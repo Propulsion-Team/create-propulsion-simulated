@@ -1,14 +1,14 @@
 package dev.propulsionteam.propulsionsimulated.events;
 
-import dan200.computercraft.api.peripheral.PeripheralCapability;
+import dev.propulsionteam.propulsionsimulated.compat.PropulsionCompatibility;
 import dev.propulsionteam.propulsionsimulated.content.heat.burners.liquid.LiquidBurnerBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.heat.burners.liquid.PassthroughFluidHandler;
 import dev.propulsionteam.propulsionsimulated.content.platinum.CoralGeneratorBlockEntity;
-import dev.propulsionteam.propulsionsimulated.content.heat.engine.StirlingEngineBlockEntity;
+/*import dev.propulsionteam.propulsionsimulated.content.heat.engine.StirlingEngineBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.redstone_transmission.RedstoneTransmissionBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.tilt_adapter.TiltAdapterBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.thruster.creative_thruster.CreativeThrusterBlockEntity;
-import dev.propulsionteam.propulsionsimulated.content.thruster.creative_vector_thruster.CreativeVectorThrusterBlockEntity;
+import dev.propulsionteam.propulsionsimulated.content.thruster.creative_vector_thruster.CreativeVectorThrusterBlockEntity;*/
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionBlockEntities;
 import dev.propulsionteam.propulsionsimulated.content.thruster.thruster.ThrusterBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.thruster.IonThrusterBlockEntity;
@@ -47,46 +47,49 @@ public class ModCapabilityEvents {
             (be, side) -> ((CoralGeneratorBlockEntity) be).getEnergyHandler(side)
         );
 
-        event.registerBlockEntity(
-            PeripheralCapability.get(),
-            PropulsionBlockEntities.THRUSTER_BLOCK_ENTITY.get(),
-            (be, side) -> be.computerBehaviour == null ? null : be.computerBehaviour.getPeripheralCapability()
-        );
-        event.registerBlockEntity(
-            PeripheralCapability.get(),
-            PropulsionBlockEntities.ION_THRUSTER_BLOCK_ENTITY.get(),
-            (be, side) -> be.computerBehaviour == null ? null : be.computerBehaviour.getPeripheralCapability()
-        );
-        event.registerBlockEntity(
-            PeripheralCapability.get(),
-            PropulsionBlockEntities.CREATIVE_THRUSTER_BLOCK_ENTITY.get(),
-            (be, side) -> be.computerBehaviour == null ? null : be.computerBehaviour.getPeripheralCapability()
-        );
-        event.registerBlockEntity(
-            PeripheralCapability.get(),
-            PropulsionBlockEntities.CREATIVE_VECTOR_THRUSTER_BLOCK_ENTITY.get(),
-            (be, side) -> be.computerBehaviour == null ? null : be.computerBehaviour.getPeripheralCapability()
-        );
-        event.registerBlockEntity(
-            PeripheralCapability.get(),
-            PropulsionBlockEntities.STIRLING_ENGINE_BLOCK_ENTITY.get(),
-            (be, side) -> be.computerBehaviour == null ? null : be.computerBehaviour.getPeripheralCapability()
-        );
-        event.registerBlockEntity(
-            PeripheralCapability.get(),
-            PropulsionBlockEntities.REDSTONE_TRANSMISSION_BLOCK_ENTITY.get(),
-            (be, side) -> be.computerBehaviour == null ? null : be.computerBehaviour.getPeripheralCapability()
-        );
-        event.registerBlockEntity(
-            PeripheralCapability.get(),
-            PropulsionBlockEntities.TILT_ADAPTER_BLOCK_ENTITY.get(),
-            (be, side) -> be.computerBehaviour == null ? null : be.computerBehaviour.getPeripheralCapability()
-        );
-        event.registerBlockEntity(
-            PeripheralCapability.get(),
-            PropulsionBlockEntities.CORAL_GENERATOR_BLOCK_ENTITY.get(),
-            (be, side) -> be.computerBehaviour == null ? null : be.computerBehaviour.getPeripheralCapability()
-        );
+
+        if (PropulsionCompatibility.CC_ACTIVE) {
+            event.registerBlockEntity(
+                dan200.computercraft.api.peripheral.PeripheralCapability.get(),
+                PropulsionBlockEntities.THRUSTER_BLOCK_ENTITY.get(),
+                (be, side) -> be.computerBehaviour == null ? null : be.computerBehaviour.getPeripheralCapability()
+            );
+            event.registerBlockEntity(
+                dan200.computercraft.api.peripheral.PeripheralCapability.get(),
+                PropulsionBlockEntities.ION_THRUSTER_BLOCK_ENTITY.get(),
+                (be, side) -> be.computerBehaviour == null ? null : be.computerBehaviour.getPeripheralCapability()
+            );
+            event.registerBlockEntity(
+                dan200.computercraft.api.peripheral.PeripheralCapability.get(),
+                PropulsionBlockEntities.CREATIVE_THRUSTER_BLOCK_ENTITY.get(),
+                (be, side) -> be.computerBehaviour == null ? null : be.computerBehaviour.getPeripheralCapability()
+            );
+            event.registerBlockEntity(
+                dan200.computercraft.api.peripheral.PeripheralCapability.get(),
+                PropulsionBlockEntities.CREATIVE_VECTOR_THRUSTER_BLOCK_ENTITY.get(),
+                (be, side) -> be.computerBehaviour == null ? null : be.computerBehaviour.getPeripheralCapability()
+            );
+            event.registerBlockEntity(
+                dan200.computercraft.api.peripheral.PeripheralCapability.get(),
+                PropulsionBlockEntities.STIRLING_ENGINE_BLOCK_ENTITY.get(),
+                (be, side) -> be.computerBehaviour == null ? null : be.computerBehaviour.getPeripheralCapability()
+            );
+            event.registerBlockEntity(
+                dan200.computercraft.api.peripheral.PeripheralCapability.get(),
+                PropulsionBlockEntities.REDSTONE_TRANSMISSION_BLOCK_ENTITY.get(),
+                (be, side) -> be.computerBehaviour == null ? null : be.computerBehaviour.getPeripheralCapability()
+            );
+            event.registerBlockEntity(
+                dan200.computercraft.api.peripheral.PeripheralCapability.get(),
+                PropulsionBlockEntities.TILT_ADAPTER_BLOCK_ENTITY.get(),
+                (be, side) -> be.computerBehaviour == null ? null : be.computerBehaviour.getPeripheralCapability()
+            );
+            event.registerBlockEntity(
+                dan200.computercraft.api.peripheral.PeripheralCapability.get(),
+                PropulsionBlockEntities.CORAL_GENERATOR_BLOCK_ENTITY.get(),
+                (be, side) -> be.computerBehaviour == null ? null : be.computerBehaviour.getPeripheralCapability()
+            );
+        }
     }
 
     private static IFluidHandler getThrusterFluidHandler(ThrusterBlockEntity blockEntity, Direction side) {
