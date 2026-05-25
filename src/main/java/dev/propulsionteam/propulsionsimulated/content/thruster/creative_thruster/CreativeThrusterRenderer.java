@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import com.simibubi.create.foundation.blockEntity.renderer.SmartBlockEntityRenderer;
+import dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterPlumeRenderer;
 import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.VectorThrusterDebugRenderer;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionPartialModels;
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
@@ -32,7 +33,7 @@ public class CreativeThrusterRenderer extends SmartBlockEntityRenderer<CreativeT
         VectorThrusterDebugRenderer.render(be);
         final BlockState state = be.getBlockState();
         if (be.isController() && be.isMultiblock()) {
-            renderMultiblock(be, ms, buffer, light, overlay, state);
+            renderMultiblock(be, partialTicks, ms, buffer, light, overlay, state);
             return;
         }
         if (VisualizationManager.supportsVisualization(be.getLevel())) {
@@ -61,9 +62,12 @@ public class CreativeThrusterRenderer extends SmartBlockEntityRenderer<CreativeT
 
         bracket.light(light).overlay(overlay).renderInto(ms, vb);
         ms.popPose();
+
+        ThrusterPlumeRenderer.render(be, partialTicks, ms, buffer, light, overlay);
     }
 
     private void renderMultiblock(final CreativeThrusterBlockEntity be,
+                                  final float partialTicks,
                                   final PoseStack ms,
                                   final MultiBufferSource buffer,
                                   final int light,
@@ -85,6 +89,8 @@ public class CreativeThrusterRenderer extends SmartBlockEntityRenderer<CreativeT
         ms.scale(w, w, w);
         mb.light(light).overlay(overlay).renderInto(ms, vb);
         ms.popPose();
+
+        ThrusterPlumeRenderer.render(be, partialTicks, ms, buffer, light, overlay);
     }
 
     private static PartialModel getMultiblockModel(int width) {

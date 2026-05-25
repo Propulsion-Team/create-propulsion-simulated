@@ -80,6 +80,16 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
         }
     }
 
+    @Override
+    protected boolean isMultiblockThruster() {
+        return isMultiblock();
+    }
+
+    @Override
+    protected boolean isMultiblockController() {
+        return isController();
+    }
+
     public boolean isMultiblock() {
         return width > 1;
     }

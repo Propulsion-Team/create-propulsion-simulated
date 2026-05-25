@@ -66,6 +66,9 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
     //Ticking
     private int currentTick = 0;
 
+    /** Client-only; smoothed plume fade/length for texture exhaust. */
+    private ThrusterPlumeVisuals plumeVisuals;
+
     protected double getParticleBroadcastRange() { return PARTICLE_BROADCAST_RANGE_BLOCKS; }
     protected float getParticleVelocity() { return PARTICLE_VELOCITY; }
     protected double getThrustUnitsPerKn() { return PropulsionConfig.getThrustUnitsPerKnOrDefault(); }
@@ -97,9 +100,11 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
     @Override
     public void initialize() {
         super.initialize();
+        BlockState state = getBlockState();
+        Direction facing = state.getValue(AbstractThrusterBlock.FACING);
+        calculateObstruction(level, worldPosition, facing);
+
         if (!level.isClientSide) {
-            BlockState state = getBlockState();
-            calculateObstruction(level, worldPosition, state.getValue(AbstractThrusterBlock.FACING));
             ThrusterData data = this.getThrusterData();
             data.setDirection(getThrustDirectionLocal());
             data.setThrust(0);
@@ -146,6 +151,9 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         if (controlMode == ControlMode.PERIPHERAL) {
             return digitalInput;
         }
+        if (level != null && level.isClientSide) {
+            return level.getBestNeighborSignal(worldPosition) / 15.0f;
+        }
         return redstoneInput / 15.0f;
     }
 
@@ -185,6 +193,11 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         BlockState currentBlockState = isOutsideWorldHeight ? getBlockState() : SimulatedThrustAdapter.getBlockStateSafe(level,worldPosition);
         if (level.isClientSide) {
             ThrusterSoundHooks.clientTick(this);
+            getPlumeVisuals().clientTick(this);
+            if (currentTick % 20 == 0) {
+                calculateObstruction(level, worldPosition, currentBlockState.getValue(AbstractThrusterBlock.FACING));
+            }
+            currentTick++;
             return;
         }
         if (shouldEmitParticles()) {
@@ -245,7 +258,46 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
     }
 
     public boolean shouldEmitParticles() {
+        if (PropulsionConfig.USE_TEXTURE_PLUMES.get() && supportsTexturePlume()) {
+            return false;
+        }
         return isPowered() && isWorking();
+    }
+
+    public ThrusterPlumeVisuals getPlumeVisuals() {
+        if (plumeVisuals == null) {
+            plumeVisuals = new ThrusterPlumeVisuals();
+        }
+        return plumeVisuals;
+    }
+
+    /** When false, creative/solid thrusters with particle type NONE skip texture plumes too. */
+    protected boolean supportsTexturePlume() {
+        return true;
+    }
+
+    public boolean shouldRenderTexturePlume() {
+        if (!PropulsionConfig.USE_TEXTURE_PLUMES.get() || !supportsTexturePlume()) {
+            return false;
+        }
+        if (emptyBlocks == 0 || !isPowered()) {
+            return false;
+        }
+        if (isMultiblockThruster() && !isMultiblockController()) {
+            return false;
+        }
+        if (level != null && level.isClientSide) {
+            return getThrottle() > 0.01f && (getCurrentThrust() > 0.01f || isWorking());
+        }
+        return getThrottle() > 0.01f && isWorking();
+    }
+
+    protected boolean isMultiblockThruster() {
+        return false;
+    }
+
+    protected boolean isMultiblockController() {
+        return true;
     }
 
     protected boolean shouldDamageEntities() {

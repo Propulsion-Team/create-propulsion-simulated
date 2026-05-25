@@ -195,6 +195,16 @@ public class CreativeThrusterBlockEntity extends AbstractThrusterBlockEntity {
         }
     }
 
+    @Override
+    protected boolean isMultiblockThruster() {
+        return isMultiblock();
+    }
+
+    @Override
+    protected boolean isMultiblockController() {
+        return isController();
+    }
+
     public boolean isMultiblock() {
         return width > 1;
     }
@@ -412,6 +422,19 @@ public class CreativeThrusterBlockEntity extends AbstractThrusterBlockEntity {
     @Override
     protected double getRawThrustCap() {
         return getConfiguredTargetThrustKn();
+    }
+
+    @Override
+    protected boolean supportsTexturePlume() {
+        return plumeType != PlumeType.NONE;
+    }
+
+    @Override
+    public boolean shouldRenderTexturePlume() {
+        if (plumeType == PlumeType.NONE || !hasPlumeSpace()) {
+            return false;
+        }
+        return super.shouldRenderTexturePlume();
     }
 
     @Override

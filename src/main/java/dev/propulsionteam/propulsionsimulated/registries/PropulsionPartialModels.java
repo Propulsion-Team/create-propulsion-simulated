@@ -50,6 +50,8 @@ public class PropulsionPartialModels {
     //Transmission
     public static final PartialModel TRANSMISSION_PLUS = partial("transmission_plus");
     public static final PartialModel TRANSMISSION_MINUS = partial("transmission_minus");
+    public static final PartialModel THRUSTER_PLUME_BASE = partial("thruster_plume_base");
+    public static final PartialModel THRUSTER_PLUME_JET = partial("thruster_plume_jet");
 
     private static PartialModel partial(String path) {
         return PartialModel.of(ResourceLocation.fromNamespaceAndPath(CreatePropulsion.ID, "partial/" + path));

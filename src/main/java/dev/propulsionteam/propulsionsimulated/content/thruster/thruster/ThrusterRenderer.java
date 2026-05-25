@@ -6,6 +6,7 @@ import com.mojang.math.Axis;
 import com.simibubi.create.foundation.blockEntity.renderer.SmartBlockEntityRenderer;
 import dev.engine_room.flywheel.lib.model.baked.PartialModel;
 import dev.propulsionteam.propulsionsimulated.content.thruster.AbstractThrusterBlock;
+import dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterPlumeRenderer;
 import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.VectorThrusterDebugRenderer;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionPartialModels;
 import net.createmod.catnip.render.CachedBuffers;
@@ -24,26 +25,28 @@ public class ThrusterRenderer extends SmartBlockEntityRenderer<ThrusterBlockEnti
     @Override
     protected void renderSafe(ThrusterBlockEntity be, float partialTicks, PoseStack ms, MultiBufferSource buffer, int light, int overlay) {
         VectorThrusterDebugRenderer.render(be);
-        if (!be.isController() || !be.isMultiblock()) return;
+        if (be.isController() && be.isMultiblock()) {
+            PartialModel model = getMultiblockModel(be.width);
+            if (model != null) {
+                BlockState state = be.getBlockState();
+                Direction facing = state.getValue(AbstractThrusterBlock.FACING);
+                int w = be.width;
 
-        PartialModel model = getMultiblockModel(be.width);
-        if (model == null) return;
+                SuperByteBuffer mb = CachedBuffers.partial(model, state);
+                VertexConsumer vb = buffer.getBuffer(RenderType.cutoutMipped());
 
-        BlockState state = be.getBlockState();
-        Direction facing = state.getValue(AbstractThrusterBlock.FACING);
-        int w = be.width;
+                ms.pushPose();
+                float cx = w * 0.5f;
+                ms.translate(cx, cx, cx);
+                applyFacingRotation(ms, facing);
+                ms.translate(-cx, -cx, -cx);
+                ms.scale(w, w, w);
+                mb.light(light).overlay(overlay).renderInto(ms, vb);
+                ms.popPose();
+            }
+        }
 
-        SuperByteBuffer mb = CachedBuffers.partial(model, state);
-        VertexConsumer vb = buffer.getBuffer(RenderType.cutoutMipped());
-
-        ms.pushPose();
-        float cx = w * 0.5f;
-        ms.translate(cx, cx, cx);
-        applyFacingRotation(ms, facing);
-        ms.translate(-cx, -cx, -cx);
-        ms.scale(w, w, w);
-        mb.light(light).overlay(overlay).renderInto(ms, vb);
-        ms.popPose();
+        ThrusterPlumeRenderer.render(be, partialTicks, ms, buffer, light, overlay);
     }
 
     private static PartialModel getMultiblockModel(int width) {

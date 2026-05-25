@@ -7,6 +7,7 @@ import com.simibubi.create.foundation.blockEntity.renderer.SmartBlockEntityRende
 import dev.engine_room.flywheel.lib.model.baked.PartialModel;
 import dev.propulsionteam.propulsionsimulated.content.thruster.AbstractThrusterBlock;
 import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.VectorRedstoneLinkRenderer;
+import dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterPlumeRenderer;
 import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.VectorThrusterDebugRenderer;
 import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.VectorThrusterRenderer;
 import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.VectorThrusterBlockEntity;
@@ -31,15 +32,17 @@ public class IonThrusterRenderer extends SmartBlockEntityRenderer<IonThrusterBlo
         super.renderSafe(be, partialTicks, ms, buffer, light, overlay);
         VectorThrusterDebugRenderer.render(be);
         if (be.isController() && be.isMultiblock()) {
-            renderMultiblock(be, ms, buffer, light, overlay);
+            renderMultiblock(be, partialTicks, ms, buffer, light, overlay);
         }
         if (be instanceof VectorThrusterBlockEntity vector) {
             VectorThrusterRenderer.render(vector, partialTicks, ms, buffer, light, overlay);
             VectorRedstoneLinkRenderer.renderOnBlockEntity(vector, partialTicks, ms, buffer, light, overlay);
         }
+        ThrusterPlumeRenderer.render(be, partialTicks, ms, buffer, light, overlay);
     }
 
-    private static void renderMultiblock(IonThrusterBlockEntity be, PoseStack ms, MultiBufferSource buffer, int light, int overlay) {
+    private static void renderMultiblock(IonThrusterBlockEntity be, float partialTicks, PoseStack ms,
+                                         MultiBufferSource buffer, int light, int overlay) {
         PartialModel model = getMultiblockModel(be.width);
         if (model == null) return;
 
@@ -58,6 +61,8 @@ public class IonThrusterRenderer extends SmartBlockEntityRenderer<IonThrusterBlo
         ms.scale(w, w, w);
         mb.light(light).overlay(overlay).renderInto(ms, vb);
         ms.popPose();
+
+        ThrusterPlumeRenderer.render(be, partialTicks, ms, buffer, light, overlay);
     }
 
     private static PartialModel getMultiblockModel(int width) {

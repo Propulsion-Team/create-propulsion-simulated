@@ -266,6 +266,9 @@ public class SolidFuelThrusterBlockEntity extends AbstractThrusterBlockEntity im
         if (controlMode == ControlMode.PERIPHERAL) {
             return digitalInput > 0.0f ? 1.0f : 0.0f;
         }
+        if (level != null && level.isClientSide) {
+            return level.getBestNeighborSignal(worldPosition) > 0 ? 1.0f : 0.0f;
+        }
         return redstoneInput > 0 ? 1.0f : 0.0f;
     }
 
@@ -331,12 +334,17 @@ public class SolidFuelThrusterBlockEntity extends AbstractThrusterBlockEntity im
     }
 
     @Override
+    protected boolean supportsTexturePlume() {
+        ItemThrusterProperties properties = SolidThrusterFuelManager.getProperties(getFuelStack());
+        return properties != null && properties.particleType() != ThrusterParticleType.NONE;
+    }
+
+    @Override
     public boolean shouldEmitParticles() {
         if (!super.shouldEmitParticles()) {
             return false;
         }
-        ItemThrusterProperties properties = SolidThrusterFuelManager.getProperties(getFuelStack());
-        return properties != null && properties.particleType() != ThrusterParticleType.NONE;
+        return supportsTexturePlume();
     }
 
     @Override

@@ -1,0 +1,33 @@
+{
+	"credit": "Adapted from Create Aeronautics steam vent",
+	"textures": {
+		"plume": "createpropulsion:block/thruster_plume_anim",
+		"particle": "minecraft:block/air"
+	},
+	"elements": [
+		{
+			"name": "jet_exterior",
+			"from": [5, 9, 5],
+			"to": [11, 25, 11],
+			"rotation": {"angle": 0, "axis": "y", "origin": [5, 9, 5]},
+			"faces": {
+				"north": {"uv": [2, 0, 8, 16], "texture": "#plume"},
+				"east": {"uv": [7, 0, 13, 16], "texture": "#plume"},
+				"south": {"uv": [2, 0, 8, 16], "texture": "#plume"},
+				"west": {"uv": [8, 0, 14, 16], "texture": "#plume"}
+			}
+		},
+		{
+			"name": "jet_interior",
+			"from": [11, 9, 5],
+			"to": [5, 25, 11],
+			"rotation": {"angle": 0, "axis": "y", "origin": [21, 9, 5]},
+			"faces": {
+				"north": {"uv": [2, 0, 8, 16], "texture": "#plume"},
+				"east": {"uv": [7, 0, 13, 16], "texture": "#plume"},
+				"south": {"uv": [2, 0, 8, 16], "texture": "#plume"},
+				"west": {"uv": [8, 0, 14, 16], "texture": "#plume"}
+			}
+		}
+	]
+}

@@ -1,0 +1,18 @@
+{
+	"credit": "Adapted from Create Aeronautics steam vent",
+	"textures": {
+		"plume": "createpropulsion:block/thruster_plume_anim",
+		"particle": "minecraft:block/air"
+	},
+	"elements": [
+		{
+			"name": "base",
+			"from": [5, 11, 5],
+			"to": [11, 11, 11],
+			"rotation": {"angle": 0, "axis": "y", "origin": [5, 11, 5]},
+			"faces": {
+				"up": {"uv": [2, 4, 3, 5], "texture": "#plume"}
+			}
+		}
+	]
+}

@@ -6,6 +6,7 @@ import com.mojang.math.Axis;
 import com.simibubi.create.foundation.blockEntity.renderer.SmartBlockEntityRenderer;
 import dev.engine_room.flywheel.lib.model.baked.PartialModel;
 import dev.propulsionteam.propulsionsimulated.content.thruster.AbstractThrusterBlock;
+import dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterPlumeRenderer;
 import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.VectorRedstoneLinkRenderer;
 import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.VectorThrusterDebugRenderer;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionPartialModels;
@@ -41,6 +42,7 @@ public class LiquidVectorThrusterRenderer extends SmartBlockEntityRenderer<Liqui
         VectorThrusterDebugRenderer.render(be);
         renderBody(be, partialTicks, ms, buffer, light, overlay);
         VectorRedstoneLinkRenderer.renderOnBlockEntity(be, partialTicks, ms, buffer, light, overlay);
+        ThrusterPlumeRenderer.render(be, partialTicks, ms, buffer, light, overlay);
     }
 
     private static void renderBody(LiquidVectorThrusterBlockEntity be, float partialTick, PoseStack ms, MultiBufferSource buffer, int light, int overlay) {

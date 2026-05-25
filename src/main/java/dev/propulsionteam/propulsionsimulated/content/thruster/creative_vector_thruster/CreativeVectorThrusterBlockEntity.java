@@ -82,6 +82,19 @@ public class CreativeVectorThrusterBlockEntity extends VectorThrusterBlockEntity
     }
 
     @Override
+    protected boolean supportsTexturePlume() {
+        return plumeType != CreativeThrusterBlockEntity.PlumeType.NONE;
+    }
+
+    @Override
+    public boolean shouldRenderTexturePlume() {
+        if (plumeType == CreativeThrusterBlockEntity.PlumeType.NONE || !hasPlumeSpace()) {
+            return false;
+        }
+        return super.shouldRenderTexturePlume();
+    }
+
+    @Override
     public boolean shouldEmitParticles() {
         if (plumeType == CreativeThrusterBlockEntity.PlumeType.NONE)
             return false;

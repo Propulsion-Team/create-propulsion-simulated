@@ -53,6 +53,7 @@ public class PropulsionConfig {
     public static final ModConfigSpec.DoubleValue ATMOSPHERIC_PRESSURE_AMOUNT;
     public static final ModConfigSpec.DoubleValue THRUST_UNITS_PER_KN;
     public static final ModConfigSpec.IntValue CLIENT_PARTICLES_PER_TICK;
+    public static final ModConfigSpec.BooleanValue USE_TEXTURE_PLUMES;
     public static final Map<String, ModConfigSpec.IntValue> FUEL_EFFICIENCY_ENTRIES = new LinkedHashMap<>();
     public static final Map<String, ModConfigSpec.IntValue> FUEL_BURN_RATE_ENTRIES = new LinkedHashMap<>();
     public static final Map<String, ModConfigSpec.ConfigValue<String>> THRUSTER_DYE_COLORS = new LinkedHashMap<>();
@@ -100,6 +101,9 @@ public class PropulsionConfig {
 
         CLIENT_PARTICLES_PER_TICK = COMMON_BUILDER.comment("Max client particles per tick while active.")
                 .defineInRange("clientParticlesPerTick", 4, 0, 64);
+        USE_TEXTURE_PLUMES = COMMON_BUILDER.comment(
+                        "Render thruster exhaust with animated translucent models (Aeronautics steam-vent style) instead of particles.")
+                .define("useTexturePlumes", true);
 
         COMMON_BUILDER.pop(); // thruster
 
