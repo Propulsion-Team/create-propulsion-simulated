@@ -1,44 +1,43 @@
 package dev.propulsionteam.propulsionsimulated.content.thruster;
 
+import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
+import com.simibubi.create.compat.computercraft.AbstractComputerBehaviour;
+import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
+import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
+import com.simibubi.create.foundation.utility.CreateLang;
 import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
 import dev.propulsionteam.propulsionsimulated.compat.PropulsionCompatibility;
 import dev.propulsionteam.propulsionsimulated.compat.computercraft.ComputerBehaviour;
 import dev.propulsionteam.propulsionsimulated.particles.plume.PlumeParticleData;
 import dev.propulsionteam.propulsionsimulated.utility.GoggleUtils;
 import dev.propulsionteam.propulsionsimulated.utility.math.MathUtility;
-import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
-import com.simibubi.create.compat.computercraft.AbstractComputerBehaviour;
-import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
-import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
-import com.simibubi.create.foundation.utility.CreateLang;
 import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.api.block.BlockSubLevelAssemblyListener;
+import dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle;
+import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import net.createmod.catnip.lang.LangBuilder;
 import net.minecraft.ChatFormatting;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.ClipContext;
-import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import org.joml.Math;
 import org.joml.Vector3d;
-import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 
 import java.util.List;
 import java.util.Locale;
-
-import dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle;
-import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 
 public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
     implements IHaveGoggleInformation, dev.ryanhcode.sable.api.block.BlockEntitySubLevelActor, BlockSubLevelAssemblyListener {
@@ -62,6 +61,7 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
     protected String dyeId = null;
     protected int emptyBlocks;
     protected boolean isThrustDirty = false;
+    protected boolean isDirty = false;
 
     //Ticking
     private int currentTick = 0;
@@ -118,7 +118,7 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
             redstoneInput = power;
             if (controlMode == ControlMode.NORMAL) {
                 dirtyThrust();
-                notifyUpdate();
+                isDirty = true;
             }
         }
     }
@@ -129,7 +129,7 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
             digitalInput = clamped;
             if (controlMode == ControlMode.PERIPHERAL) {
                 dirtyThrust();
-                notifyUpdate();
+                isDirty = true;
             }
         }
     }
@@ -138,7 +138,7 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         if (this.controlMode != mode) {
             this.controlMode = mode;
             dirtyThrust();
-            notifyUpdate();
+            isDirty = true;
         }
     }
 
@@ -168,6 +168,11 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
     public void tick() {
         if (this.isRemoved()) {
             return;
+        }
+
+        if (isDirty) {
+            notifyUpdate();
+            isDirty = false;
         }
 
         // Fix: Do not check block state when outside build height to prevent self-removal.
