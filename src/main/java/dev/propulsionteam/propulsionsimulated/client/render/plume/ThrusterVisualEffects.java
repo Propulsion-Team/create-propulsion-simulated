@@ -87,7 +87,17 @@ public final class ThrusterVisualEffects {
                 * getWidthRadiusScale(width, preset);
 
         ms.pushPose();
-        ms.translate(localNozzle.x, localNozzle.y, localNozzle.z);
+
+        if (preset == Preset.ION) {
+            Vec3 nudge = exhaust.scale(-0.28d);
+            ms.translate(
+                    localNozzle.x + nudge.x,
+                    localNozzle.y + nudge.y,
+                    localNozzle.z + nudge.z
+            );
+        } else {
+            ms.translate(localNozzle.x, localNozzle.y, localNozzle.z);
+        }
 
         PlumeRenderer.render(
                 ms,
@@ -138,11 +148,11 @@ public final class ThrusterVisualEffects {
                     power,
                     length,
                     radius,
-                    0.34f,
-                    0.22f,
-                    0.42f,
                     1.0f,
-                    PlumeShape.ROUND
+                    0.28f,
+                    0.48f,
+                    1.0f,
+                    PlumeShape.ION_FULL
             );
             case PLASMA -> new PlumeRenderParams(
                     exhaust,
@@ -195,7 +205,7 @@ public final class ThrusterVisualEffects {
         return switch (preset) {
             case FIRE -> Mth.lerp(power, 3.2f, 9.4f);
             case SOLID -> Mth.lerp(power, 2.2f, 6.6f);
-            case ION -> Mth.lerp(power, 2.4f, 6.8f);
+            case ION -> Mth.lerp(power, 0.95f, 2.15f);
             case PLASMA -> Mth.lerp(power, 3.2f, 9.0f);
             case CREATIVE -> Mth.lerp(power, 3.2f, 8.5f);
             case VECTOR -> Mth.lerp(power, 2.8f, 7.4f);
@@ -207,7 +217,7 @@ public final class ThrusterVisualEffects {
         return switch (preset) {
             case FIRE -> Mth.lerp(power, 0.075f, 0.245f);
             case SOLID -> Mth.lerp(power, 0.120f, 0.36f);
-            case ION -> Mth.lerp(power, 0.018f, 0.055f);
+            case ION -> Mth.lerp(power, 0.34f, 0.46f);
             case PLASMA -> Mth.lerp(power, 0.045f, 0.150f);
             case CREATIVE -> Mth.lerp(power, 0.060f, 0.18f);
             case VECTOR -> Mth.lerp(power, 0.040f, 0.135f);
@@ -219,8 +229,8 @@ public final class ThrusterVisualEffects {
         if (preset == Preset.ION) {
             return switch (width) {
                 case 1 -> 1.0f;
-                case 2 -> 1.10f;
-                default -> 1.22f;
+                case 2 -> 1.15f;
+                default -> 1.35f;
             };
         }
 
@@ -243,8 +253,8 @@ public final class ThrusterVisualEffects {
         if (preset == Preset.ION) {
             return switch (width) {
                 case 1 -> 1.0f;
-                case 2 -> 1.24f;
-                default -> 1.55f;
+                case 2 -> 1.08f;
+                default -> 1.16f;
             };
         }
 
