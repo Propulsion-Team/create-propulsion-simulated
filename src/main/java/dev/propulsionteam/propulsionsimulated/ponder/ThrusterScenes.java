@@ -1,13 +1,13 @@
 package dev.propulsionteam.propulsionsimulated.ponder;
 
 import com.simibubi.create.foundation.ponder.CreateSceneBuilder;
+import dev.propulsionteam.propulsionsimulated.content.thruster.thruster.ThrusterBlockEntity;
 import net.createmod.catnip.math.Pointing;
 import net.createmod.ponder.api.PonderPalette;
 import net.createmod.ponder.api.scene.SceneBuilder;
 import net.createmod.ponder.api.scene.SceneBuildingUtil;
 import net.createmod.ponder.api.scene.Selection;
 import dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterParticleType;
-import dev.propulsionteam.propulsionsimulated.content.thruster.thruster.ThrusterBlockEntity;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;

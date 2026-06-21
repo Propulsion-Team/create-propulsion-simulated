@@ -7,6 +7,7 @@ import com.simibubi.create.foundation.model.ModelSwapper;
 import dev.propulsionteam.propulsionsimulated.CreatePropulsion;
 import dev.propulsionteam.propulsionsimulated.content.heat.burners.liquid.LiquidBurnerRenderer;
 import dev.propulsionteam.propulsionsimulated.content.platinum.PlatinumFluidTankModel;
+import dev.propulsionteam.propulsionsimulated.content.thruster.solid_fuel_thruster.SolidFuelThrusterRenderer;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionBlocks;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionSpriteShifts;
 import dev.propulsionteam.propulsionsimulated.content.heat.burners.liquid.LiquidBurnerVisual;
@@ -18,9 +19,9 @@ import dev.propulsionteam.propulsionsimulated.content.redstone_transmission.Reds
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionBlockEntities;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionInstanceTypes;
 import dev.propulsionteam.propulsionsimulated.content.tilt_adapter.TiltAdapterRenderer;
-import dev.propulsionteam.propulsionsimulated.content.thruster.creative_thruster.CreativeThrusterRenderer;
+import dev.propulsionteam.propulsionsimulated.content.thruster.thruster.creative_thruster.CreativeThrusterRenderer;
 import dev.propulsionteam.propulsionsimulated.content.thruster.ion_thruster.IonThrusterRenderer;
-import dev.propulsionteam.propulsionsimulated.content.thruster.liquid_vector_thruster.LiquidVectorThrusterRenderer;
+import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.liquid_vector_thruster.LiquidVectorThrusterRenderer;
 import dev.propulsionteam.propulsionsimulated.content.thruster.thruster.ThrusterRenderer;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionFluids;
 import com.simibubi.create.content.fluids.tank.FluidTankRenderer;
@@ -182,10 +183,14 @@ public class ModClientEvents {
         event.registerBlockEntityRenderer(PropulsionBlockEntities.STIRLING_ENGINE_BLOCK_ENTITY.get(), StirlingEngineRenderer::new);
         event.registerBlockEntityRenderer(PropulsionBlockEntities.REDSTONE_TRANSMISSION_BLOCK_ENTITY.get(), RedstoneTransmissionRenderer::new);
         event.registerBlockEntityRenderer(PropulsionBlockEntities.CREATIVE_THRUSTER_BLOCK_ENTITY.get(), CreativeThrusterRenderer::new);
-        event.registerBlockEntityRenderer(PropulsionBlockEntities.CREATIVE_VECTOR_THRUSTER_BLOCK_ENTITY.get(), IonThrusterRenderer::new);
+
         event.registerBlockEntityRenderer(PropulsionBlockEntities.THRUSTER_BLOCK_ENTITY.get(), ThrusterRenderer::new);
         event.registerBlockEntityRenderer(PropulsionBlockEntities.ION_THRUSTER_BLOCK_ENTITY.get(), IonThrusterRenderer::new);
+
+        event.registerBlockEntityRenderer(PropulsionBlockEntities.CREATIVE_VECTOR_THRUSTER_BLOCK_ENTITY.get(), IonThrusterRenderer::new);
         event.registerBlockEntityRenderer(PropulsionBlockEntities.LIQUID_VECTOR_THRUSTER_BLOCK_ENTITY.get(), LiquidVectorThrusterRenderer::new);
+
+        event.registerBlockEntityRenderer(PropulsionBlockEntities.SOLID_FUEL_THRUSTER_BLOCK_ENTITY.get(), SolidFuelThrusterRenderer::new);
         event.registerBlockEntityRenderer(PropulsionBlockEntities.LIQUID_BURNER_BLOCK_ENTITY.get(), LiquidBurnerRenderer::new);
         event.registerBlockEntityRenderer(PropulsionBlockEntities.TILT_ADAPTER_BLOCK_ENTITY.get(), TiltAdapterRenderer::new);
         event.registerBlockEntityRenderer(PropulsionBlockEntities.ADVANCED_TILT_ADAPTER_BLOCK_ENTITY.get(), TiltAdapterRenderer::new);

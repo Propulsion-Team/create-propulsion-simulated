@@ -44,12 +44,7 @@ neoForge {
 sourceSets.main.resources { srcDirs = ['src/main/resources', 'src/generated/resources'] }
 
 repositories {
-
     mavenCentral()
-
-    maven {
-        url = "https://modmaven.dev/"
-    }
 
     maven {
         name = "Modrinth Maven"
@@ -79,16 +74,7 @@ repositories {
         url = "https://maven.createmod.net"
     }
     maven {
-        name = "RyanHCode Maven"
-        url = "https://maven.ryanhcode.dev/releases"
-    }
-    maven {
         url = "https://maven.theillusivec4.top/"
-    }
-
-    maven {
-        name = "Jared's maven"
-        url = "https://maven.blamejared.com/"
     }
     maven {
         name = "Latvian Maven"
@@ -136,6 +122,15 @@ repositories {
             includeGroup("com.github.bawnorton")
         }
     }
+    maven { url = "https://maven.blamejared.com" } // JEI, Vazkii's Mods
+    maven { url = "https://modmaven.dev" }
+    maven { url = "https://api.modrinth.com/maven" }
+    maven { url = "https://www.cursemaven.com" }
+    maven { url = "https://raw.githubusercontent.com/Fuzss/modresources/main/maven" } // NeoForge config api port, needed by ponder
+    maven { url = "https://maven.createmod.net" } // Create, Ponder, Flywheel
+    maven { url = "https://maven.ithundxr.dev/snapshots" } // Registrate
+    maven { url = "https://maven.architectury.dev" } // Arch API
+    maven { url = "https://maven.ryanhcode.dev/releases" } // Sable, Offroad, Simulated, Aeronautics
 }
 
 dependencies {
@@ -157,15 +152,16 @@ dependencies {
     compileOnly "curse.maven:createindustry-693815:7236535"
     //CC
     compileOnly "cc.tweaked:cc-tweaked-${minecraft_version}-forge:${cc_version}"
-    //JEI
+    //JEI, create addition, Jade
     runtimeOnly "mezz.jei:jei-${minecraft_version}-neoforge:19.25.0.322"
+    runtimeOnly files("libs/createaddition-1.5.10.jar")
+    runtimeOnly files("libs/Jade-${minecraft_version}-NeoForge-15.10.5.jar")
     //KFF
     implementation "thedarkcolour:kotlinforforge-neoforge:5.9.0"
     //KubeJS API (optional; used for script globals integration)
     compileOnly "dev.latvian.mods:kubejs-neoforge:2101.7.2-build.336"
     runtimeOnly "dev.latvian.mods:kubejs-neoforge:2101.7.2-build.336"
-    //VMod
-    //TODO: compileOnly & use tis for magnet compat https://github.com/SuperSpaceEye/Valkyrien-Ship-Schematics/blob/master/common/src/main/kotlin/net/spaceeye/valkyrien_ship_schematics/interfaces/ICopyableBlock.kt
+    //VMod - TODO: compileOnly & use for magnet compat https://github.com/SuperSpaceEye/Valkyrien-Ship-Schematics/blob/master/common/src/main/kotlin/net/spaceeye/valkyrien_ship_schematics/interfaces/ICopyableBlock.kt
     /*
     compileOnly(annotationProcessor("com.github.bawnorton.mixinsquared:mixinsquared-common:0.3.2-beta.4"))
     implementation(jarJar("com.github.bawnorton.mixinsquared:mixinsquared-forge:0.3.2-beta.4")) {
@@ -174,16 +170,24 @@ dependencies {
     //Mixin Extras
     compileOnly(annotationProcessor("io.github.llamalad7:mixinextras-common:0.4.1"))
     implementation "io.github.llamalad7:mixinextras-neoforge:0.4.1"
-    compileOnly "dev.ryanhcode.sable:sable-common-${minecraft_version}:${sable_version}"
-    compileOnly files("libs/simulated-neoforge-${minecraft_version}-1.1.3.jar")
-    runtimeOnly files("libs/sable-neoforge-${minecraft_version}-${sable_version}.jar")
-    runtimeOnly files("libs/create-aeronautics-bundled-${minecraft_version}-1.1.3.jar")
-    runtimeOnly files("libs/createaddition-1.5.10.jar")
-    runtimeOnly files("libs/Jade-${minecraft_version}-NeoForge-15.10.5.jar")
-    implementation "dev.ryanhcode.sable-companion:sable-companion-common-${minecraft_version}:${sable_companion_version}"
+
+    //other
     runtimeOnly "curse.maven:forge-config-api-port-547434:7213611"
     implementation "com.fasterxml.jackson.core:jackson-annotations:2.18.2"
     implementation "org.joml:joml-primitives:1.10.0"
+
+    //Sable
+    implementation("dev.ryanhcode.sable:sable-neoforge-${minecraft_version}:${bundled_version}")
+    api("dev.ryanhcode.sable-companion:sable-companion-common-${minecraft_version}:${sable_companion_version}")
+    implementation "dev.ryanhcode.sable-companion:sable-companion-common-${minecraft_version}:${sable_companion_version}"
+
+    //Simulated https://maven.ryanhcode.dev/#/releases/dev/ryanhcode
+    //https://maven.ryanhcode.dev/#/releases/dev/simulated_team/simulated/simulated-neoforge-1.21.1
+    implementation "dev.simulated_team.simulated:simulated-neoforge-1.21.1:${bundled_version}"
+    //https://maven.ryanhcode.dev/#/releases/dev/eriksonn/aeronautics/aeronautics-neoforge-1.21.1
+    implementation("dev.eriksonn.aeronautics:aeronautics-neoforge-1.21.1:${bundled_version}")
+    //https://maven.ryanhcode.dev/#/releases/dev/ryanhcode/offroad/offroad-neoforge-1.21.1/1.2.1
+    implementation "dev.ryanhcode.offroad:offroad-neoforge-1.21.1:${bundled_version}"
 }
 
 tasks.named('processResources', ProcessResources).configure {

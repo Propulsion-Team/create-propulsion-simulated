@@ -6,10 +6,11 @@ import com.mojang.math.Axis;
 import com.simibubi.create.foundation.blockEntity.renderer.SmartBlockEntityRenderer;
 import dev.engine_room.flywheel.lib.model.baked.PartialModel;
 import dev.propulsionteam.propulsionsimulated.content.thruster.AbstractThrusterBlock;
+import dev.propulsionteam.propulsionsimulated.content.thruster.MeshedThrusterFlameUtils;
 import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.VectorRedstoneLinkRenderer;
-import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.VectorThrusterDebugRenderer;
-import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.VectorThrusterRenderer;
+import dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterDebugRenderer;
 import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.VectorThrusterBlockEntity;
+import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.VectorThrusterRenderer;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionPartialModels;
 import net.createmod.catnip.render.CachedBuffers;
 import net.createmod.catnip.render.SuperByteBuffer;
@@ -26,20 +27,23 @@ public class IonThrusterRenderer extends SmartBlockEntityRenderer<IonThrusterBlo
     }
 
     @Override
-    protected void renderSafe(IonThrusterBlockEntity be, float partialTicks, PoseStack ms, MultiBufferSource buffer,
-            int light, int overlay) {
-        super.renderSafe(be, partialTicks, ms, buffer, light, overlay);
-        VectorThrusterDebugRenderer.render(be);
-        if (be.isController() && be.isMultiblock()) {
-            renderMultiblock(be, ms, buffer, light, overlay);
-        }
+    protected void renderSafe(IonThrusterBlockEntity be, float partialTick, PoseStack ms, MultiBufferSource buffer,
+                              int light, int overlay) {
+        super.renderSafe(be, partialTick, ms, buffer, light, overlay);
+        ThrusterDebugRenderer.render(be, ms, buffer);
+
         if (be instanceof VectorThrusterBlockEntity vector) {
-            VectorThrusterRenderer.render(vector, partialTicks, ms, buffer, light, overlay);
-            VectorRedstoneLinkRenderer.renderOnBlockEntity(vector, partialTicks, ms, buffer, light, overlay);
+            VectorThrusterRenderer.renderThruster(vector, partialTick, ms, buffer, light, overlay);
+            VectorRedstoneLinkRenderer.renderOnBlockEntity(vector, partialTick, ms, buffer, light, overlay);
+        } else {
+            if (be.isMultiblock()) {
+                if (be.isController()) renderMultiblock(be, partialTick, ms, buffer, light, overlay);
+            } else if (be.isMeshedPlume())
+                MeshedThrusterFlameUtils.renderMeshFlame(be, partialTick, ms, buffer, false);
         }
     }
 
-    private static void renderMultiblock(IonThrusterBlockEntity be, PoseStack ms, MultiBufferSource buffer, int light, int overlay) {
+    private static void renderMultiblock(IonThrusterBlockEntity be, float partialTicks, PoseStack ms, MultiBufferSource buffer, int light, int overlay) {
         PartialModel model = getMultiblockModel(be.width);
         if (model == null) return;
 
@@ -58,6 +62,11 @@ public class IonThrusterRenderer extends SmartBlockEntityRenderer<IonThrusterBlo
         ms.scale(w, w, w);
         mb.light(light).overlay(overlay).renderInto(ms, vb);
         ms.popPose();
+
+        //Draw meshed thrusters
+        if (be.isMeshedPlume()) {
+            MeshedThrusterFlameUtils.renderMultiblockFlame(be, partialTicks, ms, buffer, w);
+        }
     }
 
     private static PartialModel getMultiblockModel(int width) {

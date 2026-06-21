@@ -9,7 +9,7 @@ import com.simibubi.create.foundation.blockEntity.behaviour.ValueBox;
 import com.simibubi.create.foundation.blockEntity.behaviour.ValueBoxRenderer;
 import com.simibubi.create.foundation.blockEntity.behaviour.ValueBoxTransform;
 import com.simibubi.create.foundation.utility.CreateLang;
-import dev.propulsionteam.propulsionsimulated.content.thruster.liquid_vector_thruster.LiquidVectorThrusterBlockEntity;
+import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.liquid_vector_thruster.LiquidVectorThrusterBlockEntity;
 import dev.ryanhcode.sable.Sable;
 import java.util.ArrayList;
 import java.util.List;
@@ -86,7 +86,7 @@ public class VectorRedstoneLinkRenderer {
     }
 
     public static void renderOnBlockEntity(VectorThrusterBlockEntity be, float partialTicks, PoseStack ms,
-            MultiBufferSource buffer, int light, int overlay) {
+                                           MultiBufferSource buffer, int light, int overlay) {
         if (be == null || be.isRemoved())
             return;
 
@@ -116,7 +116,7 @@ public class VectorRedstoneLinkRenderer {
     }
 
     public static void renderOnBlockEntity(LiquidVectorThrusterBlockEntity be, float partialTicks, PoseStack ms,
-            MultiBufferSource buffer, int light, int overlay) {
+                                           MultiBufferSource buffer, int light, int overlay) {
         if (be == null || be.isRemoved())
             return;
 

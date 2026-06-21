@@ -15,11 +15,11 @@ import dev.propulsionteam.propulsionsimulated.content.redstone_converter.Redston
 import dev.propulsionteam.propulsionsimulated.content.redstone_transmission.RedstoneTransmissionBlock;
 import dev.propulsionteam.propulsionsimulated.content.tilt_adapter.AdvancedTiltAdapterBlock;
 import dev.propulsionteam.propulsionsimulated.content.tilt_adapter.TiltAdapterBlock;
-import dev.propulsionteam.propulsionsimulated.content.thruster.creative_thruster.CreativeThrusterBlock;
-import dev.propulsionteam.propulsionsimulated.content.thruster.creative_vector_thruster.CreativeVectorThrusterBlock;
+import dev.propulsionteam.propulsionsimulated.content.thruster.thruster.creative_thruster.CreativeThrusterBlock;
+import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.creative_vector_thruster.CreativeVectorThrusterBlock;
 import dev.propulsionteam.propulsionsimulated.content.thruster.ion_thruster.IonThrusterBlock;
 import dev.propulsionteam.propulsionsimulated.content.thruster.thruster.ThrusterBlock;
-import dev.propulsionteam.propulsionsimulated.content.thruster.liquid_vector_thruster.LiquidVectorThrusterBlock;
+import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.liquid_vector_thruster.LiquidVectorThrusterBlock;
 import dev.propulsionteam.propulsionsimulated.content.thruster.solid_fuel_thruster.SolidFuelThrusterBlock;
 import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.VectorThrusterBlock;
 import dev.propulsionteam.propulsionsimulated.content.wing.CopycatWingBlock;

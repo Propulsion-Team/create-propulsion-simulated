@@ -1,0 +1,7 @@
+{
+  "fragment": "createpropulsion:thruster_flame",
+  "vertex": "createpropulsion:thruster_flame",
+  "textures": {
+    "FirePalette": "aeronautics:textures/effects/fire_palette.png"
+  }
+}
