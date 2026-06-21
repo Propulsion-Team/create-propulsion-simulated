@@ -2,9 +2,7 @@ package dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster;
 
 import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
 import dev.propulsionteam.propulsionsimulated.content.thruster.MeshedThrusterFlameUtils;
-import dev.propulsionteam.propulsionsimulated.content.thruster.thruster.ThrusterBlock;
 import dev.propulsionteam.propulsionsimulated.particles.ion.IonParticleData;
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -27,8 +25,6 @@ import net.createmod.catnip.math.VecHelper;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import org.joml.Vector3d;
-
-import static dev.propulsionteam.propulsionsimulated.content.thruster.MeshedThrusterFlameUtils.RENDER_BOX_FLAME_LENGTH;
 
 public class VectorThrusterBlockEntity extends IonThrusterBlockEntity {
     public static final float MAX_VISUAL_TILT_DEGREES = 30.0f;
@@ -72,7 +68,7 @@ public class VectorThrusterBlockEntity extends IonThrusterBlockEntity {
     }
 
     public boolean isMeshedPlume() {
-        return PropulsionConfig.isVectorThrustersMeshedFlame();
+        return PropulsionConfig.getVectorThrustersPlumeType() ==  PropulsionConfig.ThrusterPlumeType.SPRITE_MESH;
     }
 
 

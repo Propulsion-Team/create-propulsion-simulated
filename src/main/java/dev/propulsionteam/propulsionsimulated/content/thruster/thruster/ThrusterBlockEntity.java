@@ -81,8 +81,8 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
         return controllerPos == null;
     }
 
-    public boolean isMeshedPlume() {
-        return PropulsionConfig.isThrusterMeshedFlame();
+    public boolean isMeshedPlume() {//TODO: Update these
+        return PropulsionConfig.getThrusterPlumeType() == PropulsionConfig.ThrusterPlumeType.SPRITE_MESH;
     }
 
 

@@ -59,7 +59,7 @@ public class CreativeThrusterBlockEntity extends AbstractThrusterBlockEntity {
     }
 
     public boolean isMeshedPlume() {
-        return PropulsionConfig.isThrusterMeshedFlame();
+        return PropulsionConfig.getCreativeThrusterPlumeType()  ==  PropulsionConfig.ThrusterPlumeType.SPRITE_MESH;
     }
 
 

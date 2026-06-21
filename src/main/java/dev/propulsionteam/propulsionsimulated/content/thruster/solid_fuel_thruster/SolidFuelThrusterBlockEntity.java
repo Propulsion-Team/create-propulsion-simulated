@@ -50,7 +50,7 @@ public class SolidFuelThrusterBlockEntity extends AbstractThrusterBlockEntity im
     }
 
     public boolean isMeshedPlume() {
-        return PropulsionConfig.isSolidFuelThrusterMeshedFlame();
+        return PropulsionConfig.getSolidFuelThrusterPlumeType() == PropulsionConfig.ThrusterPlumeType.SPRITE_MESH;
     }
 
     @Override

@@ -132,7 +132,7 @@ public class MeshedThrusterFlameUtils {
             ms.pushPose();
             ms.translate(0.5f, 0.5f, 0.5f);
 //            ms.translate(facing.getStepX() * flameOffset, facing.getStepY() * flameOffset, facing.getStepZ() * flameOffset);
-            ms.mulPose(Axis.XP.rotation((float)Math.PI/2));
+            ms.mulPose(Axis.XP.rotation((float) Math.PI / 2));
 //            rotateTowardsFacing(ms, facing);
 
 
@@ -163,6 +163,7 @@ public class MeshedThrusterFlameUtils {
     }
 
     public static AABB inflateRenderBoundingBox(AbstractThrusterBlockEntity be, AABB box) {
+        if (!be.isMeshedPlume()) return box;
         final var state = be.getBlockState();
         Vec3 center = box.getCenter();
         float power = Mth.clamp(be.interpolatedPower.getValue(), 0f, 1f);
@@ -180,6 +181,7 @@ public class MeshedThrusterFlameUtils {
     }
 
     public static AABB inflateVectorRenderBoundingBox(VectorThrusterBlockEntity be, AABB box) {
+        if (!be.isMeshedPlume()) return box;
         Vec3 center = box.getCenter();
         Direction facing = be.getBlockState().getValue(ThrusterBlock.FACING);
         float rotX = be.getInterpolatedVectorX(1) * 3;

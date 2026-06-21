@@ -350,7 +350,7 @@ public class IonThrusterBlockEntity extends ThrusterBlockEntity {
     }
 
     public boolean isMeshedPlume() {
-        return PropulsionConfig.isIonThrusterMeshedFlame();
+        return PropulsionConfig.getIonThrusterPlumeType() ==  PropulsionConfig.ThrusterPlumeType.SPRITE_MESH;
     }
 
     @Override

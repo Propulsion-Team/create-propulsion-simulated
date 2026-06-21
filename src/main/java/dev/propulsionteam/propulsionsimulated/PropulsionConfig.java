@@ -63,12 +63,19 @@ public class PropulsionConfig {
     public static final Map<String, ModConfigSpec.ConfigValue<String>> THRUSTER_DYE_COLORS = new LinkedHashMap<>();
     public static final ModConfigSpec.IntValue CABLE_ENERGY_TRANSFER;
 
+    public enum ThrusterPlumeType {
+        PARTICLES,
+        SPRITE_MESH,
+        SPRITE_MESH_SINGLE_MULTIBLOCK,
+        ROUND_MESH
+    }
+
     //flame config options
-    public static final boolean THRUSTER_MESHED_FLAME = true;
-    public static final boolean ION_THRUSTER_MESHED_FLAME = true;
-    public static final boolean VECTOR_THRUSTERS_MESHED_FLAME = true;
-    public static final boolean CREATIVE_VECTOR_THRUSTER_MESHED_FLAME = true;
-    public static final boolean SOLID_FUEL_THRUSTER_MESHED_FLAME = true;
+    public static final ModConfigSpec.EnumValue<ThrusterPlumeType> THRUSTER_PLUME_TYPE;
+    public static final ModConfigSpec.EnumValue<ThrusterPlumeType> CREATIVE_THRUSTER_PLUME_TYPE;
+    public static final ModConfigSpec.EnumValue<ThrusterPlumeType> ION_THRUSTER_PLUME_TYPE;
+    public static final ModConfigSpec.EnumValue<ThrusterPlumeType> VECTOR_THRUSTERS_PLUME_TYPE;
+    public static final ModConfigSpec.EnumValue<ThrusterPlumeType> SOLID_FUEL_THRUSTER_PLUME_TYPE;
 
 
     public static final ModConfigSpec.BooleanValue DEBUG_THRUSTER;
@@ -326,9 +333,20 @@ public class PropulsionConfig {
         STIRLING_CONROD_LENGTH = CLIENT_BUILDER.comment("Length of the simulated conrod.")
                 .define("Conrod length", 0.5);
         CLIENT_BUILDER.pop();
+
+
         CLIENT_BUILDER.push("Debug");
         DEBUG_THRUSTER = CLIENT_BUILDER.comment("Render thruster debug overlays (plume ray, obstruction hits, damage zones).")
                 .define("Thruster", false);
+        CLIENT_BUILDER.pop();
+
+        CLIENT_BUILDER.push("Thruster Render Types");
+        CLIENT_BUILDER.comment("How the thruster plume should be rendered.");
+        THRUSTER_PLUME_TYPE = CLIENT_BUILDER.defineEnum("Thruster Plume Type", ThrusterPlumeType.PARTICLES);
+        CREATIVE_THRUSTER_PLUME_TYPE = CLIENT_BUILDER.defineEnum("Creative Thruster Plume Type", ThrusterPlumeType.SPRITE_MESH);
+        ION_THRUSTER_PLUME_TYPE = CLIENT_BUILDER.defineEnum("Ion Thruster Plume Type", ThrusterPlumeType.SPRITE_MESH);
+        SOLID_FUEL_THRUSTER_PLUME_TYPE = CLIENT_BUILDER.defineEnum("Solid Fuel Thruster Plume Type", ThrusterPlumeType.PARTICLES);
+        VECTOR_THRUSTERS_PLUME_TYPE = CLIENT_BUILDER.defineEnum("Vector Thrusters Plume Type", ThrusterPlumeType.SPRITE_MESH);
         CLIENT_BUILDER.pop();
 
 
@@ -499,24 +517,24 @@ public class PropulsionConfig {
     }
 
 
-    public static boolean isThrusterMeshedFlame() {
-        return THRUSTER_MESHED_FLAME;
+    public static ThrusterPlumeType getThrusterPlumeType() {
+        return THRUSTER_PLUME_TYPE.get();
     }
 
-    public static boolean isIonThrusterMeshedFlame() {
-        return ION_THRUSTER_MESHED_FLAME;
+    public static ThrusterPlumeType getCreativeThrusterPlumeType() {
+        return CREATIVE_THRUSTER_PLUME_TYPE.get();
     }
 
-    public static boolean isVectorThrustersMeshedFlame() {
-        return VECTOR_THRUSTERS_MESHED_FLAME;
+    public static ThrusterPlumeType getIonThrusterPlumeType() {
+        return ION_THRUSTER_PLUME_TYPE.get();
     }
 
-    public static boolean isCreativeVectorThrusterMeshedFlame() {
-        return CREATIVE_VECTOR_THRUSTER_MESHED_FLAME;
+    public static ThrusterPlumeType getVectorThrustersPlumeType() {
+        return VECTOR_THRUSTERS_PLUME_TYPE.get();
     }
 
-    public static boolean isSolidFuelThrusterMeshedFlame() {
-        return SOLID_FUEL_THRUSTER_MESHED_FLAME;
+    public static ThrusterPlumeType getSolidFuelThrusterPlumeType() {
+        return SOLID_FUEL_THRUSTER_PLUME_TYPE.get();
     }
 
 }
