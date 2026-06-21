@@ -9,12 +9,14 @@ import dev.propulsionteam.propulsionsimulated.content.thruster.AbstractThrusterB
 import dev.propulsionteam.propulsionsimulated.content.thruster.FluidThrusterProperties;
 import dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterFuelManager;
 import dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterParticleType;
+import dev.propulsionteam.propulsionsimulated.particles.smoke.ThrusterSmokeParticleData;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionBlockEntities;
 import net.createmod.catnip.lang.LangBuilder;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.Level;
@@ -351,11 +353,26 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
     @Override
     public AABB getRenderBoundingBox() {
         if (isController() && isMultiblock()) {
+            double extra = 32.0d;
             return new AABB(
-                worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(),
-                worldPosition.getX() + width, worldPosition.getY() + width, worldPosition.getZ() + width);
+                    worldPosition.getX() - extra,
+                    worldPosition.getY() - extra,
+                    worldPosition.getZ() - extra,
+                    worldPosition.getX() + width + extra,
+                    worldPosition.getY() + width + extra,
+                    worldPosition.getZ() + width + extra
+            );
         }
-        return super.getRenderBoundingBox();
+
+        double extra = 16.0d;
+        return new AABB(
+                worldPosition.getX() - extra,
+                worldPosition.getY() - extra,
+                worldPosition.getZ() - extra,
+                worldPosition.getX() + 1.0d + extra,
+                worldPosition.getY() + 1.0d + extra,
+                worldPosition.getZ() + 1.0d + extra
+        );
     }
 
     private boolean isFrontLayerCell(ThrusterBlockEntity ctrl, Direction cubeFacing) {
@@ -766,89 +783,165 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
 
     @Override
     public void emitParticles(Level level, BlockPos pos, BlockState state) {
-        if (!(isController() && isMultiblock())) {
-            super.emitParticles(level, pos, state);
-            return;
-        }
-        if (!shouldEmitParticles()) return;
+        if (!isController() && isMultiblock()) return;
+        if (!validFluid()) return;
+
         float power = getPower();
-        float emissionScale = (float) Math.max(power, MathUtility.epsilon);
-        if (power <= 0) return;
+        if (power <= 0.035f) return;
+        if (getEmptyBlocks() <= 0) return;
 
-        Direction direction = state.getValue(AbstractThrusterBlock.FACING);
-        Direction oppositeDirection = direction.getOpposite();
+        WorldExhaustRay ray = getWorldExhaustRay();
+        if (ray == null) return;
 
-        Vec3 localExhaustDirection = new Vec3(oppositeDirection.getStepX(), oppositeDirection.getStepY(), oppositeDirection.getStepZ());
-        // Emit from the center nozzle plane of the whole assembled cube.
-        Vec3 localNozzlePosition = getMultiblockCenterNozzlePositionLocal();
+        Level particleLevel = ray.level();
+        Vec3 nozzle = ray.nozzlePos();
+        Vec3 direction = ray.direction();
 
-        Vec3 worldNozzlePosition = Sable.HELPER.projectOutOfSubLevel(level, localNozzlePosition);
-        Vec3 worldAheadPosition = Sable.HELPER.projectOutOfSubLevel(level, localNozzlePosition.add(localExhaustDirection));
-        Vec3 worldExhaustDirection = worldAheadPosition.subtract(worldNozzlePosition);
-        if (worldExhaustDirection.lengthSqr() < MathUtility.epsilon) {
-            worldExhaustDirection = localExhaustDirection;
-        } else {
-            worldExhaustDirection = worldExhaustDirection.normalize();
-        }
+        if (particleLevel == null) return;
+        if (direction.lengthSqr() < MathUtility.epsilon) return;
+
+        direction = direction.normalize();
+
+        int w = isMultiblock() ? width : 1;
 
         double particleCountMultiplier = org.joml.Math.clamp(0.0d, PARTICLE_MULTIPLIER_CAP, getParticleCountMultiplier());
         if (particleCountMultiplier <= 0) return;
+
         double particleVelocityMultiplier = org.joml.Math.clamp(0.0d, PARTICLE_MULTIPLIER_CAP, getParticleVelocityMultiplier());
 
-        float velocityScale = width == 2 ? 1.15f : 1.3f;
-        Vector3d particleVelocity = new Vector3d(worldExhaustDirection.x, worldExhaustDirection.y, worldExhaustDirection.z)
-            .mul(4.0f * emissionScale * velocityScale * particleVelocityMultiplier);
-        ParticleOptions particleData = createParticleOptions();
+        double smokeStart = switch (w) {
+            case 1 -> 7.7d;
+            case 2 -> 11.4d;
+            default -> 16.0d;
+        };
 
-        double speedPerTick = particleVelocity.length();
-        int streamParticles = Math.max(1, (int) Math.ceil(speedPerTick / TARGET_PARTICLE_SPACING_BLOCKS * particleCountMultiplier));
-        int crossSectionParticles = Math.max(1, (int) Math.round((width == 2 ? 14 : 28) * particleCountMultiplier));
-        int particlesToSpawn = Math.max(streamParticles, crossSectionParticles);
-        double plumeRadius = width == 2 ? 0.45 : 0.7;
+        double streamLength = switch (w) {
+            case 1 -> 1.15d;
+            case 2 -> 1.75d;
+            default -> 2.6d;
+        };
+
+        double streamRadius = switch (w) {
+            case 1 -> 0.28d;
+            case 2 -> 0.58d;
+            default -> 1.05d;
+        };
+
+        double particleSpeed = switch (w) {
+            case 1 -> 0.72d;
+            case 2 -> 0.95d;
+            default -> 1.25d;
+        };
+
+        float baseScale = switch (w) {
+            case 1 -> 2.6f;
+            case 2 -> 3.8f;
+            default -> 5.4f;
+        };
+
+        int baseLifetime = switch (w) {
+            case 1 -> 48;
+            case 2 -> 58;
+            default -> 72;
+        };
+
+        int particlesToSpawn = switch (w) {
+            case 1 -> Math.max(2, (int) java.lang.Math.round((2.0d + power * 3.0d) * particleCountMultiplier));
+            case 2 -> Math.max(4, (int) java.lang.Math.round((4.0d + power * 5.0d) * particleCountMultiplier));
+            default -> Math.max(7, (int) java.lang.Math.round((7.0d + power * 7.0d) * particleCountMultiplier));
+        };
+
+        Vec3 up = Math.abs(direction.y) < 0.92d ? new Vec3(0, 1, 0) : new Vec3(1, 0, 0);
+        Vec3 right = direction.cross(up).normalize();
+        Vec3 localUp = right.cross(direction).normalize();
+
         for (int i = 0; i < particlesToSpawn; i++) {
-            double ox = (level.random.nextDouble() * 2.0 - 1.0) * plumeRadius;
-            double oy = (level.random.nextDouble() * 2.0 - 1.0) * plumeRadius;
-            double oz = (level.random.nextDouble() * 2.0 - 1.0) * plumeRadius;
-            // Keep spread mostly perpendicular to exhaust direction.
-            switch (oppositeDirection.getAxis()) {
-                case X -> ox = 0.0;
-                case Y -> oy = 0.0;
-                case Z -> oz = 0.0;
-            }
-            double beamFrac = particlesToSpawn <= 1 ? 0.0 : (double) i / (double) particlesToSpawn;
-            if (level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
-                double px = worldNozzlePosition.x + ox + particleVelocity.x * beamFrac;
-                double py = worldNozzlePosition.y + oy + particleVelocity.y * beamFrac;
-                double pz = worldNozzlePosition.z + oz + particleVelocity.z * beamFrac;
+            double beamFrac = particlesToSpawn <= 1 ? 0.0d : (double) i / (double) particlesToSpawn;
+
+            double burst = java.lang.Math.pow(level.random.nextDouble(), 2.2d);
+            double angle = level.random.nextDouble() * java.lang.Math.PI * 2.0d;
+
+            double spawnSpread = streamRadius * (0.18d + burst * 0.38d);
+            Vec3 radial = right.scale(java.lang.Math.cos(angle) * spawnSpread)
+                    .add(localUp.scale(java.lang.Math.sin(angle) * spawnSpread));
+
+            double along = smokeStart
+                    + streamLength * beamFrac * 0.28d
+                    + level.random.nextDouble() * 0.35d;
+
+            Vec3 spawn = nozzle
+                    .add(direction.scale(along))
+                    .add(radial);
+
+            double punch = switch (w) {
+                case 1 -> 2.35d;
+                case 2 -> 2.85d;
+                default -> 3.35d;
+            };
+
+            double speedRandom = 0.95d + level.random.nextDouble() * 0.55d;
+
+            Vec3 outward = radial.lengthSqr() > 0.0001d
+                    ? radial.normalize().scale((0.018d + level.random.nextDouble() * 0.035d) * w)
+                    : Vec3.ZERO;
+
+            Vec3 turbulent = right.scale((level.random.nextDouble() - 0.5d) * 0.055d * w)
+                    .add(localUp.scale((level.random.nextDouble() - 0.5d) * 0.055d * w));
+
+            Vec3 velocity = direction.scale(particleSpeed * punch * power * speedRandom * particleVelocityMultiplier)
+                    .add(outward)
+                    .add(turbulent)
+                    .add(0.0d, 0.004d + level.random.nextDouble() * 0.010d, 0.0d);
+
+            float sizeRandom = 0.72f + level.random.nextFloat() * 0.76f;
+            float distanceBoost = 0.85f + (float) beamFrac * 0.45f;
+            float scale = baseScale * sizeRandom * distanceBoost;
+
+            int lifetime = baseLifetime + level.random.nextInt(18);
+
+            float heat = (float) (1.0d - beamFrac);
+            float r = 0.20f + heat * 0.08f;
+            float g = 0.20f + heat * 0.05f;
+            float b = 0.23f + heat * 0.03f;
+
+            ThrusterSmokeParticleData particle = new ThrusterSmokeParticleData(
+                    scale,
+                    lifetime,
+                    r,
+                    g,
+                    b
+            );
+
+            if (particleLevel instanceof ServerLevel serverLevel) {
                 double maxDistSq = PARTICLE_BROADCAST_RANGE_BLOCKS * PARTICLE_BROADCAST_RANGE_BLOCKS;
+
                 for (ServerPlayer player : serverLevel.players()) {
-                    if (player.distanceToSqr(px, py, pz) > maxDistSq) {
-                        continue;
-                    }
+                    if (player.distanceToSqr(spawn.x, spawn.y, spawn.z) > maxDistSq) continue;
+
                     serverLevel.sendParticles(
-                        player,
-                        particleData,
-                        true,
-                        px,
-                        py,
-                        pz,
-                        0,
-                        particleVelocity.x,
-                        particleVelocity.y,
-                        particleVelocity.z,
-                        1.0
+                            player,
+                            particle,
+                            true,
+                            spawn.x,
+                            spawn.y,
+                            spawn.z,
+                            0,
+                            velocity.x,
+                            velocity.y,
+                            velocity.z,
+                            1.0d
                     );
                 }
             } else {
-                level.addParticle(
-                    particleData,
-                    true,
-                    worldNozzlePosition.x + ox + particleVelocity.x * beamFrac,
-                    worldNozzlePosition.y + oy + particleVelocity.y * beamFrac,
-                    worldNozzlePosition.z + oz + particleVelocity.z * beamFrac,
-                    particleVelocity.x,
-                    particleVelocity.y,
-                    particleVelocity.z
+                particleLevel.addParticle(
+                        particle,
+                        true,
+                        spawn.x,
+                        spawn.y,
+                        spawn.z,
+                        velocity.x,
+                        velocity.y,
+                        velocity.z
                 );
             }
         }

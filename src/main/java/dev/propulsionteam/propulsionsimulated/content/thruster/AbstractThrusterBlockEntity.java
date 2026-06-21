@@ -30,6 +30,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
@@ -424,6 +425,21 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
             worldDirection = worldDirection.normalize();
         }
         return new WorldExhaustRay(projection.level(), projection.position(), worldDirection);
+    }
+
+    @Override
+    public AABB getRenderBoundingBox() {
+        int w = Math.max(1, width);
+        double extra = 32.0d;
+
+        return new AABB(
+                worldPosition.getX() - extra,
+                worldPosition.getY() - extra,
+                worldPosition.getZ() - extra,
+                worldPosition.getX() + w + extra,
+                worldPosition.getY() + w + extra,
+                worldPosition.getZ() + w + extra
+        );
     }
 
     protected ObstructionRaySample sampleObstructionRaycast(Level level, int scanLength) {

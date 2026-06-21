@@ -65,6 +65,15 @@ public class VectorThrusterBlockEntity extends IonThrusterBlockEntity {
     }
 
     @Override
+    public boolean shouldEmitParticles() {
+        return false;
+    }
+
+    @Override
+    public void emitParticles(Level level, BlockPos pos, BlockState state) {
+    }
+
+    @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
         super.addBehaviours(behaviours);
 

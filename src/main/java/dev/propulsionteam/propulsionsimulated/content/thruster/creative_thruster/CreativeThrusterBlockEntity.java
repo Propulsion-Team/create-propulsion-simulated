@@ -416,19 +416,7 @@ public class CreativeThrusterBlockEntity extends AbstractThrusterBlockEntity {
 
     @Override
     public boolean shouldEmitParticles() {
-        if (plumeType == PlumeType.NONE)
-            return false;
-
-        if (!isPowered())
-            return false;
-
-        if (isMultiblock() && !isController())
-            return false;
-
-        if (isMultiblock() && calculateObstructionEffect() <= 0f)
-            return false;
-
-        return hasPlumeSpace();
+        return false;
     }
 
     private Vec3 getMultiblockCenterNozzlePositionLocal() {
@@ -445,74 +433,6 @@ public class CreativeThrusterBlockEntity extends AbstractThrusterBlockEntity {
 
     @Override
     public void emitParticles(Level level, BlockPos pos, BlockState state) {
-        if (!(isController() && isMultiblock())) {
-            super.emitParticles(level, pos, state);
-            return;
-        }
-        if (!shouldEmitParticles()) return;
-        float power = getPower();
-        float emissionScale = (float) Math.max(power, 1e-6f);
-        if (power <= 0) return;
-
-        Direction direction = state.getValue(AbstractThrusterBlock.FACING);
-        Direction oppositeDirection = direction.getOpposite();
-        Vec3 localExhaustDirection = new Vec3(oppositeDirection.getStepX(), oppositeDirection.getStepY(), oppositeDirection.getStepZ());
-        Vec3 localNozzlePosition = getMultiblockCenterNozzlePositionLocal();
-
-        Vec3 worldNozzlePosition = Sable.HELPER.projectOutOfSubLevel(level, localNozzlePosition);
-        Vec3 worldAheadPosition = Sable.HELPER.projectOutOfSubLevel(level, localNozzlePosition.add(localExhaustDirection));
-        Vec3 worldExhaustDirection = worldAheadPosition.subtract(worldNozzlePosition);
-        if (worldExhaustDirection.lengthSqr() < 1e-6) {
-            worldExhaustDirection = localExhaustDirection;
-        } else {
-            worldExhaustDirection = worldExhaustDirection.normalize();
-        }
-
-        double particleCountMultiplier = org.joml.Math.clamp(0.0d, PARTICLE_MULTIPLIER_CAP, getParticleCountMultiplier());
-        if (particleCountMultiplier <= 0) return;
-        double particleVelocityMultiplier = org.joml.Math.clamp(0.0d, PARTICLE_MULTIPLIER_CAP, getParticleVelocityMultiplier());
-
-        float velocityScale = width == 2 ? 1.15f : 1.3f;
-        Vec3 particleVelocity = worldExhaustDirection.scale(4.0f * emissionScale * velocityScale * particleVelocityMultiplier);
-        ParticleOptions particleData = createParticleOptions();
-
-        double speedPerTick = particleVelocity.length();
-        int streamParticles = Math.max(1, (int) Math.ceil(speedPerTick / TARGET_PARTICLE_SPACING_BLOCKS * particleCountMultiplier));
-        int crossSectionParticles = Math.max(1, (int) Math.round((width == 2 ? 14 : 28) * particleCountMultiplier));
-        int particlesToSpawn = Math.max(streamParticles, crossSectionParticles);
-        double plumeRadius = width == 2 ? 0.45 : 0.7;
-        for (int i = 0; i < particlesToSpawn; i++) {
-            double ox = (level.random.nextDouble() * 2.0 - 1.0) * plumeRadius;
-            double oy = (level.random.nextDouble() * 2.0 - 1.0) * plumeRadius;
-            double oz = (level.random.nextDouble() * 2.0 - 1.0) * plumeRadius;
-            switch (oppositeDirection.getAxis()) {
-                case X -> ox = 0.0;
-                case Y -> oy = 0.0;
-                case Z -> oz = 0.0;
-            }
-            double beamFrac = particlesToSpawn <= 1 ? 0.0 : (double) i / (double) particlesToSpawn;
-            if (level instanceof ServerLevel serverLevel) {
-                double px = worldNozzlePosition.x + ox + particleVelocity.x * beamFrac;
-                double py = worldNozzlePosition.y + oy + particleVelocity.y * beamFrac;
-                double pz = worldNozzlePosition.z + oz + particleVelocity.z * beamFrac;
-                double maxDistSq = PARTICLE_BROADCAST_RANGE_BLOCKS * PARTICLE_BROADCAST_RANGE_BLOCKS;
-                for (ServerPlayer player : serverLevel.players()) {
-                    if (player.distanceToSqr(px, py, pz) > maxDistSq) continue;
-                    serverLevel.sendParticles(player, particleData, true, px, py, pz, 0, particleVelocity.x, particleVelocity.y, particleVelocity.z, 1.0);
-                }
-            } else {
-                level.addParticle(
-                    particleData,
-                    true,
-                    worldNozzlePosition.x + ox + particleVelocity.x * beamFrac,
-                    worldNozzlePosition.y + oy + particleVelocity.y * beamFrac,
-                    worldNozzlePosition.z + oz + particleVelocity.z * beamFrac,
-                    particleVelocity.x,
-                    particleVelocity.y,
-                    particleVelocity.z
-                );
-            }
-        }
     }
 
     private boolean hasPlumeSpace() {

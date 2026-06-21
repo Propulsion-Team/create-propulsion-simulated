@@ -5,6 +5,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import com.simibubi.create.foundation.blockEntity.renderer.SmartBlockEntityRenderer;
 import dev.engine_room.flywheel.lib.model.baked.PartialModel;
+import dev.propulsionteam.propulsionsimulated.client.render.plume.ThrusterVisualEffects;
 import dev.propulsionteam.propulsionsimulated.content.thruster.AbstractThrusterBlock;
 import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.VectorRedstoneLinkRenderer;
 import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.VectorThrusterDebugRenderer;
@@ -39,6 +40,9 @@ public class LiquidVectorThrusterRenderer extends SmartBlockEntityRenderer<Liqui
     protected void renderSafe(LiquidVectorThrusterBlockEntity be, float partialTicks, PoseStack ms, MultiBufferSource buffer, int light, int overlay) {
         super.renderSafe(be, partialTicks, ms, buffer, light, overlay);
         VectorThrusterDebugRenderer.render(be);
+
+        ThrusterVisualEffects.render(be, partialTicks, ms, buffer, ThrusterVisualEffects.Preset.FIRE);
+
         renderBody(be, partialTicks, ms, buffer, light, overlay);
         VectorRedstoneLinkRenderer.renderOnBlockEntity(be, partialTicks, ms, buffer, light, overlay);
     }
@@ -103,5 +107,15 @@ public class LiquidVectorThrusterRenderer extends SmartBlockEntityRenderer<Liqui
             case UP -> ms.mulPose(Axis.XP.rotationDegrees(-270));
             case DOWN -> ms.mulPose(Axis.XP.rotationDegrees(-90));
         }
+    }
+
+    @Override
+    public boolean shouldRenderOffScreen(LiquidVectorThrusterBlockEntity be) {
+        return true;
+    }
+
+    @Override
+    public int getViewDistance() {
+        return 256;
     }
 }

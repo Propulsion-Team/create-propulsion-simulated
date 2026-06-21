@@ -22,6 +22,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -338,10 +339,11 @@ public class IonThrusterBlockEntity extends ThrusterBlockEntity {
 
     @Override
     public boolean shouldEmitParticles() {
-        if (isMultiblock() && !isController()) {
-            return false;
-        }
-        return getThrottle() > 0 && getTotalEnergyStoredFe() > 0;
+        return false;
+    }
+
+    @Override
+    public void emitParticles(Level level, BlockPos pos, BlockState state) {
     }
 
     @Override

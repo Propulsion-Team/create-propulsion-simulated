@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import com.simibubi.create.foundation.blockEntity.renderer.SmartBlockEntityRenderer;
+import dev.propulsionteam.propulsionsimulated.client.render.plume.ThrusterVisualEffects;
 import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.VectorThrusterDebugRenderer;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionPartialModels;
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
@@ -30,14 +31,28 @@ public class CreativeThrusterRenderer extends SmartBlockEntityRenderer<CreativeT
                               final int light,
                               final int overlay) {
         VectorThrusterDebugRenderer.render(be);
+
+        if (be.isController() && be.getPlumeType() != CreativeThrusterBlockEntity.PlumeType.NONE) {
+            ThrusterVisualEffects.render(
+                    be,
+                    partialTicks,
+                    ms,
+                    buffer,
+                    ThrusterVisualEffects.presetForCreativePlume(be.getPlumeType())
+            );
+        }
+
         final BlockState state = be.getBlockState();
+
         if (be.isController() && be.isMultiblock()) {
             renderMultiblock(be, ms, buffer, light, overlay, state);
             return;
         }
+
         if (VisualizationManager.supportsVisualization(be.getLevel())) {
             return;
         }
+
         if (!state.hasProperty(CreativeThrusterBlock.PLACEMENT_FACING)) {
             return;
         }
@@ -111,6 +126,16 @@ public class CreativeThrusterRenderer extends SmartBlockEntityRenderer<CreativeT
         local.rotateX((float) Math.toRadians(-90));
         final double targetAngle = Math.toDegrees(Math.atan2(local.y, local.x));
         return (float) (targetAngle + 90);
+    }
+
+    @Override
+    public boolean shouldRenderOffScreen(CreativeThrusterBlockEntity be) {
+        return true;
+    }
+
+    @Override
+    public int getViewDistance() {
+        return 256;
     }
 }
 
