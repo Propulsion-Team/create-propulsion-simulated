@@ -2,10 +2,7 @@ package dev.propulsionteam.propulsionsimulated.content.thruster.solid_fuel_thrus
 
 import com.simibubi.create.foundation.utility.CreateLang;
 import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
-import dev.propulsionteam.propulsionsimulated.content.thruster.AbstractThrusterBlockEntity;
-import dev.propulsionteam.propulsionsimulated.content.thruster.ItemThrusterProperties;
-import dev.propulsionteam.propulsionsimulated.content.thruster.SolidThrusterFuelManager;
-import dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterParticleType;
+import dev.propulsionteam.propulsionsimulated.content.thruster.*;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionBlockEntities;
 import net.createmod.catnip.lang.LangBuilder;
 import net.minecraft.ChatFormatting;
@@ -23,6 +20,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
@@ -51,6 +49,15 @@ public class SolidFuelThrusterBlockEntity extends AbstractThrusterBlockEntity im
         super(type, pos, state);
     }
 
+    public boolean isMeshedPlume() {
+        return PropulsionConfig.isSolidFuelThrusterMeshedFlame();
+    }
+
+    @Override
+    public AABB getRenderBoundingBox() {
+        return MeshedThrusterFlameUtils.inflateRenderBoundingBox(this, super.getRenderBoundingBox());
+    }
+
     @Override
     public void tick() {
         if (level != null && !level.isClientSide) {
@@ -72,7 +79,7 @@ public class SolidFuelThrusterBlockEntity extends AbstractThrusterBlockEntity im
         if (burnTime > 0 && powered != wasPoweredLastTick) {
             syncBurnStateToClient();
         } else if (burnTime > 0 && powered && level != null
-            && level.getGameTime() % BURN_SYNC_INTERVAL_TICKS == 0) {
+                && level.getGameTime() % BURN_SYNC_INTERVAL_TICKS == 0) {
             syncBurnStateToClient();
         }
         wasPoweredLastTick = powered;
@@ -113,7 +120,9 @@ public class SolidFuelThrusterBlockEntity extends AbstractThrusterBlockEntity im
         dirtyThrust();
     }
 
-    /** Remaining burn ticks (only decreases while the thruster is powered on). */
+    /**
+     * Remaining burn ticks (only decreases while the thruster is powered on).
+     */
     public int getDisplayBurnTimeRemaining() {
         return burnTime;
     }
@@ -132,9 +141,9 @@ public class SolidFuelThrusterBlockEntity extends AbstractThrusterBlockEntity im
         Direction inputSide = getFuelInputSide();
         BlockPos behind = worldPosition.relative(inputSide);
         IItemHandler source = level.getCapability(
-            Capabilities.ItemHandler.BLOCK,
-            behind,
-            inputSide.getOpposite()
+                Capabilities.ItemHandler.BLOCK,
+                behind,
+                inputSide.getOpposite()
         );
         if (source == null) {
             return;
@@ -169,8 +178,8 @@ public class SolidFuelThrusterBlockEntity extends AbstractThrusterBlockEntity im
             return false;
         }
         return SolidThrusterFuelManager.getProperties(stack) != null
-            || SolidFuelThrusterFuelHelper.isSuperheatedFuel(stack)
-            || SolidFuelThrusterFuelHelper.isCreativeBlazeCake(stack);
+                || SolidFuelThrusterFuelHelper.isSuperheatedFuel(stack)
+                || SolidFuelThrusterFuelHelper.isCreativeBlazeCake(stack);
     }
 
     public ItemStack getFuelStack() {
@@ -179,8 +188,8 @@ public class SolidFuelThrusterBlockEntity extends AbstractThrusterBlockEntity im
 
     public void setFuelStack(ItemStack stack) {
         inventory.setStackInSlot(
-            SolidFuelThrusterItemHandler.FUEL_SLOT,
-            stack.isEmpty() ? ItemStack.EMPTY : stack.copyWithCount(1)
+                SolidFuelThrusterItemHandler.FUEL_SLOT,
+                stack.isEmpty() ? ItemStack.EMPTY : stack.copyWithCount(1)
         );
     }
 
@@ -331,8 +340,8 @@ public class SolidFuelThrusterBlockEntity extends AbstractThrusterBlockEntity im
     }
 
     @Override
-    public boolean shouldEmitParticles() {
-        if (!super.shouldEmitParticles()) {
+    public boolean shouldEmitPlume() {
+        if (!super.shouldEmitPlume()) {
             return false;
         }
         ItemThrusterProperties properties = SolidThrusterFuelManager.getProperties(getFuelStack());
@@ -352,36 +361,36 @@ public class SolidFuelThrusterBlockEntity extends AbstractThrusterBlockEntity im
     protected LangBuilder getGoggleStatus() {
         if (getFuelStack().isEmpty()) {
             return CreateLang.builder()
-                .add(Component.translatable("createpropulsion.gui.goggles.thruster.status.no_fuel"))
-                .style(ChatFormatting.RED);
+                    .add(Component.translatable("createpropulsion.gui.goggles.thruster.status.no_fuel"))
+                    .style(ChatFormatting.RED);
         }
         if (!validFuel()) {
             return CreateLang.builder()
-                .add(Component.translatable("createpropulsion.gui.goggles.thruster.status.wrong_fuel"))
-                .style(ChatFormatting.RED);
+                    .add(Component.translatable("createpropulsion.gui.goggles.thruster.status.wrong_fuel"))
+                    .style(ChatFormatting.RED);
         }
         if (!isPowered()) {
             return CreateLang.builder()
-                .add(Component.translatable("createpropulsion.gui.goggles.thruster.status.not_powered"))
-                .style(ChatFormatting.GOLD);
+                    .add(Component.translatable("createpropulsion.gui.goggles.thruster.status.not_powered"))
+                    .style(ChatFormatting.GOLD);
         }
         if (getEmptyBlocks() == 0) {
             return CreateLang.builder()
-                .add(Component.translatable("createpropulsion.gui.goggles.thruster.obstructed"))
-                .style(ChatFormatting.RED);
+                    .add(Component.translatable("createpropulsion.gui.goggles.thruster.obstructed"))
+                    .style(ChatFormatting.RED);
         }
         return CreateLang.builder()
-            .add(Component.translatable("createpropulsion.gui.goggles.thruster.status.working"))
-            .style(ChatFormatting.GREEN);
+                .add(Component.translatable("createpropulsion.gui.goggles.thruster.status.working"))
+                .style(ChatFormatting.GREEN);
     }
 
     @Override
     protected void addThrusterDetails(List<Component> tooltip, boolean isPlayerSneaking) {
         super.addThrusterDetails(tooltip, isPlayerSneaking);
         CreateLang.builder()
-            .add(Component.translatable("createpropulsion.gui.goggles.solid_fuel_thruster.fuel_label"))
-            .style(ChatFormatting.WHITE)
-            .forGoggles(tooltip);
+                .add(Component.translatable("createpropulsion.gui.goggles.solid_fuel_thruster.fuel_label"))
+                .style(ChatFormatting.WHITE)
+                .forGoggles(tooltip);
 
         if (hasActiveBurn()) {
             appendBurnTimeLine(tooltip, getDisplayBurnTimeRemaining(), totalBurnTicks, superHeated);
@@ -392,19 +401,19 @@ public class SolidFuelThrusterBlockEntity extends AbstractThrusterBlockEntity im
 
         if (!getFuelStack().isEmpty()) {
             CreateLang.builder()
-                .add(Component.literal("  "))
-                .add(getFuelStack().getHoverName().copy().withStyle(ChatFormatting.GRAY))
-                .forGoggles(tooltip);
+                    .add(Component.literal("  "))
+                    .add(getFuelStack().getHoverName().copy().withStyle(ChatFormatting.GRAY))
+                    .forGoggles(tooltip);
         }
     }
 
     private static void appendBurnTimeLine(List<Component> tooltip, int remaining, int total, boolean superheated) {
         boolean infinite = SolidFuelThrusterFuelHelper.isInfiniteBurnTime(remaining)
-            || SolidFuelThrusterFuelHelper.isInfiniteBurnTime(total);
+                || SolidFuelThrusterFuelHelper.isInfiniteBurnTime(total);
         LangBuilder time = CreateLang.builder().add(Component.literal("  "));
         if (infinite) {
             time.add(Component.translatable("createpropulsion.gui.goggles.solid_fuel_thruster.infinite")
-                .withStyle(ChatFormatting.LIGHT_PURPLE));
+                    .withStyle(ChatFormatting.LIGHT_PURPLE));
         } else {
             String formatted = SolidFuelThrusterFuelHelper.formatBurnTime(remaining);
             if (formatted != null) {
@@ -412,15 +421,15 @@ public class SolidFuelThrusterBlockEntity extends AbstractThrusterBlockEntity im
             }
         }
         time.add(Component.translatable("createpropulsion.gui.goggles.solid_fuel_thruster.burn_time")
-            .withStyle(ChatFormatting.GRAY));
+                .withStyle(ChatFormatting.GRAY));
         time.forGoggles(tooltip);
 
         if (superheated) {
             CreateLang.builder()
-                .add(Component.literal("  "))
-                .add(Component.translatable("createpropulsion.gui.goggles.solid_fuel_thruster.superheated")
-                    .withStyle(ChatFormatting.GOLD))
-                .forGoggles(tooltip);
+                    .add(Component.literal("  "))
+                    .add(Component.translatable("createpropulsion.gui.goggles.solid_fuel_thruster.superheated")
+                            .withStyle(ChatFormatting.GOLD))
+                    .forGoggles(tooltip);
         }
     }
 
@@ -466,8 +475,8 @@ public class SolidFuelThrusterBlockEntity extends AbstractThrusterBlockEntity im
         super.read(compound, registries, clientPacket);
         burnTime = compound.getInt("BurnTime");
         totalBurnTicks = compound.contains("TotalBurnTicks")
-            ? compound.getInt("TotalBurnTicks")
-            : burnTime;
+                ? compound.getInt("TotalBurnTicks")
+                : burnTime;
         superHeated = compound.getBoolean("SuperHeated");
         hatchOpen = compound.getBoolean("HatchOpen");
         if (compound.contains("Inventory")) {

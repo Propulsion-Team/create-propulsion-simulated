@@ -1,4 +1,4 @@
-package dev.propulsionteam.propulsionsimulated.content.thruster.liquid_vector_thruster;
+package dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.liquid_vector_thruster;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
@@ -7,6 +7,7 @@ import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
 import dev.propulsionteam.propulsionsimulated.content.thruster.AbstractThrusterBlock;
 import dev.propulsionteam.propulsionsimulated.content.thruster.thruster.ThrusterBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.VectorRedstoneLinkBehaviour;
+import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.VectorThrusterBlockEntity;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionBlockEntities;
 import net.createmod.catnip.math.AngleHelper;
 import net.createmod.catnip.math.VecHelper;
@@ -22,7 +23,7 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3d;
 import java.util.List;
 
-public class LiquidVectorThrusterBlockEntity extends ThrusterBlockEntity {
+public class LiquidVectorThrusterBlockEntity extends VectorThrusterBlockEntity {
     public static final float MAX_VISUAL_TILT_DEGREES = 30.0f;
     private static final float TWEEN_SPEED = 0.2f;
 

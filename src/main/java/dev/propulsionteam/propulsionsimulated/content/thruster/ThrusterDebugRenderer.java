@@ -1,14 +1,18 @@
-package dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster;
+package dev.propulsionteam.propulsionsimulated.content.thruster;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
-import dev.propulsionteam.propulsionsimulated.content.thruster.AbstractThrusterBlockEntity;
 import dev.propulsionteam.propulsionsimulated.debug.DebugRenderer;
 import dev.propulsionteam.propulsionsimulated.debug.PropulsionDebug;
 import dev.propulsionteam.propulsionsimulated.debug.routes.MainDebugRoute;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
@@ -16,19 +20,32 @@ import java.awt.Color;
 import java.util.HashSet;
 import java.util.Set;
 
-public final class VectorThrusterDebugRenderer {
+public final class ThrusterDebugRenderer {
     private static final int RENDER_TICKS = 2;
     private static final float LINE_THICKNESS = 0.07f;
     private static final double STEP = 0.1d;
     private static final double START_EPSILON = 0.05d;
 
-    private VectorThrusterDebugRenderer() {
+    private ThrusterDebugRenderer() {
     }
 
-    public static void render(AbstractThrusterBlockEntity be) {
+    public static void debug_drawRenderBoundingBox(AbstractThrusterBlockEntity be, PoseStack ms, MultiBufferSource buffer) {
+        //Debug render box
+//        ms.pushPose();
+//        ms.setIdentity();
+        AABB box = be.getRenderBoundingBox();
+        BlockPos pos2 = be.getBlockPos();
+        AABB localBox = box.move(-pos2.getX(), -pos2.getY(), -pos2.getZ());
+        LevelRenderer.renderLineBox(ms, buffer.getBuffer(RenderType.lines()), localBox, 1, 0, 0, 1);
+//        ms.popPose();
+    }
+
+    public static void render(AbstractThrusterBlockEntity be, PoseStack ms, MultiBufferSource buffer) {
         if (be == null || be.isRemoved() || be.getLevel() == null) {
             return;
         }
+        debug_drawRenderBoundingBox(be, ms, buffer);
+
         if (!PropulsionDebug.isDebug(MainDebugRoute.THRUSTER)) {
             return;
         }

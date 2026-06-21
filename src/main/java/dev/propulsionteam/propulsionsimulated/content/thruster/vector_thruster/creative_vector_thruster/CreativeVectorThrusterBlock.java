@@ -1,6 +1,4 @@
-package dev.propulsionteam.propulsionsimulated.content.thruster.creative_vector_thruster;
-
-import net.minecraft.world.level.block.state.BlockBehaviour.Properties;
+package dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.creative_vector_thruster;
 
 import com.mojang.serialization.MapCodec;
 import com.simibubi.create.content.equipment.wrench.IWrenchable;

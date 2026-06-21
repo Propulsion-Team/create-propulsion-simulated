@@ -1,12 +1,12 @@
-package dev.propulsionteam.propulsionsimulated.content.thruster.creative_vector_thruster;
+package dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.creative_vector_thruster;
 
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.simibubi.create.foundation.blockEntity.behaviour.ValueBoxTransform;
 import com.simibubi.create.foundation.utility.CreateLang;
 import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
 import dev.propulsionteam.propulsionsimulated.content.thruster.SimulatedThrustAdapter;
-import dev.propulsionteam.propulsionsimulated.content.thruster.creative_thruster.CreativeThrusterBlockEntity;
-import dev.propulsionteam.propulsionsimulated.content.thruster.creative_thruster.CreativeThrusterPowerScrollValueBehaviour;
+import dev.propulsionteam.propulsionsimulated.content.thruster.thruster.creative_thruster.CreativeThrusterBlockEntity;
+import dev.propulsionteam.propulsionsimulated.content.thruster.thruster.creative_thruster.CreativeThrusterPowerScrollValueBehaviour;
 import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.VectorThrusterBlockEntity;
 import dev.propulsionteam.propulsionsimulated.particles.ion.IonParticleData;
 import dev.propulsionteam.propulsionsimulated.particles.plasma.PlasmaParticleData;
@@ -82,7 +82,7 @@ public class CreativeVectorThrusterBlockEntity extends VectorThrusterBlockEntity
     }
 
     @Override
-    public boolean shouldEmitParticles() {
+    public boolean shouldEmitPlume() {
         if (plumeType == CreativeThrusterBlockEntity.PlumeType.NONE)
             return false;
         if (!isPowered())

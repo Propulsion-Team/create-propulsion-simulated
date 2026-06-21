@@ -8,10 +8,10 @@ import dev.propulsionteam.propulsionsimulated.content.cable.hub.CableHubBlockEnt
 import dev.propulsionteam.propulsionsimulated.content.platinum.CoralGeneratorBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.heat.burners.solid.SolidBurnerBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.thruster.ion_thruster.IonThrusterBlockEntity;
-import dev.propulsionteam.propulsionsimulated.content.thruster.liquid_vector_thruster.LiquidVectorThrusterBlockEntity;
+import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.liquid_vector_thruster.LiquidVectorThrusterBlockEntity;
+import dev.propulsionteam.propulsionsimulated.content.thruster.thruster.ThrusterBlockEntity;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionBlockEntities;
 import dev.propulsionteam.propulsionsimulated.content.thruster.solid_fuel_thruster.SolidFuelThrusterBlockEntity;
-import dev.propulsionteam.propulsionsimulated.content.thruster.thruster.ThrusterBlockEntity;
 import net.minecraft.core.Direction;
 import net.neoforged.neoforge.capabilities.BlockCapability;
 import net.neoforged.neoforge.capabilities.Capabilities;
@@ -147,8 +147,8 @@ public class ModCapabilityEvents {
         }
     }
 
-    private static IFluidHandler getThrusterFluidHandler(ThrusterBlockEntity blockEntity, Direction side) {
-        return blockEntity.getFluidHandler(side);
+    private static IFluidHandler getThrusterFluidHandler(ThrusterBlockEntity thrusterBlockEntity, Direction side) {
+        return thrusterBlockEntity.getFluidHandler(side);
     }
 
     private static IFluidHandler getLiquidVectorThrusterFluidHandler(LiquidVectorThrusterBlockEntity blockEntity, Direction side) {

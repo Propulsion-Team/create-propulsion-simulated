@@ -10,6 +10,7 @@ import dev.propulsionteam.propulsionsimulated.particles.ParticleTypes;
 import dev.propulsionteam.propulsionsimulated.assemblerstick.item.ModItems;
 import com.simibubi.create.compat.Mods;
 
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.ModList;
@@ -50,5 +51,9 @@ public class CreatePropulsion {
         modContainer.registerConfig(ModConfig.Type.COMMON, PropulsionConfig.COMMON_SPEC, ID + "-common.toml");
         modContainer.registerConfig(ModConfig.Type.CLIENT, PropulsionConfig.CLIENT_SPEC, ID + "-client.toml");
         PropulsionDefaultStress.init(PropulsionConfig.COMMON_SPEC);
+    }
+
+    public static ResourceLocation loc(String loc) {
+        return ResourceLocation.fromNamespaceAndPath(ID, loc);
     }
 }

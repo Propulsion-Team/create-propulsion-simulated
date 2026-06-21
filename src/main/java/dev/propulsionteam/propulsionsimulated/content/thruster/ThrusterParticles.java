@@ -18,7 +18,7 @@ public final class ThrusterParticles {
     }
 
     public static void spawn(final ThrusterBlockEntity blockEntity) {
-        if (!blockEntity.shouldEmitParticles()) {
+        if (!blockEntity.shouldEmitPlume()) {
             return;
         }
 

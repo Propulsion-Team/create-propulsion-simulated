@@ -3,7 +3,7 @@ package dev.propulsionteam.propulsionsimulated.compat.computercraft;
 import dan200.computercraft.api.lua.LuaFunction;
 import dan200.computercraft.api.peripheral.IPeripheral;
 import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
-import dev.propulsionteam.propulsionsimulated.content.thruster.creative_vector_thruster.CreativeVectorThrusterBlockEntity;
+import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.creative_vector_thruster.CreativeVectorThrusterBlockEntity;
 
 /**
  * Creative vector thrusters use their own peripheral class so Lua lists only relevant methods and {@link #getType()} is distinct.
