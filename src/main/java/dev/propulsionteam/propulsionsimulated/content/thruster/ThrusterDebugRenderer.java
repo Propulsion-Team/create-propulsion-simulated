@@ -41,14 +41,10 @@ public final class ThrusterDebugRenderer {
     }
 
     public static void render(AbstractThrusterBlockEntity be, PoseStack ms, MultiBufferSource buffer) {
-        if (be == null || be.isRemoved() || be.getLevel() == null) {
+        if (!PropulsionDebug.isDebug(MainDebugRoute.THRUSTER) || be == null || be.isRemoved() || be.getLevel() == null) {
             return;
         }
         debug_drawRenderBoundingBox(be, ms, buffer);
-
-        if (!PropulsionDebug.isDebug(MainDebugRoute.THRUSTER)) {
-            return;
-        }
 
         AbstractThrusterBlockEntity.WorldExhaustRay worldRay = be.getWorldExhaustRay();
         if (worldRay == null || worldRay.direction().lengthSqr() < 1.0e-8) {
@@ -63,30 +59,30 @@ public final class ThrusterDebugRenderer {
         String idBase = "thruster_debug_" + be.getBlockPos().asLong();
 
         DebugRenderer.drawElongatedBox(
-            idBase + "_ray",
-            worldRay.nozzlePos(),
-            worldEnd,
-            LINE_THICKNESS,
-            new Color(0, 255, 255, 255),
-            false,
-            RENDER_TICKS
+                idBase + "_ray",
+                worldRay.nozzlePos(),
+                worldEnd,
+                LINE_THICKNESS,
+                new Color(0, 255, 255, 255),
+                false,
+                RENDER_TICKS
         );
         DebugRenderer.drawBox(idBase + "_origin", worldRay.nozzlePos(), new Vec3(0.12, 0.12, 0.12), Color.GREEN, RENDER_TICKS);
 
         BlockHitResult hitResult = worldLevel.clip(new ClipContext(
-            traceStart,
-            worldEnd,
-            ClipContext.Block.COLLIDER,
-            ClipContext.Fluid.NONE,
-            net.minecraft.world.phys.shapes.CollisionContext.empty()
+                traceStart,
+                worldEnd,
+                ClipContext.Block.COLLIDER,
+                ClipContext.Fluid.NONE,
+                net.minecraft.world.phys.shapes.CollisionContext.empty()
         ));
         if (hitResult.getType() == BlockHitResult.Type.BLOCK) {
             DebugRenderer.drawBox(
-                idBase + "_ray_hit",
-                hitResult.getLocation(),
-                new Vec3(0.14, 0.14, 0.14),
-                new Color(255, 100, 100, 255),
-                RENDER_TICKS
+                    idBase + "_ray_hit",
+                    hitResult.getLocation(),
+                    new Vec3(0.14, 0.14, 0.14),
+                    new Color(255, 100, 100, 255),
+                    RENDER_TICKS
             );
         }
 
@@ -112,11 +108,11 @@ public final class ThrusterDebugRenderer {
             }
 
             DebugRenderer.drawBox(
-                idBase + "_hit_" + hitIndex,
-                Vec3.atCenterOf(hitPos),
-                new Vec3(0.98, 0.98, 0.98),
-                new Color(255, 64, 64, 255),
-                RENDER_TICKS
+                    idBase + "_hit_" + hitIndex,
+                    Vec3.atCenterOf(hitPos),
+                    new Vec3(0.98, 0.98, 0.98),
+                    new Color(255, 64, 64, 255),
+                    RENDER_TICKS
             );
             hitIndex++;
         }
