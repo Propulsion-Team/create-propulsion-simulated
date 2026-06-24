@@ -349,8 +349,8 @@ public class IonThrusterBlockEntity extends ThrusterBlockEntity {
         return getThrottle() > 0 && getTotalEnergyStoredFe() > 0;
     }
 
-    public boolean isMeshedPlume() {
-        return PropulsionConfig.getIonThrusterPlumeType() ==  PropulsionConfig.ThrusterPlumeType.SPRITE_MESH;
+    public PropulsionConfig.ThrusterPlumeType getPlumeRenderType() {
+        return PropulsionConfig.getIonThrusterPlumeType();
     }
 
     @Override

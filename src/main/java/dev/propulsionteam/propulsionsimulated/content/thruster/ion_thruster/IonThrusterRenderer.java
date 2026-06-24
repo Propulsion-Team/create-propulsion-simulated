@@ -38,8 +38,8 @@ public class IonThrusterRenderer extends SmartBlockEntityRenderer<IonThrusterBlo
         } else {
             if (be.isMultiblock()) {
                 if (be.isController()) renderMultiblock(be, partialTick, ms, buffer, light, overlay);
-            } else if (be.isMeshedPlume())
-                MeshedThrusterFlameUtils.renderMeshFlame(be, partialTick, ms, buffer, false);
+            } else if (MeshedThrusterFlameUtils.isSpritePlume(be))
+                MeshedThrusterFlameUtils.renderMeshFlame(be, partialTick, ms, buffer);
         }
     }
 
@@ -64,7 +64,7 @@ public class IonThrusterRenderer extends SmartBlockEntityRenderer<IonThrusterBlo
         ms.popPose();
 
         //Draw meshed thrusters
-        if (be.isMeshedPlume()) {
+        if (MeshedThrusterFlameUtils.isSpritePlume(be)) {
             MeshedThrusterFlameUtils.renderMultiblockFlame(be, partialTicks, ms, buffer, w);
         }
     }

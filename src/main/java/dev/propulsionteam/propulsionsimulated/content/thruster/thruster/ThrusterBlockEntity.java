@@ -81,8 +81,8 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
         return controllerPos == null;
     }
 
-    public boolean isMeshedPlume() {//TODO: Update these
-        return PropulsionConfig.getThrusterPlumeType() == PropulsionConfig.ThrusterPlumeType.SPRITE_MESH;
+    public PropulsionConfig.ThrusterPlumeType getPlumeRenderType() {
+        return PropulsionConfig.getThrusterPlumeType();
     }
 
 
@@ -348,13 +348,14 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
 
     @Override
     public AABB getRenderBoundingBox() {
-        if (isController() && isMultiblock()) {
-            return MeshedThrusterFlameUtils.inflateRenderBoundingBox(this,
-                    new AABB(
-                            worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(),
-                            worldPosition.getX() + width, worldPosition.getY() + width, worldPosition.getZ() + width));
-        }
-        return MeshedThrusterFlameUtils.inflateRenderBoundingBox(this, super.getRenderBoundingBox());
+        if (isMultiblock()) {
+            if (isController()) {
+                return MeshedThrusterFlameUtils.inflateRenderBoundingBox(this,
+                        new AABB(
+                                worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(),
+                                worldPosition.getX() + width, worldPosition.getY() + width, worldPosition.getZ() + width));
+            }else return MeshedThrusterFlameUtils.NULL_AABB;
+        } else return MeshedThrusterFlameUtils.inflateRenderBoundingBox(this, super.getRenderBoundingBox());
     }
 
     private boolean isFrontLayerCell(ThrusterBlockEntity ctrl, Direction cubeFacing) {

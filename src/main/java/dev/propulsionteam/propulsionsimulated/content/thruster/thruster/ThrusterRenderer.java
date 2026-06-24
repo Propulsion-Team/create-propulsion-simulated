@@ -48,7 +48,7 @@ public class ThrusterRenderer extends SmartBlockEntityRenderer<ThrusterBlockEnti
                 MeshedThrusterFlameUtils.renderMultiblockFlame(be, partialTick, ms, buffer, w);
             }
         } else {
-            MeshedThrusterFlameUtils.renderMeshFlame(be, partialTick, ms, buffer, false);
+            MeshedThrusterFlameUtils.renderMeshFlame(be, partialTick, ms, buffer);
         }
     }
 

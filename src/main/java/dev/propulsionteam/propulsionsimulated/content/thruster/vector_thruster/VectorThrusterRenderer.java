@@ -93,7 +93,7 @@ public final class VectorThrusterRenderer {
         renderFlap(ms, vb, state, flapRight, light, overlay, FLAP_PIVOT_RIGHT_X, FLAP_PIVOT_SIDE_Y, FLAP_PIVOT_Z, Axis.YP, flapAngle);
         ms.popPose();
 
-        if (be.isMeshedPlume()) {
+        if (MeshedThrusterFlameUtils.isSpritePlume(be)) {
             ms.pushPose();
             // Orient to block facing
             ms.translate(0.5, 0.5, 0.5);

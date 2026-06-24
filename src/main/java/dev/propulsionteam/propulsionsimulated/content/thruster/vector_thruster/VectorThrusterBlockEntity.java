@@ -67,8 +67,8 @@ public class VectorThrusterBlockEntity extends IonThrusterBlockEntity {
         super(type, pos, state);
     }
 
-    public boolean isMeshedPlume() {
-        return PropulsionConfig.getVectorThrustersPlumeType() ==  PropulsionConfig.ThrusterPlumeType.SPRITE_MESH;
+    public PropulsionConfig.ThrusterPlumeType getPlumeRenderType() {
+        return PropulsionConfig.getVectorThrustersPlumeType();
     }
 
 

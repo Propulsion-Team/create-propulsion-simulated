@@ -216,8 +216,9 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         }
 
         if (shouldEmitPlume()) {
-            if (isMeshedPlume()) emitMeshedParticles(level, worldPosition, currentBlockState);
-            else emitPlumeParticles(level, worldPosition, currentBlockState);
+            if (getPlumeRenderType() == PropulsionConfig.ThrusterPlumeType.PARTICLES)
+                emitPlumeParticles(level, worldPosition, currentBlockState);
+            else emitMeshedParticles(level, worldPosition, currentBlockState);
         }
 
         currentTick++;
@@ -238,13 +239,6 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         }
     }
 
-    /**
-     *
-     * @return if this thruster is a meshed plume or a particle only plume
-     */
-    public boolean isMeshedPlume() {
-        return false;
-    }
 
     public abstract void updateThrust(BlockState currentBlockState);
 
@@ -347,6 +341,12 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
     public CreativeThrusterBlockEntity.PlumeType getPlumeType() {
         return CreativeThrusterBlockEntity.PlumeType.NONE;
     }
+
+    /**
+     *
+     * @return if this thruster is a meshed plume or a particle only plume
+     */
+    public abstract PropulsionConfig.ThrusterPlumeType getPlumeRenderType();
 
     public boolean isBluePlume() {
         return getPlumeType() == CreativeThrusterBlockEntity.PlumeType.PLASMA ||

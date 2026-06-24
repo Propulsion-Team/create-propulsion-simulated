@@ -4,9 +4,10 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.math.Axis;
 import dev.propulsionteam.propulsionsimulated.CreatePropulsion;
+import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
 import dev.propulsionteam.propulsionsimulated.content.thruster.thruster.ThrusterBlock;
+import dev.propulsionteam.propulsionsimulated.content.thruster.thruster.ThrusterBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.VectorThrusterBlockEntity;
-import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.liquid_vector_thruster.LiquidVectorThrusterBlockEntity;
 import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import net.createmod.ponder.api.level.PonderLevel;
@@ -32,9 +33,12 @@ public class MeshedThrusterFlameUtils {
     private static final float BLOCK_PIXEL = 1f / 16f;
     private static final float FLAME_PIXEL = BLOCK_PIXEL / FLAME_SIZE;
     protected static final float DISPLAY_THRESHOLD = 0.03f;
-    public static final float RENDER_BOX_FLAME_LENGTH = 5.0f;
+    public static final float RENDER_BOX_FLAME_LENGTH = 7.0f;
 
-    private static final boolean SINGLE_MULTIBLOCK_FLAME = false;
+    public static boolean isSpritePlume(AbstractThrusterBlockEntity be) {
+        return be.getPlumeRenderType() == PropulsionConfig.ThrusterPlumeType.SPRITE_MESH ||
+                be.getPlumeRenderType() == PropulsionConfig.ThrusterPlumeType.SPRITE_MESH_SINGLE_MULTIBLOCK;
+    }
 
     public static void renderMultiblockFlame(AbstractThrusterBlockEntity be, float partialTicks, PoseStack ms, MultiBufferSource buffer, int w) {
         final var state = be.getBlockState();
@@ -53,11 +57,11 @@ public class MeshedThrusterFlameUtils {
         final ShaderProgram shader = VeilRenderSystem.setShader(THRUSTER_FLAME_SHADER);
         boolean bluePlume = be.isBluePlume();
 
-        if (SINGLE_MULTIBLOCK_FLAME) {
+        if (be.getPlumeRenderType() == PropulsionConfig.ThrusterPlumeType.SPRITE_MESH_SINGLE_MULTIBLOCK) {
             ms.pushPose();
-            ms.scale(1f / w, 1f / w, 1f / w);
+            ms.scale(w, w, w);
             MeshedThrusterFlameUtils.renderMeshFlame(be, partialTicks, ms, buffer, shader,
-                    bluePlume, 0 + offset.x, offset.y, 0 + offset.z, false);
+                    bluePlume, 0 + offset.x, offset.y, 0 + offset.z, true);
             ms.popPose();
         } else {
             for (int x = 0; x < w; x++) {
@@ -70,15 +74,17 @@ public class MeshedThrusterFlameUtils {
         }
     }
 
-    public static void renderMeshFlame(AbstractThrusterBlockEntity be, float partialTicks, PoseStack ms, MultiBufferSource buffer, boolean isRotatedPoseStack) {
+    public final static AABB NULL_AABB = AABB.ofSize(Vec3.ZERO, 0, 0, 0);
+
+    public static void renderMeshFlame(AbstractThrusterBlockEntity be, float partialTicks, PoseStack ms, MultiBufferSource buffer) {
         final ShaderProgram shader = VeilRenderSystem.setShader(THRUSTER_FLAME_SHADER);
-        renderMeshFlame(be, partialTicks, ms, buffer, shader, be.isBluePlume(), 0, 0, 0, isRotatedPoseStack);
+        renderMeshFlame(be, partialTicks, ms, buffer, shader, be.isBluePlume(), 0, 0, 0, false);
     }
 
 
     public static void renderMeshFlame(AbstractThrusterBlockEntity be, float partialTicks, PoseStack ms, MultiBufferSource buffer,
                                        ShaderProgram shader,
-                                       boolean soulFlame, int offsetX, int offsetY, int offsetZ, boolean offsetPoseStack) {
+                                       boolean soulFlame, int offsetX, int offsetY, int offsetZ, boolean crossed) {
         if (shader != null) {
             //Get the interpolated power
             float power = Mth.clamp(be.interpolatedPower.getValue(partialTicks), 0f, 1f);
@@ -97,12 +103,7 @@ public class MeshedThrusterFlameUtils {
             rotateTowardsFacing(ms, facing);
             ms.translate(offsetX, offsetY, offsetZ);
 
-            if (offsetPoseStack) {//TODO: Fix this when I learn how to properly rotate the billboard
-                //V2 isnt really that bad, but It seemed like there was a bit of a tradeoff with how the billboard behaved
-                ms.mulPose(Axis.YP.rotation(getBillboardAngleV2(be, pos, ms, partialTicks)));
-            } else {
-                ms.mulPose(Axis.YP.rotation(getBillboardAngleV1(be, pos, facing, flameOffset, partialTicks)));
-            }
+
             float r = random01( //Randomness of the flame to prevent flames next to each other from looking the same
                     (pos.getX() + offsetX) * 73856093L ^ (pos.getY() + offsetY) * 19349663L ^ (pos.getZ() + offsetZ) * 83492791L);
             float shaderTime = r + (be.getLevel().getGameTime() + partialTicks) * 0.1f;
@@ -111,7 +112,14 @@ public class MeshedThrusterFlameUtils {
             shader.getUniformSafe("Palette").setFloat(soulFlame ? 1 : 0); //Soul Fire modifier
             shader.getUniformSafe("LengthMultiplier").setFloat(Math.max(lengthMultiplier, FLAME_PIXEL));
             shader.getUniformSafe("WidthMultiplier").setFloat(Math.max(widthMultiplier, FLAME_PIXEL));
+
+            ms.mulPose(Axis.YP.rotation(getBillboardAngleV1(be, pos, facing, flameOffset, partialTicks)));
+            if (crossed) ms.mulPose(Axis.YP.rotation((float) (Math.PI / 4)));
             renderFlame(ms, FLAME_SIZE, lengthMultiplier, widthMultiplier);
+            if (crossed) {
+                ms.mulPose(Axis.YP.rotation((float) (Math.PI / 2)));
+                renderFlame(ms, FLAME_SIZE, lengthMultiplier, widthMultiplier);
+            }
             ms.popPose();
         }
     }
@@ -163,11 +171,14 @@ public class MeshedThrusterFlameUtils {
     }
 
     public static AABB inflateRenderBoundingBox(AbstractThrusterBlockEntity be, AABB box) {
-        if (!be.isMeshedPlume()) return box;
+        if (be.getPlumeRenderType() == PropulsionConfig.ThrusterPlumeType.PARTICLES) return box;
         final var state = be.getBlockState();
         Vec3 center = box.getCenter();
         float power = Mth.clamp(be.interpolatedPower.getValue(), 0f, 1f);
         double length = power * RENDER_BOX_FLAME_LENGTH;
+        if (be.getPlumeRenderType() == PropulsionConfig.ThrusterPlumeType.SPRITE_MESH_SINGLE_MULTIBLOCK) {
+            length *= be.width;
+        }
 
         Vec3 flameEnd = switch (state.getValue(ThrusterBlock.FACING)) {
             case DOWN -> new Vec3(center.x, box.maxY + length, center.z);
@@ -181,7 +192,7 @@ public class MeshedThrusterFlameUtils {
     }
 
     public static AABB inflateVectorRenderBoundingBox(VectorThrusterBlockEntity be, AABB box) {
-        if (!be.isMeshedPlume()) return box;
+        if (be.getPlumeRenderType() == PropulsionConfig.ThrusterPlumeType.PARTICLES) return box;
         Vec3 center = box.getCenter();
         Direction facing = be.getBlockState().getValue(ThrusterBlock.FACING);
         float rotX = be.getInterpolatedVectorX(1) * 3;

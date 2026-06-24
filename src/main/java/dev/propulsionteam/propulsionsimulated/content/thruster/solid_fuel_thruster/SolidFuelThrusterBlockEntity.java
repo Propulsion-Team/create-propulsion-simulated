@@ -49,14 +49,15 @@ public class SolidFuelThrusterBlockEntity extends AbstractThrusterBlockEntity im
         super(type, pos, state);
     }
 
-    public boolean isMeshedPlume() {
-        return PropulsionConfig.getSolidFuelThrusterPlumeType() == PropulsionConfig.ThrusterPlumeType.SPRITE_MESH;
+    public PropulsionConfig.ThrusterPlumeType getPlumeRenderType() {
+        return PropulsionConfig.getSolidFuelThrusterPlumeType();
     }
 
     @Override
     public AABB getRenderBoundingBox() {
         return MeshedThrusterFlameUtils.inflateRenderBoundingBox(this, super.getRenderBoundingBox());
     }
+
 
     @Override
     public void tick() {

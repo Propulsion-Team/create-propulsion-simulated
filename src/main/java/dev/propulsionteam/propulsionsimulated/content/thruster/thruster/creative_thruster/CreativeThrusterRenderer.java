@@ -40,7 +40,7 @@ public class CreativeThrusterRenderer extends SmartBlockEntityRenderer<CreativeT
                 return;
             }
         } else {
-            MeshedThrusterFlameUtils.renderMeshFlame(be, partialTick, ms, buffer, false);
+            MeshedThrusterFlameUtils.renderMeshFlame(be, partialTick, ms, buffer);
         }
 
         //Visualization

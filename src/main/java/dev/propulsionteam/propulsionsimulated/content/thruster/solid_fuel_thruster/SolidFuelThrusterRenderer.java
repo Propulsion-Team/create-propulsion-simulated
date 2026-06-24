@@ -26,7 +26,7 @@ public class SolidFuelThrusterRenderer extends SmartBlockEntityRenderer<SolidFue
     @Override
     protected void renderSafe(SolidFuelThrusterBlockEntity be, float partialTick, PoseStack ms, MultiBufferSource buffer, int light, int overlay) {
         ThrusterDebugRenderer.render(be, ms, buffer);
-        MeshedThrusterFlameUtils.renderMeshFlame(be, partialTick, ms, buffer, false);
+        MeshedThrusterFlameUtils.renderMeshFlame(be, partialTick, ms, buffer);
     }
 
 }
