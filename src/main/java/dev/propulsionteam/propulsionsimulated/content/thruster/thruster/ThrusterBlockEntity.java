@@ -40,8 +40,6 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
     public SmartFluidTankBehaviour tank;
     public SmartFluidTankBehaviour oxidizerTank;
 
-    @Nullable
-    protected BlockPos controllerPos;
     protected boolean updateConnectivity = true;
     protected double lastConsumedMbPerTick = 0.0d;
     protected double lastOxidizerConsumedMbPerTick = 0.0d;
@@ -73,13 +71,7 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
         }
     }
 
-    public boolean isMultiblock() {
-        return width > 1;
-    }
 
-    public boolean isController() {
-        return controllerPos == null;
-    }
 
     public PropulsionConfig.ThrusterPlumeType getPlumeRenderType() {
         return PropulsionConfig.getThrusterPlumeType();
@@ -342,20 +334,9 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
         return (ox != null) ? new dev.propulsionteam.propulsionsimulated.utility.MultiFluidHandler(fuel, ox) : fuel;
     }
 
-    protected boolean supportsMultiblock() {
-        return true;
-    }
-
     @Override
-    public AABB getRenderBoundingBox() {
-        if (isMultiblock()) {
-            if (isController()) {
-                return MeshedThrusterFlameUtils.inflateRenderBoundingBox(this,
-                        new AABB(
-                                worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(),
-                                worldPosition.getX() + width, worldPosition.getY() + width, worldPosition.getZ() + width));
-            }else return MeshedThrusterFlameUtils.NULL_AABB;
-        } else return MeshedThrusterFlameUtils.inflateRenderBoundingBox(this, super.getRenderBoundingBox());
+    public boolean supportsMultiblock() {
+        return true;
     }
 
     private boolean isFrontLayerCell(ThrusterBlockEntity ctrl, Direction cubeFacing) {

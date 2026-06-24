@@ -31,6 +31,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.BlockHitResult;
 import org.joml.Math;
@@ -43,6 +44,8 @@ import java.util.Random;
 
 import dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
+
+import javax.annotation.Nullable;
 
 public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         implements IHaveGoggleInformation, dev.ryanhcode.sable.api.block.BlockEntitySubLevelActor, BlockSubLevelAssemblyListener {
@@ -66,10 +69,38 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
 
     //Common State
     protected ThrusterData thrusterData;
+    @Nullable
+    protected BlockPos controllerPos;
     public int width = 1;
     protected String dyeId = null;
     protected int emptyBlocks;
     protected boolean isThrustDirty = false;
+
+    public boolean isMultiblock() {
+        return width > 1;
+    }
+
+    public boolean isController() {
+        return controllerPos == null;
+    }
+
+    abstract public boolean supportsMultiblock();
+
+    protected AABB getSingleRenderBox(){
+        return super.getRenderBoundingBox();
+    }
+
+    @Override
+    public AABB getRenderBoundingBox() {
+        if (isMultiblock()) {
+            if (isController()) {
+                return MeshedThrusterFlameUtils.inflateRenderBoundingBox(this,
+                        new AABB(
+                                worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(),
+                                worldPosition.getX() + width, worldPosition.getY() + width, worldPosition.getZ() + width));
+            }else return MeshedThrusterFlameUtils.NULL_AABB;
+        } else return MeshedThrusterFlameUtils.inflateRenderBoundingBox(this, getSingleRenderBox());
+    }
 
     //Ticking
     private int currentTick = 0;

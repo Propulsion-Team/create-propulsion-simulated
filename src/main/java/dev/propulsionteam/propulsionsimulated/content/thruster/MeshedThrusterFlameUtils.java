@@ -117,7 +117,7 @@ public class MeshedThrusterFlameUtils {
             if (crossed) ms.mulPose(Axis.YP.rotation((float) (Math.PI / 4)));
             renderFlame(ms, FLAME_SIZE, lengthMultiplier, widthMultiplier);
             if (crossed) {
-                ms.mulPose(Axis.YP.rotation((float) (Math.PI / 2)));
+                ms.mulPose(Axis.YP.rotation((float) -(Math.PI / 2)));
                 renderFlame(ms, FLAME_SIZE, lengthMultiplier, widthMultiplier);
             }
             ms.popPose();
@@ -172,6 +172,7 @@ public class MeshedThrusterFlameUtils {
 
     public static AABB inflateRenderBoundingBox(AbstractThrusterBlockEntity be, AABB box) {
         if (be.getPlumeRenderType() == PropulsionConfig.ThrusterPlumeType.PARTICLES) return box;
+
         final var state = be.getBlockState();
         Vec3 center = box.getCenter();
         float power = Mth.clamp(be.interpolatedPower.getValue(), 0f, 1f);
@@ -195,18 +196,18 @@ public class MeshedThrusterFlameUtils {
         if (be.getPlumeRenderType() == PropulsionConfig.ThrusterPlumeType.PARTICLES) return box;
         Vec3 center = box.getCenter();
         Direction facing = be.getBlockState().getValue(ThrusterBlock.FACING);
-        float rotX = be.getInterpolatedVectorX(1) * 3;
-        float rotY = be.getInterpolatedVectorY(1) * 3;
+        float xInflate = be.getInterpolatedVectorX(1) * 3.5f;
+        float yInflate = be.getInterpolatedVectorY(1) * 3.5f;
         float power = Mth.clamp(be.interpolatedPower.getValue(), 0f, 1f);
-        double length = power * RENDER_BOX_FLAME_LENGTH - Math.max(Math.abs(rotX), Math.abs(rotY)) * 2;
+        double length = power * RENDER_BOX_FLAME_LENGTH - Math.max(Math.abs(xInflate), Math.abs(yInflate)) * 0.8f;
 
         Vector3d end = switch (facing) {
-            case DOWN -> new Vector3d(center.x, box.maxY + length, center.z).add(rotX, 0, -rotY);
-            case UP -> new Vector3d(center.x, box.minY - length, center.z).add(-rotX, 0, -rotY);
-            case SOUTH -> new Vector3d(center.x, center.y, box.minZ - length).add(-rotX, rotY, 0);
-            case NORTH -> new Vector3d(center.x, center.y, box.maxZ + length).add(rotX, rotY, 0);
-            case WEST -> new Vector3d(box.maxX + length, center.y, center.z).add(0, rotY, -rotX);
-            case EAST -> new Vector3d(box.minX - length, center.y, center.z).add(0, rotY, rotX);
+            case DOWN -> new Vector3d(center.x, box.maxY + length, center.z).add(xInflate, 0, -yInflate);
+            case UP -> new Vector3d(center.x, box.minY - length, center.z).add(-xInflate, 0, -yInflate);
+            case SOUTH -> new Vector3d(center.x, center.y, box.minZ - length).add(-xInflate, yInflate, 0);
+            case NORTH -> new Vector3d(center.x, center.y, box.maxZ + length).add(xInflate, yInflate, 0);
+            case WEST -> new Vector3d(box.maxX + length, center.y, center.z).add(0, yInflate, -xInflate);
+            case EAST -> new Vector3d(box.minX - length, center.y, center.z).add(0, yInflate, xInflate);
         };
 //        System.out.println("rotx=" + rotX + " roty=" + rotY + " flameEnd=" + end + " center=" + center);
         return fitPoint(box, end.x, end.y, end.z);

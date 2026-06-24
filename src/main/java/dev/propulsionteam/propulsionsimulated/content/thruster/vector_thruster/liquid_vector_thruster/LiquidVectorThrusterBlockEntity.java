@@ -246,7 +246,7 @@ public class LiquidVectorThrusterBlockEntity extends VectorThrusterBlockEntity {
     }
 
     @Override
-    protected boolean supportsMultiblock() {
+    public boolean supportsMultiblock() {
         return false;
     }
 

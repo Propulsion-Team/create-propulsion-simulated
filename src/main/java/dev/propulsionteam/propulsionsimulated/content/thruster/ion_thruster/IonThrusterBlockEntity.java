@@ -323,7 +323,7 @@ public class IonThrusterBlockEntity extends ThrusterBlockEntity {
 
 
     @Override
-    protected boolean supportsMultiblock() {
+    public boolean supportsMultiblock() {
         return true;
     }
 

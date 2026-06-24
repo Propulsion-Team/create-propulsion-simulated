@@ -59,7 +59,7 @@ public class VectorThrusterBlockEntity extends IonThrusterBlockEntity {
     }
 
     @Override
-    protected boolean supportsMultiblock() {
+    public boolean supportsMultiblock() {
         return false;
     }
 
@@ -155,7 +155,7 @@ public class VectorThrusterBlockEntity extends IonThrusterBlockEntity {
 
     @Override
     public AABB getRenderBoundingBox() {
-        return MeshedThrusterFlameUtils.inflateVectorRenderBoundingBox(this, super.getRenderBoundingBox());
+        return MeshedThrusterFlameUtils.inflateVectorRenderBoundingBox(this, getSingleRenderBox());
     }
 
     /**

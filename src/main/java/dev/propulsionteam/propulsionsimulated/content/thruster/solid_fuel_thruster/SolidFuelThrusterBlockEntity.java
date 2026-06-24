@@ -54,10 +54,9 @@ public class SolidFuelThrusterBlockEntity extends AbstractThrusterBlockEntity im
     }
 
     @Override
-    public AABB getRenderBoundingBox() {
-        return MeshedThrusterFlameUtils.inflateRenderBoundingBox(this, super.getRenderBoundingBox());
+    public boolean supportsMultiblock() {
+        return false;
     }
-
 
     @Override
     public void tick() {

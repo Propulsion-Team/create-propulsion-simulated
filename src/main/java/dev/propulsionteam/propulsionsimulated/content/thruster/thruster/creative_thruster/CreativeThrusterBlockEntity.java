@@ -37,8 +37,7 @@ import javax.annotation.Nullable;
 
 public class CreativeThrusterBlockEntity extends AbstractThrusterBlockEntity {
     public static final int MAX_WIDTH = 3;
-    @Nullable
-    protected BlockPos controllerPos;
+
     protected boolean updateConnectivity = true;
     private static final int DISASSEMBLY_GRACE_TICKS = 5;
     private int disassemblyCooldown = 0;
@@ -202,17 +201,12 @@ public class CreativeThrusterBlockEntity extends AbstractThrusterBlockEntity {
         }
     }
 
-    public boolean isMultiblock() {
-        return width > 1;
-    }
 
-    protected boolean supportsMultiblock() {
+    @Override
+    public boolean supportsMultiblock() {
         return true;
     }
 
-    public boolean isController() {
-        return controllerPos == null;
-    }
 
     public boolean isBaseLayerMember() {
         if (!isMultiblock()) return true;
@@ -669,17 +663,7 @@ public class CreativeThrusterBlockEntity extends AbstractThrusterBlockEntity {
         updateConnectivity = width <= 1 || !compound.contains("UpdateConnectivity") || savedConnectivity;
     }
 
-    @Override
-    public AABB getRenderBoundingBox() {
-        if (isMultiblock()) {
-            if (isController()) {
-                return MeshedThrusterFlameUtils.inflateRenderBoundingBox(this,
-                        new AABB(
-                                worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(),
-                                worldPosition.getX() + width, worldPosition.getY() + width, worldPosition.getZ() + width));
-            }else return MeshedThrusterFlameUtils.NULL_AABB;
-        } else return MeshedThrusterFlameUtils.inflateRenderBoundingBox(this, super.getRenderBoundingBox());
-    }
+
 
     @Override
     public void afterMove(ServerLevel oldLevel, ServerLevel newLevel, BlockState state, BlockPos oldPos, BlockPos newPos) {
