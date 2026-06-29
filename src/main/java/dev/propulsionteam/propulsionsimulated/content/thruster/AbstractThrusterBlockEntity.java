@@ -34,6 +34,8 @@ import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.BlockHitResult;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import org.joml.Math;
 import org.joml.Vector3d;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
@@ -86,20 +88,55 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
 
     abstract public boolean supportsMultiblock();
 
-    protected AABB getSingleRenderBox(){
+    //We need to cache the bounding box to avoid recalculating it every tick
+    @OnlyIn(Dist.CLIENT)
+    protected int boundingBoxHash;
+    @OnlyIn(Dist.CLIENT)
+    public AABB boundingBox = MeshedThrusterFlameUtils.NULL_AABB;
+    @OnlyIn(Dist.CLIENT)
+    protected AABB multiblockBoundingBox;
+
+    protected AABB getSingleRenderBox() {
         return super.getRenderBoundingBox();
+    }
+
+    protected AABB getMultiblockRenderBox() {
+        if (multiblockBoundingBox == null) {
+            multiblockBoundingBox = new AABB(
+                    worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(),
+                    worldPosition.getX() + width, worldPosition.getY() + width, worldPosition.getZ() + width);
+        }
+        return multiblockBoundingBox;
     }
 
     @Override
     public AABB getRenderBoundingBox() {
         if (isMultiblock()) {
-            if (isController()) {
-                return MeshedThrusterFlameUtils.inflateRenderBoundingBox(this,
-                        new AABB(
-                                worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(),
-                                worldPosition.getX() + width, worldPosition.getY() + width, worldPosition.getZ() + width));
-            }else return MeshedThrusterFlameUtils.NULL_AABB;
-        } else return MeshedThrusterFlameUtils.inflateRenderBoundingBox(this, getSingleRenderBox());
+            if (isController()) { //If this is multiblock controller
+                //If this is a particle thruster, return the bounding box
+                if (getPlumeRenderType() == PropulsionConfig.ThrusterPlumeType.PARTICLES)
+                    return getMultiblockRenderBox();
+
+                //Inflate and cache the bounding box
+                AABB inflated = MeshedThrusterFlameUtils.inflateRenderBoundingBox(this, getMultiblockRenderBox());
+                if (inflated != null) boundingBox = inflated; //Update the bounding box
+                return boundingBox;
+            }
+            return MeshedThrusterFlameUtils.NULL_AABB; //Not a controller, doesnt need a bounding box
+        }
+
+        //If this is single block
+        if (getPlumeRenderType() == PropulsionConfig.ThrusterPlumeType.PARTICLES)
+            return getSingleRenderBox();
+
+        //Inflate and cache the bounding box
+        AABB inflated = MeshedThrusterFlameUtils.inflateRenderBoundingBox(this, getSingleRenderBox());
+        if (inflated != null) { //Update the bounding box
+//            System.out.println("Inflated bounding box: " + inflated);
+            boundingBox = inflated;
+            multiblockBoundingBox = null;
+        }
+        return boundingBox;
     }
 
     //Ticking
@@ -127,6 +164,7 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
 
     //CC Peripheral
     public AbstractComputerBehaviour computerBehaviour;
+
 
     public enum ControlMode {
         NORMAL,
@@ -574,7 +612,8 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         setRedstoneInput(power);
     }
 
-    public boolean tryConsumeFuelBucket(net.minecraft.world.entity.player.Player player, net.minecraft.world.InteractionHand hand, net.minecraft.world.item.ItemStack heldStack) {
+    public boolean tryConsumeFuelBucket(net.minecraft.world.entity.player.Player
+                                                player, net.minecraft.world.InteractionHand hand, net.minecraft.world.item.ItemStack heldStack) {
         return false;
     }
 
@@ -599,7 +638,8 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
     }
 
     @Override
-    public void sable$physicsTick(final ServerSubLevel subLevel, final RigidBodyHandle handle, final double timeStep) {
+    public void sable$physicsTick(final ServerSubLevel subLevel, final RigidBodyHandle handle,
+                                  final double timeStep) {
         if (this.getCurrentThrust() <= 0.0d) {
             return;
         }
@@ -617,7 +657,8 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
     }
 
     @Override
-    public void afterMove(ServerLevel oldLevel, ServerLevel newLevel, BlockState state, BlockPos oldPos, BlockPos newPos) {
+    public void afterMove(ServerLevel oldLevel, ServerLevel newLevel, BlockState state, BlockPos oldPos, BlockPos
+            newPos) {
         // Recompute obstruction and refresh redstone-derived power after assembly/disassembly moves.
         if (newLevel != null) {
             setRedstoneInput(newLevel.getBestNeighborSignal(newPos));
@@ -724,7 +765,8 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         }
     }
 
-    protected void emitParticle(double spawnX, double spawnY, double spawnZ, Vector3d particleVelocity, ParticleOptions particleData) {
+    protected void emitParticle(double spawnX, double spawnY, double spawnZ, Vector3d
+            particleVelocity, ParticleOptions particleData) {
         if (level instanceof ServerLevel serverLevel) {
             double maxDistSq = getParticleBroadcastRange() * getParticleBroadcastRange();
             for (ServerPlayer player : serverLevel.players()) {
@@ -803,7 +845,8 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
 
 
     @Override
-    protected void write(CompoundTag compound, net.minecraft.core.HolderLookup.Provider registries, boolean clientPacket) {
+    protected void write(CompoundTag compound, net.minecraft.core.HolderLookup.Provider registries,
+                         boolean clientPacket) {
         super.write(compound, registries, clientPacket);
         compound.putInt("emptyBlocks", emptyBlocks);
         compound.putInt("currentTick", currentTick);
@@ -821,7 +864,8 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
     }
 
     @Override
-    protected void read(CompoundTag compound, net.minecraft.core.HolderLookup.Provider registries, boolean clientPacket) {
+    protected void read(CompoundTag compound, net.minecraft.core.HolderLookup.Provider registries,
+                        boolean clientPacket) {
         super.read(compound, registries, clientPacket);
         emptyBlocks = compound.getInt("emptyBlocks");
         currentTick = compound.getInt("currentTick");

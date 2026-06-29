@@ -6,7 +6,6 @@ import com.mojang.math.Axis;
 import dev.propulsionteam.propulsionsimulated.CreatePropulsion;
 import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
 import dev.propulsionteam.propulsionsimulated.content.thruster.thruster.ThrusterBlock;
-import dev.propulsionteam.propulsionsimulated.content.thruster.thruster.ThrusterBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.VectorThrusterBlockEntity;
 import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.sublevel.SubLevel;
@@ -33,7 +32,7 @@ public class MeshedThrusterFlameUtils {
     private static final float BLOCK_PIXEL = 1f / 16f;
     private static final float FLAME_PIXEL = BLOCK_PIXEL / FLAME_SIZE;
     protected static final float DISPLAY_THRESHOLD = 0.03f;
-    public static final float RENDER_BOX_FLAME_LENGTH = 7.0f;
+    public static final int RENDER_BOX_FLAME_LENGTH = 7;
 
     public static boolean isSpritePlume(AbstractThrusterBlockEntity be) {
         return be.getPlumeRenderType() == PropulsionConfig.ThrusterPlumeType.SPRITE_MESH ||
@@ -132,16 +131,11 @@ public class MeshedThrusterFlameUtils {
             float power = Mth.clamp(be.interpolatedPower.getValue(partialTicks), 0f, 1f);
             if (power < DISPLAY_THRESHOLD) return;
 
-            final var state = be.getBlockState();
             final var pos = be.getBlockPos();
-            final var facing = state.getValue(ThrusterBlock.FACING);
-            var flameOffset = snapToBlockPixel(-1.5f + ((24 - 4 * Mth.clamp(power, 0.5f, 1f)) / 16f));
 
             ms.pushPose();
             ms.translate(0.5f, 0.5f, 0.5f);
-//            ms.translate(facing.getStepX() * flameOffset, facing.getStepY() * flameOffset, facing.getStepZ() * flameOffset);
             ms.mulPose(Axis.XP.rotation((float) Math.PI / 2));
-//            rotateTowardsFacing(ms, facing);
 
 
             var lengthMultiplier = snapToFlamePixel((power * 4f + 1f + (0.5f - power * power * power)));
@@ -162,7 +156,7 @@ public class MeshedThrusterFlameUtils {
         }
     }
 
-    public static float random01(long seed) {
+    private static float random01(long seed) {
         long z = seed + 0x9E3779B97F4A7C15L;
         z = (z ^ (z >>> 30)) * 0xBF58476D1CE4E5B9L;
         z = (z ^ (z >>> 27)) * 0x94D049BB133111EBL;
@@ -170,47 +164,92 @@ public class MeshedThrusterFlameUtils {
         return (float) ((z >>> 40) * (1.0 / (1L << 24)));
     }
 
-    public static AABB inflateRenderBoundingBox(AbstractThrusterBlockEntity be, AABB box) {
-        if (be.getPlumeRenderType() == PropulsionConfig.ThrusterPlumeType.PARTICLES) return box;
+    private static int hash(float x, float y, float z) {
+        // Start with a prime number
+        int result = 1;
 
-        final var state = be.getBlockState();
-        Vec3 center = box.getCenter();
-        float power = Mth.clamp(be.interpolatedPower.getValue(), 0f, 1f);
-        double length = power * RENDER_BOX_FLAME_LENGTH;
-        if (be.getPlumeRenderType() == PropulsionConfig.ThrusterPlumeType.SPRITE_MESH_SINGLE_MULTIBLOCK) {
-            length *= be.width;
-        }
-
-        Vec3 flameEnd = switch (state.getValue(ThrusterBlock.FACING)) {
-            case DOWN -> new Vec3(center.x, box.maxY + length, center.z);
-            case UP -> new Vec3(center.x, box.minY - length, center.z);
-            case SOUTH -> new Vec3(center.x, center.y, box.minZ - length);
-            case NORTH -> new Vec3(center.x, center.y, box.maxZ + length);
-            case WEST -> new Vec3(box.maxX + length, center.y, center.z);
-            case EAST -> new Vec3(box.minX - length, center.y, center.z);
-        };
-        return fitPoint(box, flameEnd.x, flameEnd.y, flameEnd.z);
+        // Combine each float
+        result = 31 * result + Float.floatToIntBits(x);
+        result = 31 * result + Float.floatToIntBits(y);
+        result = 31 * result + Float.floatToIntBits(z);
+        return result;
     }
 
+    private static int hash(float x, float y) {
+        // Start with a prime number
+        int result = 1;
+
+        // Combine each float
+        result = 31 * result + Float.floatToIntBits(x);
+        result = 31 * result + Float.floatToIntBits(y);
+        return result;
+    }
+
+    private static float getRenderBoxLength(AbstractThrusterBlockEntity be) {
+        return (float) (Math.ceil(be.interpolatedPower.getValue() * 10) / 10 * RENDER_BOX_FLAME_LENGTH);
+    }
+
+    /**
+     * inflates the render bounding box of a thruster for
+     *
+     * @param be
+     * @param box
+     * @return the inflated render bounding box if a change was detected, otherwise null
+     */
+    public static AABB inflateRenderBoundingBox(AbstractThrusterBlockEntity be, AABB box) {
+        float length = getRenderBoxLength(be);
+        int hash = Float.floatToRawIntBits(length);
+
+        if (be.boundingBoxHash != hash) {
+            be.boundingBoxHash = hash;
+            final var state = be.getBlockState();
+            Vec3 center = box.getCenter();
+            if (be.getPlumeRenderType() == PropulsionConfig.ThrusterPlumeType.SPRITE_MESH_SINGLE_MULTIBLOCK) {
+                length *= be.width;
+            }
+
+            return switch (state.getValue(ThrusterBlock.FACING)) {
+                case DOWN -> fitPoint(box, center.x, box.maxY + length, center.z);
+                case UP -> fitPoint(box, center.x, box.minY - length, center.z);
+                case SOUTH -> fitPoint(box, center.x, center.y, box.minZ - length);
+                case NORTH -> fitPoint(box, center.x, center.y, box.maxZ + length);
+                case WEST -> fitPoint(box, box.maxX + length, center.y, center.z);
+                case EAST -> fitPoint(box, box.minX - length, center.y, center.z);
+            };
+        }
+        return null;
+    }
+
+    /**
+     *
+     * @param be
+     * @param box
+     * @return the inflated render bounding box if a change was detected, otherwise null
+     */
     public static AABB inflateVectorRenderBoundingBox(VectorThrusterBlockEntity be, AABB box) {
-        if (be.getPlumeRenderType() == PropulsionConfig.ThrusterPlumeType.PARTICLES) return box;
-        Vec3 center = box.getCenter();
-        Direction facing = be.getBlockState().getValue(ThrusterBlock.FACING);
         float xInflate = be.getInterpolatedVectorX(1) * 3.5f;
         float yInflate = be.getInterpolatedVectorY(1) * 3.5f;
-        float power = Mth.clamp(be.interpolatedPower.getValue(), 0f, 1f);
-        double length = power * RENDER_BOX_FLAME_LENGTH - Math.max(Math.abs(xInflate), Math.abs(yInflate)) * 0.8f;
+        float length = Math.max(0, getRenderBoxLength(be) - Math.max(Math.abs(xInflate), Math.abs(yInflate)) * 0.8f);
+        int hash = hash(xInflate, yInflate, length);
 
-        Vector3d end = switch (facing) {
-            case DOWN -> new Vector3d(center.x, box.maxY + length, center.z).add(xInflate, 0, -yInflate);
-            case UP -> new Vector3d(center.x, box.minY - length, center.z).add(-xInflate, 0, -yInflate);
-            case SOUTH -> new Vector3d(center.x, center.y, box.minZ - length).add(-xInflate, yInflate, 0);
-            case NORTH -> new Vector3d(center.x, center.y, box.maxZ + length).add(xInflate, yInflate, 0);
-            case WEST -> new Vector3d(box.maxX + length, center.y, center.z).add(0, yInflate, -xInflate);
-            case EAST -> new Vector3d(box.minX - length, center.y, center.z).add(0, yInflate, xInflate);
-        };
+        if (be.boundingBoxHash != hash) {
+            be.boundingBoxHash = hash;
+            Vec3 center = box.getCenter();
+            Direction facing = be.getBlockState().getValue(ThrusterBlock.FACING);
+
+
+            Vector3d end = switch (facing) {
+                case DOWN -> new Vector3d(center.x, box.maxY + length, center.z).add(xInflate, 0, -yInflate);
+                case UP -> new Vector3d(center.x, box.minY - length, center.z).add(-xInflate, 0, -yInflate);
+                case SOUTH -> new Vector3d(center.x, center.y, box.minZ - length).add(-xInflate, yInflate, 0);
+                case NORTH -> new Vector3d(center.x, center.y, box.maxZ + length).add(xInflate, yInflate, 0);
+                case WEST -> new Vector3d(box.maxX + length, center.y, center.z).add(0, yInflate, -xInflate);
+                case EAST -> new Vector3d(box.minX - length, center.y, center.z).add(0, yInflate, xInflate);
+            };
 //        System.out.println("rotx=" + rotX + " roty=" + rotY + " flameEnd=" + end + " center=" + center);
-        return fitPoint(box, end.x, end.y, end.z);
+            return fitPoint(box, end.x, end.y, end.z);
+        }
+        return null;
     }
 
 

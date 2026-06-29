@@ -24,6 +24,8 @@ import net.createmod.catnip.math.AngleHelper;
 import net.createmod.catnip.math.VecHelper;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import org.joml.Vector3d;
 
 public class VectorThrusterBlockEntity extends IonThrusterBlockEntity {
@@ -153,9 +155,14 @@ public class VectorThrusterBlockEntity extends IonThrusterBlockEntity {
         return Mth.lerp(partialTick, prevFlapProgress, currentFlapProgress);
     }
 
+    @OnlyIn(Dist.CLIENT)
     @Override
     public AABB getRenderBoundingBox() {
-        return MeshedThrusterFlameUtils.inflateVectorRenderBoundingBox(this, getSingleRenderBox());
+        if (getPlumeRenderType() == PropulsionConfig.ThrusterPlumeType.PARTICLES) return getSingleRenderBox();
+
+        AABB box = MeshedThrusterFlameUtils.inflateVectorRenderBoundingBox(this, getSingleRenderBox());
+        if (box != null) boundingBox = box; //Update the box instead of calculating it every tick
+        return boundingBox;
     }
 
     /**

@@ -30,14 +30,12 @@ public final class ThrusterDebugRenderer {
     }
 
     public static void debug_drawRenderBoundingBox(AbstractThrusterBlockEntity be, PoseStack ms, MultiBufferSource buffer) {
-        //Debug render box
-//        ms.pushPose();
-//        ms.setIdentity();
         AABB box = be.getRenderBoundingBox();
-        BlockPos pos2 = be.getBlockPos();
-        AABB localBox = box.move(-pos2.getX(), -pos2.getY(), -pos2.getZ());
-        LevelRenderer.renderLineBox(ms, buffer.getBuffer(RenderType.lines()), localBox, 1, 0, 0, 1);
-//        ms.popPose();
+        if (box != null) {
+            BlockPos pos2 = be.getBlockPos();
+            AABB localBox = box.move(-pos2.getX(), -pos2.getY(), -pos2.getZ());
+            LevelRenderer.renderLineBox(ms, buffer.getBuffer(RenderType.lines()), localBox, 1, 0, 0, 1);
+        }
     }
 
     public static void render(AbstractThrusterBlockEntity be, PoseStack ms, MultiBufferSource buffer) {
