@@ -95,6 +95,10 @@ public class CableRelayBlock extends Block implements IBE<CableRelayBlockEntity>
         List<RelayNode> relays = collectRelayNodes(level, cluster);
         normalizeRelayIds(relays);
 
+        for (RelayNode relay : relays) {
+            relay.be().markNetworkDirty();
+        }
+
         // Clear cluster output first so source detection cannot be fed by this
         // same ordered relay chain.
         for (RelayNode relay : relays) {

@@ -23,8 +23,23 @@ import java.util.List;
 import java.util.Set;
 
 public class CableRelayBlockEntity extends SmartBlockEntity {
+    // How often (in ticks) the controller re-scans for connected energy machines.
+    // Network topology cache is invalidated immediately on block changes via markNetworkDirty().
+    private static final int ENDPOINT_REBUILD_INTERVAL = 20;
+
     private int redstoneSignalStrength;
     private int relayId = -1;
+
+    // Network topology cache - rebuilt via markNetworkDirty() on block changes.
+    private boolean networkDirty = true;
+    private Set<BlockPos> cachedNetwork = null;
+    private boolean isController = false;
+
+    // Endpoint location cache - rebuilt every ENDPOINT_REBUILD_INTERVAL ticks by the controller.
+    // Stores (machinePos, machineFace) so capability is fetched fresh each tick (avoids stale refs).
+    // I hate java
+    private List<EndpointLocation> cachedEndpointLocations = null;
+    private int endpointRebuildTimer = ENDPOINT_REBUILD_INTERVAL;
 
     public CableRelayBlockEntity(BlockPos pos, BlockState blockState) {
         super(PropulsionBlockEntities.CABLE_RELAY_BLOCK_ENTITY.get(), pos, blockState);
@@ -47,61 +62,90 @@ public class CableRelayBlockEntity extends SmartBlockEntity {
 
     public void setRelayId(int relayId) {
         int clampedRelayId = Math.max(0, relayId);
-        if (this.relayId == clampedRelayId) {
-            return;
-        }
+        if (this.relayId == clampedRelayId) return;
         this.relayId = clampedRelayId;
         setChanged();
+    }
+
+    // Called by CableRelayBlock.updateCluster() when the relay cluster changes.
+    public void markNetworkDirty() {
+        networkDirty = true;
     }
 
     @Override
     public void tick() {
         super.tick();
-        if (level == null || level.isClientSide) {
-            return;
+        if (level == null || level.isClientSide) return;
+
+        if (networkDirty) {
+            rebuildNetworkCache();
+            networkDirty = false;
         }
+
+        // Non-controllers exit here - no BFS, no capability lookups.
+        if (!isController) return;
+
+        if (cachedEndpointLocations == null || ++endpointRebuildTimer >= ENDPOINT_REBUILD_INTERVAL) {
+            rebuildEndpointLocations();
+            endpointRebuildTimer = 0;
+        }
+
         tickRelayNetwork();
     }
 
-    private void tickRelayNetwork() {
-        Set<BlockPos> network = collectNetwork(worldPosition);
-        if (network.isEmpty()) return;
+    private void rebuildNetworkCache() {
+        cachedNetwork = collectNetwork(worldPosition);
+        BlockPos controller = cachedNetwork.stream()
+            .min(Comparator.comparingInt((BlockPos p) -> p.getY())
+                .thenComparingInt(p -> p.getX())
+                .thenComparingInt(p -> p.getZ()))
+            .orElse(worldPosition);
+        isController = worldPosition.equals(controller);
+        // Force endpoint rebuild on the next controller tick.
+        cachedEndpointLocations = null;
+        endpointRebuildTimer = ENDPOINT_REBUILD_INTERVAL;
+    }
 
-        BlockPos controller = network.stream().min(Comparator
-            .comparingInt((BlockPos p) -> p.getY())
-            .thenComparingInt(p -> p.getX())
-            .thenComparingInt(p -> p.getZ())).orElse(worldPosition);
-        if (!worldPosition.equals(controller)) return;
-
-        List<Endpoint> sources = new ArrayList<>();
-        List<Endpoint> sinks = new ArrayList<>();
-
-        for (BlockPos cablePos : network) {
-            BlockState state = level.getBlockState(cablePos);
+    private void rebuildEndpointLocations() {
+        if (cachedNetwork == null) return;
+        List<EndpointLocation> locations = new ArrayList<>();
+        for (BlockPos nodePos : cachedNetwork) {
+            BlockState state = level.getBlockState(nodePos);
             boolean nodeIsCable = state.getBlock() instanceof FeCableBlock;
             for (Direction direction : Direction.values()) {
                 if (nodeIsCable && (!FeCableBlock.isSideEnabled(state, direction)
                         || !FeCableBlock.isSideConnected(state, direction))) {
                     continue;
                 }
-
-                BlockPos neighborPos = cablePos.relative(direction);
+                BlockPos neighborPos = nodePos.relative(direction);
                 if (isTransitNode(neighborPos)) continue;
-
                 IEnergyStorage cap = level.getCapability(Capabilities.EnergyStorage.BLOCK, neighborPos, direction.getOpposite());
-                if (cap == null) continue;
-
-                Endpoint endpoint = new Endpoint(cablePos, direction, cap);
-                if (cap.canExtract()) sources.add(endpoint);
-                if (cap.canReceive()) sinks.add(endpoint);
+                if (cap != null) {
+                    locations.add(new EndpointLocation(neighborPos, direction.getOpposite()));
+                }
             }
+        }
+        cachedEndpointLocations = locations;
+    }
+
+    private void tickRelayNetwork() {
+        if (cachedNetwork == null || cachedEndpointLocations == null) return;
+
+        List<Endpoint> sources = new ArrayList<>();
+        List<Endpoint> sinks = new ArrayList<>();
+
+        for (EndpointLocation loc : cachedEndpointLocations) {
+            IEnergyStorage cap = level.getCapability(Capabilities.EnergyStorage.BLOCK, loc.pos(), loc.face());
+            if (cap == null) continue;
+            if (cap.canExtract()) sources.add(new Endpoint(loc.pos(), loc.face(), cap));
+            if (cap.canReceive()) sinks.add(new Endpoint(loc.pos(), loc.face(), cap));
         }
 
         if (sources.isEmpty() || sinks.isEmpty()) return;
         sources.sort(Endpoint::compare);
         sinks.sort(Endpoint::compare);
 
-        int budget = Math.max(0, PropulsionConfig.CABLE_ENERGY_TRANSFER.get()) * network.size();
+        int budget = Math.max(0, PropulsionConfig.CABLE_ENERGY_TRANSFER.get()) * cachedNetwork.size();
         if (budget <= 0) return;
 
         boolean madeProgress;
@@ -110,8 +154,8 @@ public class CableRelayBlockEntity extends SmartBlockEntity {
 
             int activeSinkCount = 0;
             for (Endpoint sink : sinks) {
-                int sinkWant = sink.storage.receiveEnergy(Math.max(1, budget / Math.max(1, sinks.size())), true);
-                if (sinkWant > 0) activeSinkCount++;
+                if (sink.storage.receiveEnergy(Math.max(1, budget / Math.max(1, sinks.size())), true) > 0)
+                    activeSinkCount++;
             }
             if (activeSinkCount <= 0) break;
 
@@ -120,23 +164,18 @@ public class CableRelayBlockEntity extends SmartBlockEntity {
 
             for (Endpoint sink : sinks) {
                 if (budget <= 0) break;
-
                 int request = baseShare;
                 if (remainder > 0) {
                     request++;
                     remainder--;
                 }
                 request = Math.min(request, budget);
-
                 int canAccept = sink.storage.receiveEnergy(request, true);
                 if (canAccept <= 0) continue;
-
                 int extracted = extractFromSources(sources, canAccept);
                 if (extracted <= 0) continue;
-
                 int accepted = sink.storage.receiveEnergy(extracted, false);
                 if (accepted <= 0) continue;
-
                 budget -= accepted;
                 madeProgress = true;
             }
@@ -215,15 +254,17 @@ public class CableRelayBlockEntity extends SmartBlockEntity {
         super.read(tag, registries, clientPacket);
     }
 
-    private record Endpoint(BlockPos cablePos, Direction direction, IEnergyStorage storage) {
+    private record EndpointLocation(BlockPos pos, Direction face) {}
+
+    private record Endpoint(BlockPos pos, Direction face, IEnergyStorage storage) {
         private static int compare(Endpoint a, Endpoint b) {
-            int byY = Integer.compare(a.cablePos.getY(), b.cablePos.getY());
+            int byY = Integer.compare(a.pos.getY(), b.pos.getY());
             if (byY != 0) return byY;
-            int byX = Integer.compare(a.cablePos.getX(), b.cablePos.getX());
+            int byX = Integer.compare(a.pos.getX(), b.pos.getX());
             if (byX != 0) return byX;
-            int byZ = Integer.compare(a.cablePos.getZ(), b.cablePos.getZ());
+            int byZ = Integer.compare(a.pos.getZ(), b.pos.getZ());
             if (byZ != 0) return byZ;
-            return Integer.compare(a.direction.ordinal(), b.direction.ordinal());
+            return Integer.compare(a.face.ordinal(), b.face.ordinal());
         }
     }
 }
