@@ -103,8 +103,7 @@ public class MeshedThrusterFlameUtils {
             ms.translate(offsetX, offsetY, offsetZ);
 
 
-            float r = random01( //Randomness of the flame to prevent flames next to each other from looking the same
-                    (pos.getX() + offsetX) * 73856093L ^ (pos.getY() + offsetY) * 19349663L ^ (pos.getZ() + offsetZ) * 83492791L);
+            float r = random01(hash(pos.getX(), pos.getY(), pos.getZ())); //Randomness of the flame to prevent flames next to each other from looking the same
             float shaderTime = r + (be.getLevel().getGameTime() + partialTicks) * 0.1f;
             shader.getUniformSafe("FlameRenderTime").setFloat(shaderTime);
             shader.getUniformSafe("Intensity").setFloat(Mth.clamp(power * 2f - .35f, 0.25f, 1.5f));
@@ -142,8 +141,7 @@ public class MeshedThrusterFlameUtils {
             var widthMultiplier = snapToFlamePixel((power * 1.5f + 1));
 
             ms.mulPose(Axis.YP.rotation(getBillboardAngleV2(be, pos, ms, partialTicks)));
-            float r = random01( //Randomness of the flame to prevent flames next to each other from looking the same
-                    (pos.getX()) * 73856093L ^ (pos.getY()) * 19349663L ^ (pos.getZ()) * 83492791L);
+            float r = random01(hash(pos.getX(), pos.getY(), pos.getZ()));
             float shaderTime = r + (be.getLevel().getGameTime() + partialTicks) * 0.1f;
             shader.getUniformSafe("FlameRenderTime").setFloat(shaderTime);
             shader.getUniformSafe("Intensity").setFloat(Mth.clamp(power * 2f - .35f, 0.25f, 1.5f));
@@ -156,7 +154,12 @@ public class MeshedThrusterFlameUtils {
         }
     }
 
-    private static float random01(long seed) {
+    /**
+     * return a random float between 0 and 1 based on the seed
+     * @param seed
+     * @return
+     */
+    private static float random01(int seed) {
         long z = seed + 0x9E3779B97F4A7C15L;
         z = (z ^ (z >>> 30)) * 0xBF58476D1CE4E5B9L;
         z = (z ^ (z >>> 27)) * 0x94D049BB133111EBL;
