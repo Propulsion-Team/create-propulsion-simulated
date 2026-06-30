@@ -27,7 +27,7 @@ import java.lang.Math;
 
 public class MeshedThrusterFlameUtils {
 
-    public static final ResourceLocation THRUSTER_FLAME_SHADER = CreatePropulsion.loc("thruster_flame");
+    public static final ResourceLocation THRUSTER_FLAME_SHADER =  ResourceLocation.fromNamespaceAndPath("aeronautics", "burner_flame");
     private static final float FLAME_SIZE = 2f;
     private static final float BLOCK_PIXEL = 1f / 16f;
     private static final float FLAME_PIXEL = BLOCK_PIXEL / FLAME_SIZE;
