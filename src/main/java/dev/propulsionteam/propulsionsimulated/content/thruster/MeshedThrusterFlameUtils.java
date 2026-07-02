@@ -87,7 +87,7 @@ public class MeshedThrusterFlameUtils {
                                        boolean soulFlame, int offsetX, int offsetY, int offsetZ, boolean crossed) {
         if (shader != null) {
             //Get the interpolated power
-            float power = Mth.clamp(be.interpolatedPower.getValue(partialTicks), 0f, 1f);
+            float power = Mth.clamp(be.interpolatedPlumePower.getValue(partialTicks), 0f, 1f);
             if (power < DISPLAY_THRESHOLD) return;
 
             final var state = be.getBlockState();
@@ -103,8 +103,7 @@ public class MeshedThrusterFlameUtils {
             rotateTowardsFacing(ms, facing);
             ms.translate(offsetX, offsetY, offsetZ);
 
-
-            float r = random01(hash(pos.getX(), pos.getY(), pos.getZ())); //Randomness of the flame to prevent flames next to each other from looking the same
+            float r = random01((pos.getY() + offsetY + pos.getZ() + offsetZ * 31) * 31 + pos.getX() + offsetX); //Randomness of the flame to prevent flames next to each other from looking the same
             float shaderTime = r + (be.getLevel().getGameTime() + partialTicks) * 0.1f;
             shader.getUniformSafe("FlameRenderTime").setFloat(shaderTime);
             shader.getUniformSafe("Intensity").setFloat(Mth.clamp(power * 2f - .35f, 0.25f, 1.5f));
@@ -128,7 +127,7 @@ public class MeshedThrusterFlameUtils {
                                              ShaderProgram shader, boolean soulFlame) {
         if (shader != null) {
             //Get the interpolated power
-            float power = Mth.clamp(be.interpolatedPower.getValue(partialTicks), 0f, 1f);
+            float power = Mth.clamp(be.interpolatedPlumePower.getValue(partialTicks), 0f, 1f);
             if (power < DISPLAY_THRESHOLD) return;
 
             final var pos = be.getBlockPos();
@@ -142,7 +141,8 @@ public class MeshedThrusterFlameUtils {
             var widthMultiplier = snapToFlamePixel((power * 1.5f + 1));
 
             ms.mulPose(Axis.YP.rotation(getBillboardAngleV2(be, pos, ms, partialTicks)));
-            float r = random01(hash(pos.getX(), pos.getY(), pos.getZ()));
+
+            float r = random01(pos.hashCode());
             float shaderTime = r + (be.getLevel().getGameTime() + partialTicks) * 0.1f;
             shader.getUniformSafe("FlameRenderTime").setFloat(shaderTime);
             shader.getUniformSafe("Intensity").setFloat(Mth.clamp(power * 2f - .35f, 0.25f, 1.5f));
@@ -170,9 +170,8 @@ public class MeshedThrusterFlameUtils {
     }
 
 
-
     private static float getRenderBoxLength(AbstractThrusterBlockEntity be) {
-        return (float) (Math.ceil(be.interpolatedPower.getValue() * 10) / 10 * RENDER_BOX_FLAME_LENGTH);
+        return (float) (Math.ceil(be.interpolatedPlumePower.getValue() * 10) / 10 * RENDER_BOX_FLAME_LENGTH);
     }
 
     /**

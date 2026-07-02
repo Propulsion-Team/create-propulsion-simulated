@@ -239,7 +239,9 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         return getPower();
     }
 
-    protected LerpedFloat interpolatedPower = LerpedFloat.linear().chase(0, 0.01, LerpedFloat.Chaser.LINEAR);
+    @OnlyIn(Dist.CLIENT)
+    //Used for client-side interpolation
+    protected LerpedFloat interpolatedPlumePower = LerpedFloat.linear().chase(0, 0.01, LerpedFloat.Chaser.LINEAR);
 
     public int getLegacyPowerInt() {
         return (int) Math.round(getPower() * 15);
@@ -279,8 +281,8 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         BlockState currentBlockState = isOutsideWorldHeight ? getBlockState() : SimulatedThrustAdapter.getBlockStateSafe(level, worldPosition);
         if (level.isClientSide) {
             ThrusterSoundHooks.clientTick(this);
-            interpolatedPower.updateChaseTarget(getPower());
-            interpolatedPower.tickChaser();
+            interpolatedPlumePower.updateChaseTarget(shouldEmitPlume() ? getPower() : 0);
+            interpolatedPlumePower.tickChaser();
             return;
         }
 
