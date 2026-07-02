@@ -62,9 +62,6 @@ It adds three thruster types:
 - **FoxyFox909** - Multiblock Thrusters
 - **DeltaSF** - Original Create: Propulsion creator for 1.20.1
 
-**Credits for external code and assets:**
-- Create: Connected for some code and models pertaining to the Fluid Vessel
-
 # Wiki
 
 - [ComputerCraft (CC: Tweaked)](wiki/cc/README.md)
