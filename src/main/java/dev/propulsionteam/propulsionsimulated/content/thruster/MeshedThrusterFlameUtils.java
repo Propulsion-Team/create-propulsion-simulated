@@ -27,7 +27,8 @@ import java.lang.Math;
 
 public class MeshedThrusterFlameUtils {
 
-    public static final ResourceLocation THRUSTER_FLAME_SHADER =  ResourceLocation.fromNamespaceAndPath("aeronautics", "burner_flame");
+    public static final ResourceLocation THRUSTER_FLAME_SHADER = CreatePropulsion.loc("thruster_flame");
+    //            ResourceLocation.fromNamespaceAndPath("aeronautics", "burner_flame");
     private static final float FLAME_SIZE = 2f;
     private static final float BLOCK_PIXEL = 1f / 16f;
     private static final float FLAME_PIXEL = BLOCK_PIXEL / FLAME_SIZE;
@@ -156,6 +157,7 @@ public class MeshedThrusterFlameUtils {
 
     /**
      * return a random float between 0 and 1 based on the seed
+     *
      * @param seed
      * @return
      */
