@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "PFP"
+  ],
+  "key": {
+    "P": {
+      "item": "createpropulsion:platinum_sheet"
+    },
+    "F": {
+      "item": "create:fluid_tank"
+    }
+  },
+  "result": {
+    "id": "createpropulsion:platinum_fluid_vessel"
+  }
+}
