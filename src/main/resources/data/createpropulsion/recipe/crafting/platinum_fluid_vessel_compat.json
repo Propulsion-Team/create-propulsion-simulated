@@ -1,0 +1,23 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "create_connected"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "PFP"
+  ],
+  "key": {
+    "P": {
+      "item": "createpropulsion:platinum_sheet"
+    },
+    "F": {
+      "item": "create_connected:fluid_vessel"
+    }
+  },
+  "result": {
+    "id": "createpropulsion:platinum_fluid_vessel"
+  }
+}

@@ -25,6 +25,7 @@
     "createpropulsion:vector_thruster",
     "createpropulsion:creative_vector_thruster",
     "createpropulsion:liquid_vector_thruster",
-    "createpropulsion:platinum_fluid_tank"
+    "createpropulsion:platinum_fluid_tank",
+    "createpropulsion:platinum_fluid_vessel"
   ]
 }

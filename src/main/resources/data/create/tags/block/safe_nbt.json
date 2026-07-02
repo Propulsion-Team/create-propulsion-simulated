@@ -4,6 +4,7 @@
     "createpropulsion:redstone_converter",
     "createpropulsion:redstone_transmission",
     "createpropulsion:tilt_adapter",
-    "createpropulsion:platinum_fluid_tank"
+    "createpropulsion:platinum_fluid_tank",
+    "createpropulsion:platinum_fluid_vessel"
   ]
 }

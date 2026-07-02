@@ -10,6 +10,8 @@ import dev.propulsionteam.propulsionsimulated.content.cable.relay.CableRelayBloc
 import dev.propulsionteam.propulsionsimulated.content.platinum.CoralGeneratorBlock;
 import dev.propulsionteam.propulsionsimulated.content.platinum.PlatinumFluidTankBlock;
 import dev.propulsionteam.propulsionsimulated.content.platinum.PlatinumFluidTankItem;
+import dev.propulsionteam.propulsionsimulated.content.platinum.PlatinumFluidVesselBlock;
+import dev.propulsionteam.propulsionsimulated.content.platinum.PlatinumFluidVesselItem;
 import dev.propulsionteam.propulsionsimulated.content.platinum.PlatinumCasingBlock;
 import dev.propulsionteam.propulsionsimulated.content.redstone_converter.RedstoneConverterBlock;
 import dev.propulsionteam.propulsionsimulated.content.redstone_transmission.RedstoneTransmissionBlock;
@@ -112,6 +114,9 @@ public class PropulsionBlocks {
     public static final DeferredBlock<PlatinumFluidTankBlock> PLATINUM_FLUID_TANK = BLOCKS.register("platinum_fluid_tank",
         () -> new PlatinumFluidTankBlock(Block.Properties.of().mapColor(MapColor.METAL).sound(SoundType.COPPER)
             .requiresCorrectToolForDrops().strength(2.5f, 2.0f).noOcclusion().isRedstoneConductor((s, l, p) -> true)));
+    public static final DeferredBlock<PlatinumFluidVesselBlock> PLATINUM_FLUID_VESSEL = BLOCKS.register("platinum_fluid_vessel",
+        () -> new PlatinumFluidVesselBlock(Block.Properties.of().mapColor(MapColor.METAL).sound(SoundType.COPPER)
+            .requiresCorrectToolForDrops().strength(2.5f, 2.0f).noOcclusion().isRedstoneConductor((s, l, p) -> true)));
     public static final DeferredBlock<CoralGeneratorBlock> CORAL_GENERATOR = BLOCKS.register("coral_generator",
         () -> new CoralGeneratorBlock(Block.Properties.of().mapColor(MapColor.COLOR_CYAN).sound(SoundType.STONE)
             .requiresCorrectToolForDrops().strength(3.5f, 3.0f).noOcclusion()));
@@ -151,6 +156,7 @@ public class PropulsionBlocks {
         registerDefaultBlockItem("raw_platinum_block", RAW_PLATINUM_BLOCK);
         registerDefaultBlockItem("platinum_casing", PLATINUM_CASING);
         BLOCK_ITEMS.register("platinum_fluid_tank", () -> new PlatinumFluidTankItem(PLATINUM_FLUID_TANK.get(), new BlockItem.Properties()));
+        BLOCK_ITEMS.register("platinum_fluid_vessel", () -> new PlatinumFluidVesselItem(PLATINUM_FLUID_VESSEL.get(), new BlockItem.Properties()));
         registerBlockItem("coral_generator", CORAL_GENERATOR, new BlockItem.Properties().rarity(Rarity.RARE));
         registerDefaultBlockItem("cable", FE_CABLE);
         registerDefaultBlockItem("cable_hub", CABLE_HUB);

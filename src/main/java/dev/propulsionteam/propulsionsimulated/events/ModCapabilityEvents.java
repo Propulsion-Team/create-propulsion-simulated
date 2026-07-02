@@ -64,6 +64,11 @@ public class ModCapabilityEvents {
             (be, side) -> be.getCapabilityHandler()
         );
         event.registerBlockEntity(
+            Capabilities.FluidHandler.BLOCK,
+            PropulsionBlockEntities.PLATINUM_FLUID_VESSEL_BLOCK_ENTITY.get(),
+            (be, side) -> be.getCapabilityHandler()
+        );
+        event.registerBlockEntity(
             Capabilities.EnergyStorage.BLOCK,
             PropulsionBlockEntities.CORAL_GENERATOR_BLOCK_ENTITY.get(),
             (be, side) -> ((CoralGeneratorBlockEntity) be).getEnergyHandler(side)

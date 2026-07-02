@@ -152,9 +152,10 @@ dependencies {
     compileOnly "curse.maven:createindustry-693815:7236535"
     //CC
     compileOnly "cc.tweaked:cc-tweaked-${minecraft_version}-forge:${cc_version}"
-    //JEI, create addition, Jade
+    //JEI, create addition, Create: Connected, Jade
     runtimeOnly "mezz.jei:jei-${minecraft_version}-neoforge:19.25.0.322"
     runtimeOnly files("libs/createaddition-1.5.10.jar")
+    runtimeOnly files("libs/create_connected-1.3.2-mc${minecraft_version}.jar")
     runtimeOnly files("libs/Jade-${minecraft_version}-NeoForge-15.10.5.jar")
     //KFF
     implementation "thedarkcolour:kotlinforforge-neoforge:5.9.0"

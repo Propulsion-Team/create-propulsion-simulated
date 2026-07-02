@@ -7,6 +7,8 @@ import com.simibubi.create.foundation.model.ModelSwapper;
 import dev.propulsionteam.propulsionsimulated.CreatePropulsion;
 import dev.propulsionteam.propulsionsimulated.content.heat.burners.liquid.LiquidBurnerRenderer;
 import dev.propulsionteam.propulsionsimulated.content.platinum.PlatinumFluidTankModel;
+import dev.propulsionteam.propulsionsimulated.content.platinum.PlatinumFluidVesselModel;
+import dev.propulsionteam.propulsionsimulated.content.platinum.PlatinumFluidVesselRenderer;
 import dev.propulsionteam.propulsionsimulated.content.thruster.solid_fuel_thruster.SolidFuelThrusterRenderer;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionBlocks;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionSpriteShifts;
@@ -155,6 +157,7 @@ public class ModClientEvents {
             ItemBlockRenderTypes.setRenderLayer(PropulsionFluids.OXIDIZER.get(), RenderType.translucent());
             ItemBlockRenderTypes.setRenderLayer(PropulsionFluids.FLOWING_OXIDIZER.get(), RenderType.translucent());
             ItemBlockRenderTypes.setRenderLayer(PropulsionBlocks.PLATINUM_FLUID_TANK.get(), RenderType.cutoutMipped());
+            ItemBlockRenderTypes.setRenderLayer(PropulsionBlocks.PLATINUM_FLUID_VESSEL.get(), RenderType.cutoutMipped());
         });
 
         PonderIndex.addPlugin(new DeltaPonderPlugin());
@@ -195,6 +198,7 @@ public class ModClientEvents {
         event.registerBlockEntityRenderer(PropulsionBlockEntities.TILT_ADAPTER_BLOCK_ENTITY.get(), TiltAdapterRenderer::new);
         event.registerBlockEntityRenderer(PropulsionBlockEntities.ADVANCED_TILT_ADAPTER_BLOCK_ENTITY.get(), TiltAdapterRenderer::new);
         event.registerBlockEntityRenderer(PropulsionBlockEntities.PLATINUM_FLUID_TANK_BLOCK_ENTITY.get(), FluidTankRenderer::new);
+        event.registerBlockEntityRenderer(PropulsionBlockEntities.PLATINUM_FLUID_VESSEL_BLOCK_ENTITY.get(), PlatinumFluidVesselRenderer::new);
     }
 
     @SubscribeEvent
@@ -206,5 +210,8 @@ public class ModClientEvents {
         ModelSwapper.swapModels(event.getModels(),
             ModelSwapper.getAllBlockStateModelLocations(PropulsionBlocks.PLATINUM_FLUID_TANK.get()),
             PlatinumFluidTankModel::new);
+        ModelSwapper.swapModels(event.getModels(),
+            ModelSwapper.getAllBlockStateModelLocations(PropulsionBlocks.PLATINUM_FLUID_VESSEL.get()),
+            PlatinumFluidVesselModel::new);
     }
 }
