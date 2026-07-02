@@ -169,26 +169,7 @@ public class MeshedThrusterFlameUtils {
         return (float) ((z >>> 40) * (1.0 / (1L << 24)));
     }
 
-    private static int hash(float x, float y, float z) {
-        // Start with a prime number
-        int result = 1;
 
-        // Combine each float
-        result = 31 * result + Float.floatToIntBits(x);
-        result = 31 * result + Float.floatToIntBits(y);
-        result = 31 * result + Float.floatToIntBits(z);
-        return result;
-    }
-
-    private static int hash(float x, float y) {
-        // Start with a prime number
-        int result = 1;
-
-        // Combine each float
-        result = 31 * result + Float.floatToIntBits(x);
-        result = 31 * result + Float.floatToIntBits(y);
-        return result;
-    }
 
     private static float getRenderBoxLength(AbstractThrusterBlockEntity be) {
         return (float) (Math.ceil(be.interpolatedPower.getValue() * 10) / 10 * RENDER_BOX_FLAME_LENGTH);
@@ -203,7 +184,12 @@ public class MeshedThrusterFlameUtils {
      */
     public static AABB inflateRenderBoundingBox(AbstractThrusterBlockEntity be, AABB box) {
         float length = getRenderBoxLength(be);
-        int hash = Float.floatToRawIntBits(length);
+
+        //Hash the state of the thruster
+        int hash = 1;
+        hash = 31 * hash + Float.floatToRawIntBits(length);
+        hash = 31 * hash + box.hashCode();
+
 
         if (be.boundingBoxHash != hash) {
             be.boundingBoxHash = hash;
@@ -235,8 +221,15 @@ public class MeshedThrusterFlameUtils {
         float xInflate = be.getInterpolatedVectorX(1) * 3.5f;
         float yInflate = be.getInterpolatedVectorY(1) * 3.5f;
         float length = Math.max(0, getRenderBoxLength(be) - Math.max(Math.abs(xInflate), Math.abs(yInflate)) * 0.8f);
-        int hash = hash(xInflate, yInflate, length);
 
+        //Hash the state of the thruster
+        int hash = 1;
+        hash = 31 * hash + Float.floatToRawIntBits(xInflate);
+        hash = 31 * hash + Float.floatToRawIntBits(yInflate);
+        hash = 31 * hash + Float.floatToRawIntBits(length);
+        hash = 31 * hash + box.hashCode();
+
+        //Compare the current vs previous state of the thruster
         if (be.boundingBoxHash != hash) {
             be.boundingBoxHash = hash;
             Vec3 center = box.getCenter();

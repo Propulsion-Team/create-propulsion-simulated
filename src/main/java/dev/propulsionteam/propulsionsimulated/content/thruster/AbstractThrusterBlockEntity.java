@@ -90,9 +90,10 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
 
     //We need to cache the bounding box to avoid recalculating it every tick
     @OnlyIn(Dist.CLIENT)
+    //Used for tracking the state of the thruster so we dont have to recalculate the bounding box every time
     protected int boundingBoxHash;
     @OnlyIn(Dist.CLIENT)
-    public AABB boundingBox = MeshedThrusterFlameUtils.NULL_AABB;
+    public AABB boundingBox = getSingleRenderBox();
     @OnlyIn(Dist.CLIENT)
     protected AABB multiblockBoundingBox;
 
@@ -132,7 +133,6 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         //Inflate and cache the bounding box
         AABB inflated = MeshedThrusterFlameUtils.inflateRenderBoundingBox(this, getSingleRenderBox());
         if (inflated != null) { //Update the bounding box
-//            System.out.println("Inflated bounding box: " + inflated);
             boundingBox = inflated;
             multiblockBoundingBox = null;
         }
