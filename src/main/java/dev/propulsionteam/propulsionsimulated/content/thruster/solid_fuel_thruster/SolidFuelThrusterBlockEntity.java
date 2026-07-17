@@ -17,6 +17,7 @@ import net.minecraft.world.Clearable;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -28,6 +29,11 @@ import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 
 import java.util.List;
+import dev.propulsionteam.propulsionsimulated.particles.smoke.ThrusterSmokeParticleData;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 
 public class SolidFuelThrusterBlockEntity extends AbstractThrusterBlockEntity implements Clearable {
     private static final float SUPERHEATED_THRUST_MULTIPLIER = 2.0f;
@@ -47,10 +53,6 @@ public class SolidFuelThrusterBlockEntity extends AbstractThrusterBlockEntity im
 
     public SolidFuelThrusterBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
-    }
-
-    public PropulsionConfig.ThrusterPlumeType getPlumeRenderType() {
-        return PropulsionConfig.getSolidFuelThrusterPlumeType();
     }
 
     @Override
@@ -344,8 +346,141 @@ public class SolidFuelThrusterBlockEntity extends AbstractThrusterBlockEntity im
         if (!super.shouldEmitPlume()) {
             return false;
         }
+
         ItemThrusterProperties properties = SolidThrusterFuelManager.getProperties(getFuelStack());
         return properties != null && properties.particleType() != ThrusterParticleType.NONE;
+    }
+
+    @Override
+    public void emitParticles(Level level, BlockPos pos, BlockState state) {
+        if (!shouldEmitParticles()) return;
+
+        float power = getPower();
+        if (power <= 0.035f) return;
+        if (getEmptyBlocks() <= 0) return;
+
+        WorldExhaustRay ray = getWorldExhaustRay();
+        if (ray == null) return;
+
+        Level particleLevel = ray.level();
+        Vec3 nozzle = ray.nozzlePos();
+        Vec3 direction = ray.direction();
+
+        if (particleLevel == null) return;
+        if (direction.lengthSqr() < 1.0e-8d) return;
+
+        direction = direction.normalize();
+
+        boolean hot = isSuperHeated();
+
+        double particleCountMultiplier = org.joml.Math.clamp(0.0d, PARTICLE_MULTIPLIER_CAP, getParticleCountMultiplier());
+        if (particleCountMultiplier <= 0.0d) return;
+
+        double particleVelocityMultiplier = org.joml.Math.clamp(0.0d, PARTICLE_MULTIPLIER_CAP, getParticleVelocityMultiplier());
+
+        double smokeStart = hot ? 4.4d : 3.7d;
+        double streamLength = hot ? 1.4d : 1.9d;
+        double streamRadius = hot ? 0.34d : 0.48d;
+
+        double particleSpeed = hot ? 0.86d : 0.78d;
+
+        float baseScale = hot ? 1.55f : 2.15f;
+        int baseLifetime = hot ? 34 : 46;
+
+        int particlesToSpawn = Math.max(
+                hot ? 2 : 3,
+                (int) java.lang.Math.round((hot ? 2.0d + power * 2.0d : 3.0d + power * 4.0d) * particleCountMultiplier)
+        );
+
+        Vec3 up = Math.abs(direction.y) < 0.92d ? new Vec3(0, 1, 0) : new Vec3(1, 0, 0);
+        Vec3 right = direction.cross(up).normalize();
+        Vec3 localUp = right.cross(direction).normalize();
+
+        for (int i = 0; i < particlesToSpawn; i++) {
+            double beamFrac = particlesToSpawn <= 1 ? 0.0d : (double) i / (double) particlesToSpawn;
+
+            double burst = java.lang.Math.pow(level.random.nextDouble(), 2.2d);
+            double angle = level.random.nextDouble() * java.lang.Math.PI * 2.0d;
+
+            double spawnSpread = streamRadius * (0.25d + burst * 0.45d);
+
+            Vec3 radial = right.scale(java.lang.Math.cos(angle) * spawnSpread)
+                    .add(localUp.scale(java.lang.Math.sin(angle) * spawnSpread));
+
+            double along = smokeStart
+                    + streamLength * beamFrac * 0.35d
+                    + level.random.nextDouble() * 0.32d;
+
+            Vec3 spawn = nozzle
+                    .add(direction.scale(along))
+                    .add(radial);
+
+            double punch = hot ? 1.55d : 1.85d;
+            double speedRandom = 0.82d + level.random.nextDouble() * 0.38d;
+
+            Vec3 outward = radial.lengthSqr() > 0.0001d
+                    ? radial.normalize().scale(0.018d + level.random.nextDouble() * 0.030d)
+                    : Vec3.ZERO;
+
+            Vec3 turbulent = right.scale((level.random.nextDouble() - 0.5d) * 0.035d)
+                    .add(localUp.scale((level.random.nextDouble() - 0.5d) * 0.035d));
+
+            Vec3 velocity = direction.scale(particleSpeed * punch * power * speedRandom * particleVelocityMultiplier)
+                    .add(outward)
+                    .add(turbulent)
+                    .add(0.0d, 0.004d + level.random.nextDouble() * 0.010d, 0.0d);
+
+            float sizeRandom = 0.75f + level.random.nextFloat() * 0.55f;
+            float distanceBoost = 0.85f + (float) beamFrac * 0.35f;
+            float scale = baseScale * sizeRandom * distanceBoost;
+
+            int lifetime = baseLifetime + level.random.nextInt(14);
+
+            float r = hot ? 0.12f : 0.22f;
+            float g = hot ? 0.16f : 0.20f;
+            float b = hot ? 0.20f : 0.19f;
+
+            ThrusterSmokeParticleData particle = new ThrusterSmokeParticleData(
+                    scale,
+                    lifetime,
+                    r,
+                    g,
+                    b
+            );
+
+            if (particleLevel instanceof ServerLevel serverLevel) {
+                double maxDistSq = PARTICLE_BROADCAST_RANGE_BLOCKS * PARTICLE_BROADCAST_RANGE_BLOCKS;
+
+                for (ServerPlayer player : serverLevel.players()) {
+                    if (player.distanceToSqr(spawn.x, spawn.y, spawn.z) > maxDistSq) continue;
+
+                    serverLevel.sendParticles(
+                            player,
+                            particle,
+                            true,
+                            spawn.x,
+                            spawn.y,
+                            spawn.z,
+                            0,
+                            velocity.x,
+                            velocity.y,
+                            velocity.z,
+                            1.0d
+                    );
+                }
+            } else {
+                particleLevel.addParticle(
+                        particle,
+                        true,
+                        spawn.x,
+                        spawn.y,
+                        spawn.z,
+                        velocity.x,
+                        velocity.y,
+                        velocity.z
+                );
+            }
+        }
     }
 
     @Override

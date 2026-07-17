@@ -4,7 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import com.simibubi.create.foundation.blockEntity.renderer.SmartBlockEntityRenderer;
-import dev.propulsionteam.propulsionsimulated.content.thruster.MeshedThrusterFlameUtils;
+import dev.propulsionteam.propulsionsimulated.client.render.plume.ThrusterVisualEffects;
 import dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterDebugRenderer;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionPartialModels;
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
@@ -25,28 +25,34 @@ public class CreativeThrusterRenderer extends SmartBlockEntityRenderer<CreativeT
 
     @Override
     protected void renderSafe(final CreativeThrusterBlockEntity be,
-                              final float partialTick,
+                              final float partialTicks,
                               final PoseStack ms,
                               final MultiBufferSource buffer,
                               final int light,
                               final int overlay) {
         ThrusterDebugRenderer.render(be, ms, buffer);
-        final BlockState state = be.getBlockState();
 
-        //Rendering
-        if (be.isMultiblock()) {
-            if (be.isController()) {
-                renderMultiblock(be, partialTick, ms, buffer, light, overlay, state);
-                return;
-            }
-        } else {
-            MeshedThrusterFlameUtils.renderMeshFlame(be, partialTick, ms, buffer);
+        if (be.isController() && be.shouldRenderShaderPlume()) {
+            ThrusterVisualEffects.render(
+                    be,
+                    partialTicks,
+                    ms,
+                    buffer,
+                    ThrusterVisualEffects.presetForCreativePlume(be.getPlumeType())
+            );
         }
 
-        //Visualization
+        final BlockState state = be.getBlockState();
+
+        if (be.isController() && be.isMultiblock()) {
+            renderMultiblock(be, ms, buffer, light, overlay, state);
+            return;
+        }
+
         if (VisualizationManager.supportsVisualization(be.getLevel())) {
             return;
         }
+
         if (!state.hasProperty(CreativeThrusterBlock.PLACEMENT_FACING)) {
             return;
         }
@@ -73,7 +79,6 @@ public class CreativeThrusterRenderer extends SmartBlockEntityRenderer<CreativeT
     }
 
     private void renderMultiblock(final CreativeThrusterBlockEntity be,
-                                  final float partialTick,
                                   final PoseStack ms,
                                   final MultiBufferSource buffer,
                                   final int light,
@@ -95,7 +100,6 @@ public class CreativeThrusterRenderer extends SmartBlockEntityRenderer<CreativeT
         ms.scale(w, w, w);
         mb.light(light).overlay(overlay).renderInto(ms, vb);
         ms.popPose();
-        MeshedThrusterFlameUtils.renderMultiblockFlame(be, partialTick, ms, buffer, w);
     }
 
     private static PartialModel getMultiblockModel(int width) {
@@ -122,6 +126,16 @@ public class CreativeThrusterRenderer extends SmartBlockEntityRenderer<CreativeT
         local.rotateX((float) Math.toRadians(-90));
         final double targetAngle = Math.toDegrees(Math.atan2(local.y, local.x));
         return (float) (targetAngle + 90);
+    }
+
+    @Override
+    public boolean shouldRenderOffScreen(CreativeThrusterBlockEntity be) {
+        return true;
+    }
+
+    @Override
+    public int getViewDistance() {
+        return 256;
     }
 }
 

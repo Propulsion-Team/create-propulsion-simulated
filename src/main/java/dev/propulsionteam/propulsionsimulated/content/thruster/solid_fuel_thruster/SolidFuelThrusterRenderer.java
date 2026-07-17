@@ -1,22 +1,10 @@
 package dev.propulsionteam.propulsionsimulated.content.thruster.solid_fuel_thruster;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Axis;
 import com.simibubi.create.foundation.blockEntity.renderer.SmartBlockEntityRenderer;
-import dev.engine_room.flywheel.lib.model.baked.PartialModel;
-import dev.propulsionteam.propulsionsimulated.content.thruster.AbstractThrusterBlock;
-import dev.propulsionteam.propulsionsimulated.content.thruster.MeshedThrusterFlameUtils;
-import dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterDebugRenderer;
-import dev.propulsionteam.propulsionsimulated.content.thruster.thruster.ThrusterBlockEntity;
-import dev.propulsionteam.propulsionsimulated.registries.PropulsionPartialModels;
-import net.createmod.catnip.render.CachedBuffers;
-import net.createmod.catnip.render.SuperByteBuffer;
+import dev.propulsionteam.propulsionsimulated.client.render.plume.ThrusterVisualEffects;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.core.Direction;
-import net.minecraft.world.level.block.state.BlockState;
 
 public class SolidFuelThrusterRenderer extends SmartBlockEntityRenderer<SolidFuelThrusterBlockEntity> {
     public SolidFuelThrusterRenderer(BlockEntityRendererProvider.Context context) {
@@ -24,9 +12,32 @@ public class SolidFuelThrusterRenderer extends SmartBlockEntityRenderer<SolidFue
     }
 
     @Override
-    protected void renderSafe(SolidFuelThrusterBlockEntity be, float partialTick, PoseStack ms, MultiBufferSource buffer, int light, int overlay) {
-        ThrusterDebugRenderer.render(be, ms, buffer);
-        MeshedThrusterFlameUtils.renderMeshFlame(be, partialTick, ms, buffer);
+    protected void renderSafe(SolidFuelThrusterBlockEntity be, float partialTicks, PoseStack ms, MultiBufferSource buffer, int light, int overlay) {
+        float targetPower = be.getBurnTime() > 0 && be.validFuel() && be.getPower() > 0.0f
+                ? be.getPower()
+                : 0.0f;
+
+        if (be.shouldRenderShaderPlume()) {
+            ThrusterVisualEffects.render(
+                    be,
+                    partialTicks,
+                    ms,
+                    buffer,
+                    be.isSuperHeated()
+                            ? ThrusterVisualEffects.Preset.SUPERHEATED_SOLID
+                            : ThrusterVisualEffects.Preset.SOLID,
+                    targetPower
+            );
+        }
     }
 
+    @Override
+    public boolean shouldRenderOffScreen(SolidFuelThrusterBlockEntity be) {
+        return true;
+    }
+
+    @Override
+    public int getViewDistance() {
+        return 256;
+    }
 }

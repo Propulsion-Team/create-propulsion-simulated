@@ -1,7 +1,6 @@
 package dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster;
 
 import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
-import dev.propulsionteam.propulsionsimulated.content.thruster.MeshedThrusterFlameUtils;
 import dev.propulsionteam.propulsionsimulated.particles.ion.IonParticleData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -68,11 +67,6 @@ public class VectorThrusterBlockEntity extends IonThrusterBlockEntity {
     protected VectorThrusterBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
     }
-
-    public PropulsionConfig.ThrusterPlumeType getPlumeRenderType() {
-        return PropulsionConfig.getVectorThrustersPlumeType();
-    }
-
 
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
@@ -158,11 +152,7 @@ public class VectorThrusterBlockEntity extends IonThrusterBlockEntity {
     @OnlyIn(Dist.CLIENT)
     @Override
     public AABB getRenderBoundingBox() {
-        if (getPlumeRenderType() == PropulsionConfig.ThrusterPlumeType.PARTICLES) return getSingleRenderBox();
-
-        AABB box = MeshedThrusterFlameUtils.inflateVectorRenderBoundingBox(this, getSingleRenderBox());
-        if (box != null) boundingBox = box; //Update the box instead of calculating it every tick
-        return boundingBox;
+        return super.getRenderBoundingBox();
     }
 
     /**

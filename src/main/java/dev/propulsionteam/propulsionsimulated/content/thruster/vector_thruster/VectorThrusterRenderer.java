@@ -4,13 +4,10 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import dev.propulsionteam.propulsionsimulated.content.thruster.AbstractThrusterBlock;
-import dev.propulsionteam.propulsionsimulated.content.thruster.MeshedThrusterFlameUtils;
 import dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterDebugRenderer;
 import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.creative_vector_thruster.CreativeVectorThrusterBlockEntity;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionPartialModels;
 import dev.engine_room.flywheel.lib.model.baked.PartialModel;
-import foundry.veil.api.client.render.VeilRenderSystem;
-import foundry.veil.api.client.render.shader.program.ShaderProgram;
 import net.createmod.catnip.render.CachedBuffers;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -93,25 +90,6 @@ public final class VectorThrusterRenderer {
         renderFlap(ms, vb, state, flapRight, light, overlay, FLAP_PIVOT_RIGHT_X, FLAP_PIVOT_SIDE_Y, FLAP_PIVOT_Z, Axis.YP, flapAngle);
         ms.popPose();
 
-        if (MeshedThrusterFlameUtils.isSpritePlume(be)) {
-            ms.pushPose();
-            // Orient to block facing
-            ms.translate(0.5, 0.5, 0.5);
-            applyFacingRotation(ms, facing);
-            ms.translate(-0.5, -0.5, -0.5);
-
-            // Apply yaw/pitch tilt around the nozzle pivot
-            ms.translate(PIVOT_X, PIVOT_Y, PIVOT_Z);
-            ms.mulPose(Axis.YP.rotationDegrees(yawDegrees));
-            ms.mulPose(Axis.XP.rotationDegrees(pitchDegrees));
-            ms.translate(-PIVOT_X, -PIVOT_Y, -PIVOT_Z);
-
-            final ShaderProgram shader = VeilRenderSystem.setShader(MeshedThrusterFlameUtils.THRUSTER_FLAME_SHADER);
-
-            MeshedThrusterFlameUtils.renderMeshVectorFlame(be, partialTick, ms, buffer, shader,
-                    be.isBluePlume());
-            ms.popPose();
-        }
     }
 
     private static void renderFlap(PoseStack ms, VertexConsumer vb, BlockState state, PartialModel model,
