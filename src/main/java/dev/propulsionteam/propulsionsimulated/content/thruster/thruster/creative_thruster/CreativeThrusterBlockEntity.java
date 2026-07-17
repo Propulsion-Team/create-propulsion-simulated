@@ -4,7 +4,6 @@ import java.util.List;
 
 import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
 import dev.propulsionteam.propulsionsimulated.content.thruster.AbstractThrusterBlock;
-import dev.propulsionteam.propulsionsimulated.content.thruster.MeshedThrusterFlameUtils;
 import dev.propulsionteam.propulsionsimulated.particles.ion.IonParticleData;
 import dev.propulsionteam.propulsionsimulated.particles.plasma.PlasmaParticleData;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionBlockEntities;
@@ -28,16 +27,17 @@ import net.minecraft.world.level.block.state.BlockState;
 import dev.propulsionteam.propulsionsimulated.content.thruster.SimulatedThrustAdapter;
 import dev.propulsionteam.propulsionsimulated.content.thruster.thruster.ThrusterBlock;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import dev.ryanhcode.sable.Sable;
-import org.joml.Vector3d;
 
 import javax.annotation.Nullable;
 
 public class CreativeThrusterBlockEntity extends AbstractThrusterBlockEntity {
     public static final int MAX_WIDTH = 3;
-
+    @Nullable
+    protected BlockPos controllerPos;
     protected boolean updateConnectivity = true;
     private static final int DISASSEMBLY_GRACE_TICKS = 5;
     private int disassemblyCooldown = 0;
@@ -56,12 +56,6 @@ public class CreativeThrusterBlockEntity extends AbstractThrusterBlockEntity {
     public CreativeThrusterBlockEntity(BlockPos pos, BlockState state) {
         this(PropulsionBlockEntities.CREATIVE_THRUSTER_BLOCK_ENTITY.get(), pos, state);
     }
-
-    public PropulsionConfig.ThrusterPlumeType getPlumeRenderType() {
-        return PropulsionConfig.getCreativeThrusterPlumeType();
-    }
-
-
 
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
@@ -201,12 +195,17 @@ public class CreativeThrusterBlockEntity extends AbstractThrusterBlockEntity {
         }
     }
 
+    public boolean isMultiblock() {
+        return width > 1;
+    }
 
-    @Override
-    public boolean supportsMultiblock() {
+    protected boolean supportsMultiblock() {
         return true;
     }
 
+    public boolean isController() {
+        return controllerPos == null;
+    }
 
     public boolean isBaseLayerMember() {
         if (!isMultiblock()) return true;
@@ -360,8 +359,7 @@ public class CreativeThrusterBlockEntity extends AbstractThrusterBlockEntity {
                     BlockPos pos = origin.offset(x, y, z);
                     BlockState state = SimulatedThrustAdapter.getBlockStateSafe(level, pos);
                     if (!state.is(expectedBlock)) return false;
-                    if (!state.hasProperty(AbstractThrusterBlock.FACING) || state.getValue(AbstractThrusterBlock.FACING) != facing)
-                        return false;
+                    if (!state.hasProperty(AbstractThrusterBlock.FACING) || state.getValue(AbstractThrusterBlock.FACING) != facing) return false;
                     BlockEntity be = SimulatedThrustAdapter.getBlockEntitySafe(level, pos);
                     if (!(be instanceof CreativeThrusterBlockEntity t)) return false;
                     CreativeThrusterBlockEntity ctrl = t.getControllerBE();
@@ -418,19 +416,7 @@ public class CreativeThrusterBlockEntity extends AbstractThrusterBlockEntity {
 
     @Override
     public boolean shouldEmitPlume() {
-        if (plumeType == PlumeType.NONE)
-            return false;
-
-        if (!isPowered())
-            return false;
-
-        if (isMultiblock() && !isController())
-            return false;
-
-        if (isMultiblock() && calculateObstructionEffect() <= 0f)
-            return false;
-
-        return hasPlumeSpace();
+        return plumeType != PlumeType.NONE && super.shouldEmitPlume();
     }
 
     private Vec3 getMultiblockCenterNozzlePositionLocal() {
@@ -438,67 +424,11 @@ public class CreativeThrusterBlockEntity extends AbstractThrusterBlockEntity {
         Vec3 localExhaustDirection = new Vec3(exhaustDirection.getStepX(), exhaustDirection.getStepY(), exhaustDirection.getStepZ());
         double half = width * 0.5d;
         Vec3 localCubeCenter = new Vec3(
-                worldPosition.getX() + half,
-                worldPosition.getY() + half,
-                worldPosition.getZ() + half
+            worldPosition.getX() + half,
+            worldPosition.getY() + half,
+            worldPosition.getZ() + half
         );
         return localCubeCenter.add(localExhaustDirection.scale(half + 0.45d));
-    }
-
-    @Override
-    public void emitPlumeParticles(Level level, BlockPos pos, BlockState state) {
-        if (!(isController() && isMultiblock())) {
-            super.emitPlumeParticles(level, pos, state);
-            return;
-        }
-        if (!shouldEmitPlume()) return;
-        float power = getPower();
-        float emissionScale = (float) Math.max(power, 1e-6f);
-        if (power <= 0) return;
-
-        Direction direction = state.getValue(AbstractThrusterBlock.FACING);
-        Direction oppositeDirection = direction.getOpposite();
-        Vec3 localExhaustDirection = new Vec3(oppositeDirection.getStepX(), oppositeDirection.getStepY(), oppositeDirection.getStepZ());
-        Vec3 localNozzlePosition = getMultiblockCenterNozzlePositionLocal();
-
-        Vec3 worldNozzlePosition = Sable.HELPER.projectOutOfSubLevel(level, localNozzlePosition);
-        Vec3 worldAheadPosition = Sable.HELPER.projectOutOfSubLevel(level, localNozzlePosition.add(localExhaustDirection));
-        Vec3 worldExhaustDirection = worldAheadPosition.subtract(worldNozzlePosition);
-        if (worldExhaustDirection.lengthSqr() < 1e-6) {
-            worldExhaustDirection = localExhaustDirection;
-        } else {
-            worldExhaustDirection = worldExhaustDirection.normalize();
-        }
-
-        double particleCountMultiplier = org.joml.Math.clamp(0.0d, PARTICLE_MULTIPLIER_CAP, getParticleCountMultiplier());
-        if (particleCountMultiplier <= 0) return;
-        double particleVelocityMultiplier = org.joml.Math.clamp(0.0d, PARTICLE_MULTIPLIER_CAP, getParticleVelocityMultiplier());
-
-        float velocityScale = width == 2 ? 1.15f : 1.3f;
-        Vector3d particleVelocity = new Vector3d(worldExhaustDirection.x, worldExhaustDirection.y, worldExhaustDirection.z)
-                .mul(4.0f * emissionScale * velocityScale * particleVelocityMultiplier);
-        ParticleOptions particleData = createParticleOptions();
-
-        double speedPerTick = particleVelocity.length();
-        int streamParticles = Math.max(1, (int) Math.ceil(speedPerTick / TARGET_PARTICLE_SPACING_BLOCKS * particleCountMultiplier));
-        int crossSectionParticles = Math.max(1, (int) Math.round((width == 2 ? 14 : 28) * particleCountMultiplier));
-        int particlesToSpawn = Math.max(streamParticles, crossSectionParticles);
-        double plumeRadius = width == 2 ? 0.45 : 0.7;
-        for (int i = 0; i < particlesToSpawn; i++) {
-            double ox = (level.random.nextDouble() * 2.0 - 1.0) * plumeRadius;
-            double oy = (level.random.nextDouble() * 2.0 - 1.0) * plumeRadius;
-            double oz = (level.random.nextDouble() * 2.0 - 1.0) * plumeRadius;
-            switch (oppositeDirection.getAxis()) {
-                case X -> ox = 0.0;
-                case Y -> oy = 0.0;
-                case Z -> oz = 0.0;
-            }
-            double beamFrac = particlesToSpawn <= 1 ? 0.0 : (double) i / (double) particlesToSpawn;
-            double px = worldNozzlePosition.x + ox + particleVelocity.x * beamFrac;
-            double py = worldNozzlePosition.y + oy + particleVelocity.y * beamFrac;
-            double pz = worldNozzlePosition.z + oz + particleVelocity.z * beamFrac;
-            emitParticle(px, py, pz, particleVelocity, particleData);
-        }
     }
 
     private boolean hasPlumeSpace() {
@@ -507,7 +437,7 @@ public class CreativeThrusterBlockEntity extends AbstractThrusterBlockEntity {
 
         Direction facing = getBlockState().getValue(CreativeThrusterBlock.FACING);
         BlockPos plumeOccupiedPosition = worldPosition.relative(facing.getOpposite());
-        return !SimulatedThrustAdapter.getBlockStateSafe(level, plumeOccupiedPosition).isFaceSturdy(level, plumeOccupiedPosition, facing);
+        return !SimulatedThrustAdapter.getBlockStateSafe(level,plumeOccupiedPosition).isFaceSturdy(level, plumeOccupiedPosition, facing);
     }
 
     @Override
@@ -627,7 +557,7 @@ public class CreativeThrusterBlockEntity extends AbstractThrusterBlockEntity {
 
     @Override
     protected void write(CompoundTag compound, net.minecraft.core.HolderLookup.Provider registries,
-                         boolean clientPacket) {
+            boolean clientPacket) {
         super.write(compound, registries, clientPacket);
         compound.putInt("plumeType", plumeType.ordinal());
         compound.putInt("Width", width);
@@ -643,7 +573,7 @@ public class CreativeThrusterBlockEntity extends AbstractThrusterBlockEntity {
 
     @Override
     protected void read(CompoundTag compound, net.minecraft.core.HolderLookup.Provider registries,
-                        boolean clientPacket) {
+            boolean clientPacket) {
         super.read(compound, registries, clientPacket);
         width = Math.max(1, compound.getInt("Width"));
         if (compound.contains("plumeType")) {
@@ -663,7 +593,15 @@ public class CreativeThrusterBlockEntity extends AbstractThrusterBlockEntity {
         updateConnectivity = width <= 1 || !compound.contains("UpdateConnectivity") || savedConnectivity;
     }
 
-
+    @Override
+    public AABB getRenderBoundingBox() {
+        if (isController() && isMultiblock()) {
+            return new AABB(
+                    worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(),
+                    worldPosition.getX() + width, worldPosition.getY() + width, worldPosition.getZ() + width);
+        }
+        return super.getRenderBoundingBox();
+    }
 
     @Override
     public void afterMove(ServerLevel oldLevel, ServerLevel newLevel, BlockState state, BlockPos oldPos, BlockPos newPos) {

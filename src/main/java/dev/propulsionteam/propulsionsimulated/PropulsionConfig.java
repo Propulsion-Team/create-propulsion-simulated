@@ -63,19 +63,12 @@ public class PropulsionConfig {
     public static final Map<String, ModConfigSpec.ConfigValue<String>> THRUSTER_DYE_COLORS = new LinkedHashMap<>();
     public static final ModConfigSpec.IntValue CABLE_ENERGY_TRANSFER;
 
-    public enum ThrusterPlumeType {
-        PARTICLES,
-        SPRITE_MESH,
-        SPRITE_MESH_SINGLE_MULTIBLOCK,
-        ROUND_MESH
+    public enum PlumeRenderMode {
+        PARTICLE,
+        SHADER
     }
 
-    //flame config options
-    public static final ModConfigSpec.EnumValue<ThrusterPlumeType> THRUSTER_PLUME_TYPE;
-    public static final ModConfigSpec.EnumValue<ThrusterPlumeType> CREATIVE_THRUSTER_PLUME_TYPE;
-    public static final ModConfigSpec.EnumValue<ThrusterPlumeType> ION_THRUSTER_PLUME_TYPE;
-    public static final ModConfigSpec.EnumValue<ThrusterPlumeType> VECTOR_THRUSTERS_PLUME_TYPE;
-    public static final ModConfigSpec.EnumValue<ThrusterPlumeType> SOLID_FUEL_THRUSTER_PLUME_TYPE;
+    public static final ModConfigSpec.EnumValue<PlumeRenderMode> PLUME_RENDER_MODE;
 
 
     public static final ModConfigSpec.BooleanValue DEBUG_THRUSTER;
@@ -340,13 +333,9 @@ public class PropulsionConfig {
                 .define("Thruster", false);
         CLIENT_BUILDER.pop();
 
-        CLIENT_BUILDER.push("Thruster Render Types");
-        CLIENT_BUILDER.comment("How the thruster plume should be rendered.");
-        THRUSTER_PLUME_TYPE = CLIENT_BUILDER.defineEnum("Thruster Plume Type", ThrusterPlumeType.PARTICLES);
-        CREATIVE_THRUSTER_PLUME_TYPE = CLIENT_BUILDER.defineEnum("Creative Thruster Plume Type", ThrusterPlumeType.SPRITE_MESH);
-        ION_THRUSTER_PLUME_TYPE = CLIENT_BUILDER.defineEnum("Ion Thruster Plume Type", ThrusterPlumeType.SPRITE_MESH);
-        SOLID_FUEL_THRUSTER_PLUME_TYPE = CLIENT_BUILDER.defineEnum("Solid Fuel Thruster Plume Type", ThrusterPlumeType.PARTICLES);
-        VECTOR_THRUSTERS_PLUME_TYPE = CLIENT_BUILDER.defineEnum("Vector Thrusters Plume Type", ThrusterPlumeType.SPRITE_MESH);
+        CLIENT_BUILDER.push("Thruster Plumes");
+        PLUME_RENDER_MODE = CLIENT_BUILDER.comment("How every thruster plume is rendered. Particle uses normal particle effects; Shader uses the procedural plume shader.")
+                .defineEnum("renderMode", PlumeRenderMode.PARTICLE);
         CLIENT_BUILDER.pop();
 
 
@@ -517,24 +506,8 @@ public class PropulsionConfig {
     }
 
 
-    public static ThrusterPlumeType getThrusterPlumeType() {
-        return THRUSTER_PLUME_TYPE.get();
-    }
-
-    public static ThrusterPlumeType getCreativeThrusterPlumeType() {
-        return CREATIVE_THRUSTER_PLUME_TYPE.get();
-    }
-
-    public static ThrusterPlumeType getIonThrusterPlumeType() {
-        return ION_THRUSTER_PLUME_TYPE.get();
-    }
-
-    public static ThrusterPlumeType getVectorThrustersPlumeType() {
-        return VECTOR_THRUSTERS_PLUME_TYPE.get();
-    }
-
-    public static ThrusterPlumeType getSolidFuelThrusterPlumeType() {
-        return SOLID_FUEL_THRUSTER_PLUME_TYPE.get();
+    public static boolean useShaderPlumes() {
+        return PLUME_RENDER_MODE.get() == PlumeRenderMode.SHADER;
     }
 
 }

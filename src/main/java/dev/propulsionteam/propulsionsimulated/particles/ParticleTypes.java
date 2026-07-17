@@ -7,7 +7,7 @@ import dev.propulsionteam.propulsionsimulated.particles.plasma.PlasmaParticleDat
 import dev.propulsionteam.propulsionsimulated.particles.plume.PlumeParticleData;
 import dev.propulsionteam.propulsionsimulated.particles.ion.IonParticleData;
 import com.simibubi.create.foundation.particle.ICustomParticleData;
-
+import dev.propulsionteam.propulsionsimulated.particles.smoke.ThrusterSmokeParticleData;
 import com.simibubi.create.foundation.utility.CreateLang;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.core.particles.ParticleOptions;
@@ -26,7 +26,8 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 public enum ParticleTypes {
     PLUME(PlumeParticleData::new),
     PLASMA(PlasmaParticleData::new),
-    ION(IonParticleData::new);
+    ION(IonParticleData::new),
+    SMOKE(ThrusterSmokeParticleData::new);
 
     private final ParticleEntry<?> entry;
 
@@ -43,6 +44,7 @@ public enum ParticleTypes {
     public static ParticleType<?> getPlumeType() { return PLUME.get(); }
     public static ParticleType<?> getPlasmaType() { return PLASMA.get(); }
     public static ParticleType<?> getIonType() { return ION.get(); }
+    public static ParticleType<?> getSmokeType() { return SMOKE.get(); }
 
     public static void register(IEventBus modEventBus){
         ParticleEntry.REGISTER.register(modEventBus);
