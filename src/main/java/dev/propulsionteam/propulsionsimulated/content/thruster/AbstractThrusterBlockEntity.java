@@ -65,6 +65,8 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
     protected int emptyBlocks;
     protected boolean isThrustDirty = false;
     protected boolean isDirty = false;
+    @javax.annotation.Nullable
+    private Vec3 previousParticleNozzleWorld;
 
     //Ticking
     private int currentTick = 0;
@@ -257,7 +259,7 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
     }
 
     public boolean shouldEmitPlume() {
-        return isPowered() && isWorking();
+        return isVisuallyActive();
     }
 
     public boolean shouldRenderShaderPlume() {
@@ -566,6 +568,7 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
     @Override
     public void afterMove(ServerLevel oldLevel, ServerLevel newLevel, BlockState state, BlockPos oldPos, BlockPos newPos) {
         // Recompute obstruction and refresh redstone-derived power after assembly/disassembly moves.
+        previousParticleNozzleWorld = null;
         if (newLevel != null) {
             setRedstoneInput(newLevel.getBestNeighborSignal(newPos));
             calculateObstruction(newLevel, newPos, state.getValue(AbstractThrusterBlock.FACING));
@@ -584,7 +587,6 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         float emissionScale = (float) Math.max(power, MathUtility.epsilon);
 
         Vec3 localExhaustDirection = getParticleDebugExhaustDirectionLocal();
-        Vector3d additionalVel = new Vector3d();
         Vec3 localNozzlePosition = getParticleDebugNozzlePositionLocal();
 
         // Convert local sublevel coordinates into world-space coordinates so particles align
@@ -598,9 +600,21 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
             worldExhaustDirection = worldExhaustDirection.normalize();
         }
 
+        // Particles live in world space, so they must inherit the nozzle's motion. Without
+        // this tangential velocity, particles emitted from a rotating sublevel can be swept
+        // back through the thruster and appear stuck inside it.
+        Vector3d nozzleVelocity = previousParticleNozzleWorld == null
+            ? new Vector3d()
+            : new Vector3d(
+                worldNozzlePosition.x - previousParticleNozzleWorld.x,
+                worldNozzlePosition.y - previousParticleNozzleWorld.y,
+                worldNozzlePosition.z - previousParticleNozzleWorld.z
+            );
+        previousParticleNozzleWorld = worldNozzlePosition;
+
         Vector3d particleVelocity = new Vector3d(worldExhaustDirection.x, worldExhaustDirection.y, worldExhaustDirection.z)
             .mul(getParticleVelocity() * emissionScale * particleVelocityMultiplier)
-            .add(additionalVel);
+            .add(nozzleVelocity);
 
         // Enough particles each tick so spacing along the velocity vector stays near TARGET_PARTICLE_SPACING_BLOCKS (no fractional carry → no skipped ticks).
         double speedPerTick = particleVelocity.length();
