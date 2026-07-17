@@ -5,7 +5,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import com.simibubi.create.foundation.blockEntity.renderer.SmartBlockEntityRenderer;
 import dev.engine_room.flywheel.lib.model.baked.PartialModel;
-import dev.propulsionteam.propulsionsimulated.client.render.plume.ThrusterVisualEffects;
+import dev.propulsionteam.propulsionsimulated.client.render.plume.ThrusterPlumeRenderer;
 import dev.propulsionteam.propulsionsimulated.content.thruster.AbstractThrusterBlock;
 import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.VectorRedstoneLinkRenderer;
 import dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterDebugRenderer;
@@ -32,23 +32,7 @@ public class IonThrusterRenderer extends SmartBlockEntityRenderer<IonThrusterBlo
         super.renderSafe(be, partialTicks, ms, buffer, light, overlay);
         ThrusterDebugRenderer.render(be, ms, buffer);
 
-        if (be.isController() && be.shouldRenderShaderPlume()) {
-            if (be instanceof dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.creative_vector_thruster.CreativeVectorThrusterBlockEntity creativeVector) {
-                if (creativeVector.getPlumeType() != dev.propulsionteam.propulsionsimulated.content.thruster.thruster.creative_thruster.CreativeThrusterBlockEntity.PlumeType.NONE) {
-                    ThrusterVisualEffects.render(
-                            be,
-                            partialTicks,
-                            ms,
-                            buffer,
-                            ThrusterVisualEffects.presetForCreativePlume(creativeVector.getPlumeType())
-                    );
-                }
-            } else if (be instanceof dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.VectorThrusterBlockEntity) {
-                ThrusterVisualEffects.render(be, partialTicks, ms, buffer, ThrusterVisualEffects.Preset.VECTOR);
-            } else {
-                ThrusterVisualEffects.render(be, partialTicks, ms, buffer, ThrusterVisualEffects.Preset.ION);
-            }
-        }
+        ThrusterPlumeRenderer.render(be, partialTicks, ms, buffer);
 
         if (be.isController() && be.isMultiblock()) {
             renderMultiblock(be, ms, buffer, light, overlay);

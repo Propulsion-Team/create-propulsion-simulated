@@ -20,6 +20,8 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import org.joml.Vector3d;
 import java.util.List;
 
@@ -248,6 +250,52 @@ public class LiquidVectorThrusterBlockEntity extends VectorThrusterBlockEntity {
     @Override
     public boolean supportsMultiblock() {
         return false;
+    }
+
+    /**
+     * This class inherits vector steering from the ion thruster, but its propulsion is fuel-based.
+     * Do not inherit IonThrusterBlockEntity's empty-fluid and FE-only visual predicates.
+     */
+    @Override
+    public FluidStack fluidStack() {
+        return tank == null ? FluidStack.EMPTY : tank.getPrimaryHandler().getFluid();
+    }
+
+    @Override
+    public boolean validFluid() {
+        FluidStack fuel = fluidStack();
+        return !fuel.isEmpty() && getFuelProperties(fuel.getFluid()) != null;
+    }
+
+    @Override
+    protected boolean isWorking() {
+        return validFluid();
+    }
+
+    @Override
+    public boolean isVisuallyActive() {
+        return getThrottle() > 0.0d && validFluid();
+    }
+
+    @Override
+    public IFluidHandler getFluidHandler(Direction side) {
+        if (tank == null || (side != null && side != getFluidCapSide())) {
+            return null;
+        }
+        return tank.getPrimaryHandler();
+    }
+
+    @Override
+    public void updateThrust(BlockState currentBlockState) {
+        updateSingleThrust(currentBlockState);
+    }
+
+    /** Shared plume resolver access to the existing fuel-driven particle selection. */
+    public net.minecraft.core.particles.ParticleOptions createResolvedParticleOptions() {
+        var properties = getFuelProperties(fluidStack().getFluid());
+        return properties == null
+                ? new dev.propulsionteam.propulsionsimulated.particles.plume.PlumeParticleData()
+                : properties.particleType().createParticleOptions(properties);
     }
 
     private void onVectorSignalChanged() {

@@ -197,8 +197,8 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
             ThrusterSoundHooks.clientTick(this);
             return;
         }
-        if (shouldEmitParticles()) {
-            emitParticles(level, worldPosition, currentBlockState);
+        if (!PropulsionConfig.useShaderPlumes()) {
+            emitResolvedParticles(level, worldPosition, currentBlockState);
         }
 
         currentTick++;
@@ -576,9 +576,16 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         }
     }
 
+    /** Compatibility entrypoint; base ticking uses the non-overridable resolved path below. */
     public void emitParticles(Level level, BlockPos pos, BlockState state) {
+        emitResolvedParticles(level, pos, state);
+    }
+
+    private void emitResolvedParticles(Level level, BlockPos pos, BlockState state) {
+        ThrusterPlumeSpec plume = ThrusterPlumeResolver.resolve(this);
+        if (!plume.active() || plume.particle() == null) return;
         if (emptyBlocks == 0) return;
-        float power = getPower();
+        float power = plume.power();
 
         double particleCountMultiplier = org.joml.Math.clamp(0.0d, PARTICLE_MULTIPLIER_CAP, getParticleCountMultiplier());
         if (particleCountMultiplier <= 0) return;
@@ -621,7 +628,7 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         double density = speedPerTick / TARGET_PARTICLE_SPACING_BLOCKS * particleCountMultiplier;
         int particlesToSpawn = Math.max(1, (int) Math.ceil(density));
 
-        ParticleOptions particleData = createParticleOptions();
+        ParticleOptions particleData = plume.particle();
 
         for (int i = 0; i < particlesToSpawn; i++) {
             // Spawn every particle at the nozzle. Pre-spreading along the current velocity

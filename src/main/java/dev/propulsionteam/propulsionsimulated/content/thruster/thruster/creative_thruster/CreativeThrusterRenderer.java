@@ -4,7 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import com.simibubi.create.foundation.blockEntity.renderer.SmartBlockEntityRenderer;
-import dev.propulsionteam.propulsionsimulated.client.render.plume.ThrusterVisualEffects;
+import dev.propulsionteam.propulsionsimulated.client.render.plume.ThrusterPlumeRenderer;
 import dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterDebugRenderer;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionPartialModels;
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
@@ -32,15 +32,7 @@ public class CreativeThrusterRenderer extends SmartBlockEntityRenderer<CreativeT
                               final int overlay) {
         ThrusterDebugRenderer.render(be, ms, buffer);
 
-        if (be.isController() && be.shouldRenderShaderPlume()) {
-            ThrusterVisualEffects.render(
-                    be,
-                    partialTicks,
-                    ms,
-                    buffer,
-                    ThrusterVisualEffects.presetForCreativePlume(be.getPlumeType())
-            );
-        }
+        ThrusterPlumeRenderer.render(be, partialTicks, ms, buffer);
 
         final BlockState state = be.getBlockState();
 

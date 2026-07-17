@@ -90,6 +90,11 @@ public class CreativeVectorThrusterBlockEntity extends VectorThrusterBlockEntity
         return hasPlumeSpace();
     }
 
+    @Override
+    public boolean isVisuallyActive() {
+        return shouldEmitPlume();
+    }
+
     private boolean hasPlumeSpace() {
         if (level == null)
             return false;
@@ -111,18 +116,25 @@ public class CreativeVectorThrusterBlockEntity extends VectorThrusterBlockEntity
 
     @Override
     protected ParticleOptions createParticleOptions() {
-        Integer color = getDyeColor();
         if (plumeType == CreativeThrusterBlockEntity.PlumeType.PLASMA) {
-            return new PlasmaParticleData(List.of(), color);
+            return new PlasmaParticleData();
         }
         if (plumeType == CreativeThrusterBlockEntity.PlumeType.ION) {
-            float size = Mth.lerp(getInterpolatedFlapProgress(1.0f), 0.85f, 0.35f);
-            return new IonParticleData(List.of(), color, size);
+            return new IonParticleData();
         }
         if (plumeType == CreativeThrusterBlockEntity.PlumeType.PLUME) {
-            return new PlumeParticleData(List.of(), color);
+            return new PlumeParticleData();
         }
-        return new PlumeParticleData(List.of(), color);
+        return new PlumeParticleData();
+    }
+
+    /** Creative-vector Ion mode retains the vector nozzle's redstone-driven particle narrowing. */
+    public ParticleOptions createCreativeVectorPlumeParticleOptions() {
+        if (plumeType == CreativeThrusterBlockEntity.PlumeType.ION) {
+            float size = Mth.lerp(getInterpolatedFlapProgress(1.0f), 0.85f, 0.35f);
+            return new IonParticleData(List.of(), null, size);
+        }
+        return createParticleOptions();
     }
 
 

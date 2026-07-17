@@ -5,7 +5,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import com.simibubi.create.foundation.blockEntity.renderer.SmartBlockEntityRenderer;
 import dev.engine_room.flywheel.lib.model.baked.PartialModel;
-import dev.propulsionteam.propulsionsimulated.client.render.plume.ThrusterVisualEffects;
+import dev.propulsionteam.propulsionsimulated.client.render.plume.ThrusterPlumeRenderer;
 import dev.propulsionteam.propulsionsimulated.content.thruster.AbstractThrusterBlock;
 import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.VectorRedstoneLinkRenderer;
 import dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterDebugRenderer;
@@ -29,9 +29,7 @@ public class LiquidVectorThrusterRenderer extends SmartBlockEntityRenderer<Liqui
         super.renderSafe(be, partialTick, ms, buffer, light, overlay);
         ThrusterDebugRenderer.render(be, ms, buffer);
 
-        if (be.shouldRenderShaderPlume()) {
-            ThrusterVisualEffects.render(be, partialTick, ms, buffer, ThrusterVisualEffects.Preset.FIRE);
-        }
+        ThrusterPlumeRenderer.render(be, partialTick, ms, buffer);
 
         if (be == null || be.isRemoved()) return;
 

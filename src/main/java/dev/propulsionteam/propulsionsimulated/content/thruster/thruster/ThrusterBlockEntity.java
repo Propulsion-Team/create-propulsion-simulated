@@ -1149,6 +1149,11 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
         return ThrusterFuelManager.getProperties(fluid);
     }
 
+    /** Shared plume resolver access to the existing fuel-driven particle selection. */
+    public ParticleOptions createResolvedParticleOptions() {
+        return createParticleOptions();
+    }
+
     @Override
     protected ParticleOptions createParticleOptions() {
         FluidThrusterProperties properties = getFuelProperties(fluidStack().getFluid());
