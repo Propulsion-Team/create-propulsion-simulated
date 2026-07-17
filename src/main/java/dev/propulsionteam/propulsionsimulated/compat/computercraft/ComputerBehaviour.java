@@ -81,6 +81,7 @@ public class ComputerBehaviour extends AbstractComputerBehaviour {
     }
 
     /** @deprecated use {@link #findPeripheralSupplier} */
+    @Deprecated
     public static Supplier<IPeripheral> getPeripheralFor(SmartBlockEntity blockEntity) {
         return findPeripheralSupplier(blockEntity).orElseThrow(() ->
             new IllegalArgumentException("No peripheral available for " + blockEntity.getClass().getName()));

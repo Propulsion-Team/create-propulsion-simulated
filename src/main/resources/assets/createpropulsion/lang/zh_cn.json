@@ -121,7 +121,7 @@
   "createpropulsion.creative_thruster.tooltip.summary": "拥有无限燃料的推进器，可调节推力，可通过扳手循环切换粒子效果。",
   "createpropulsion.ion_thruster.tooltip.summary": "被红石充能且提供FE能量时，可提供定向推力。",
   "createpropulsion.vector_thruster.tooltip.summary": "方向性推进器，还可偏航和俯仰，实现矢量推力控制。",
-  "createpropulsion.liquid_vector_thruster.tooltip.summary": "方向性推进器，使用液体燃料而非FE能量实现偏航和俯仰。",
+  "createpropulsion.liquid_vector_thruster.tooltip.summary": "方向性推进器由红石驱动并消耗液体燃料，可实现偏航和俯仰。",
   "createpropulsion.copycat_wing.tooltip.summary": "能将任意_完整方块_转变为_装饰_机翼。可根据物理结构的_方向_与_速度_提供_升力_。",
   "createpropulsion.copycat_wing_8.tooltip.summary": "用于物理结构的较宽伪装风帆方块。放置后，使用其他方块对准并点击，可更改其材质。",
   "createpropulsion.copycat_wing_12.tooltip.summary": "用于物理结构的最宽伪装风帆方块。放置后，使用其他方块对准并点击，可更改其材质。",

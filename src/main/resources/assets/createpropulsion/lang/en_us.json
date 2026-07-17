@@ -121,7 +121,7 @@
     "createpropulsion.creative_thruster.tooltip.summary": "Infinite-fuel thruster with configurable output and particle mode cycling via wrench.",
     "createpropulsion.ion_thruster.tooltip.summary": "Provides directional thrust when powered by redstone and supplied with FE energy.",
     "createpropulsion.vector_thruster.tooltip.summary": "Directional thruster that can also yaw and pitch for vectored thrust control.",
-    "createpropulsion.liquid_vector_thruster.tooltip.summary": "Directional thruster that can yaw and pitch using liquid fuel instead of FE energy.",
+    "createpropulsion.liquid_vector_thruster.tooltip.summary": "Directional thruster that can yaw and pitch when powered by redstone and fueled with liquid fuel.",
     "createpropulsion.copycat_wing.tooltip.summary": "A lightweight copycat sail block for contraptions. Place and then apply another block to copy its material.",
     "createpropulsion.copycat_wing_8.tooltip.summary": "A wider copycat sail block for contraptions. Place and then apply another block to copy its material.",
     "createpropulsion.copycat_wing_12.tooltip.summary": "The widest copycat sail block for contraptions. Place and then apply another block to copy its material.",

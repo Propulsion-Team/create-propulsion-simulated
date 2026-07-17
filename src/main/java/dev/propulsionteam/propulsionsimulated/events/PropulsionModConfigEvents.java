@@ -10,7 +10,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.event.config.ModConfigEvent;
 
-@EventBusSubscriber(modid = CreatePropulsion.ID, bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = CreatePropulsion.ID)
 public final class PropulsionModConfigEvents {
 
     private PropulsionModConfigEvents() {}

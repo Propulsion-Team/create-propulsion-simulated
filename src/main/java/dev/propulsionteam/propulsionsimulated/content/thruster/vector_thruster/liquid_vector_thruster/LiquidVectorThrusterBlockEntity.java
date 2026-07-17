@@ -3,8 +3,11 @@ package dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.simibubi.create.foundation.blockEntity.behaviour.ValueBoxTransform;
+import com.simibubi.create.foundation.blockEntity.behaviour.fluid.SmartFluidTankBehaviour;
+import com.simibubi.create.foundation.utility.CreateLang;
 import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
 import dev.propulsionteam.propulsionsimulated.content.thruster.AbstractThrusterBlock;
+import dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterFuelManager;
 import dev.propulsionteam.propulsionsimulated.content.thruster.thruster.ThrusterBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.VectorRedstoneLinkBehaviour;
 import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.VectorThrusterBlockEntity;
@@ -14,6 +17,8 @@ import net.createmod.catnip.math.VecHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
@@ -63,6 +68,13 @@ public class LiquidVectorThrusterBlockEntity extends VectorThrusterBlockEntity {
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
         super.addBehaviours(behaviours);
+
+        // VectorThrusterBlockEntity inherits IonThrusterBlockEntity, whose behaviour setup
+        // deliberately omits a fluid tank. This variant is fuel-powered, so restore the
+        // standard thruster tank and its configured-fuel validation.
+        tank = SmartFluidTankBehaviour.single(this, getBaseTankCapacityMb());
+        behaviours.add(tank);
+        tank.getPrimaryHandler().setValidator(stack -> ThrusterFuelManager.getProperties(stack.getFluid()) != null);
 
         westLink = VectorRedstoneLinkBehaviour.receiver(this,
             ValueBoxTransform.Dual.makeSlots(isFirst -> new VectorThrusterLinkTransform(isFirst, Direction.WEST)),
@@ -273,6 +285,11 @@ public class LiquidVectorThrusterBlockEntity extends VectorThrusterBlockEntity {
     }
 
     @Override
+    public boolean isIon() {
+        return false;
+    }
+
+    @Override
     public boolean isVisuallyActive() {
         return getThrottle() > 0.0d && validFluid();
     }
@@ -283,6 +300,70 @@ public class LiquidVectorThrusterBlockEntity extends VectorThrusterBlockEntity {
             return null;
         }
         return tank.getPrimaryHandler();
+    }
+
+    @Override
+    public int getFuelAmountMb() {
+        return tank == null ? 0 : tank.getPrimaryHandler().getFluidAmount();
+    }
+
+    @Override
+    public int getFuelCapacityMb() {
+        return tank == null ? getBaseTankCapacityMb() : tank.getPrimaryHandler().getTankCapacity(0);
+    }
+
+    @Override
+    protected net.createmod.catnip.lang.LangBuilder getGoggleStatus() {
+        if (fluidStack().isEmpty()) {
+            return CreateLang.builder().add(Component.translatable("createpropulsion.gui.goggles.thruster.status.no_fuel"))
+                .style(ChatFormatting.RED);
+        }
+        if (!validFluid()) {
+            return CreateLang.builder().add(Component.translatable("createpropulsion.gui.goggles.thruster.status.wrong_fuel"))
+                .style(ChatFormatting.RED);
+        }
+        if (!isPowered()) {
+            return CreateLang.builder().add(Component.translatable("createpropulsion.gui.goggles.thruster.status.not_powered"))
+                .style(ChatFormatting.GOLD);
+        }
+        if (getEmptyBlocks() == 0) {
+            return CreateLang.builder().add(Component.translatable("createpropulsion.gui.goggles.thruster.obstructed"))
+                .style(ChatFormatting.RED);
+        }
+        return CreateLang.builder().add(Component.translatable("createpropulsion.gui.goggles.thruster.status.working"))
+            .style(ChatFormatting.GREEN);
+    }
+
+    @Override
+    protected void addThrusterDetails(List<Component> tooltip, boolean isPlayerSneaking) {
+        // Do not call IonThrusterBlockEntity's implementation: it appends FE storage
+        // and FE/t consumption. Use its shared output section, then show liquid fuel
+        // in the same format as the regular Thruster.
+        addIonThrusterOutputDetails(tooltip);
+        if (tank == null) {
+            return;
+        }
+
+        IFluidHandler handler = tank.getPrimaryHandler();
+        int capacity = handler.getTankCapacity(0);
+        int amount = handler.getFluidInTank(0).getAmount();
+
+        CreateLang.builder()
+            .add(Component.translatable("createpropulsion.gui.goggles.thruster.fuel_label"))
+            .style(ChatFormatting.WHITE)
+            .forGoggles(tooltip);
+        CreateLang.builder()
+            .add(Component.literal("  "))
+            .add(Component.literal(Integer.toString(amount)).withStyle(ChatFormatting.AQUA))
+            .add(Component.literal(" / ").withStyle(ChatFormatting.GRAY))
+            .add(Component.literal(Integer.toString(capacity)).withStyle(ChatFormatting.AQUA))
+            .add(Component.literal(" mB").withStyle(ChatFormatting.GRAY))
+            .forGoggles(tooltip);
+        CreateLang.builder()
+            .add(Component.literal("  "))
+            .add(Component.literal(String.format(java.util.Locale.ROOT, "%.1f", lastConsumedMbPerTick)).withStyle(ChatFormatting.AQUA))
+            .add(Component.literal(" mB/t").withStyle(ChatFormatting.GRAY))
+            .forGoggles(tooltip);
     }
 
     @Override

@@ -442,7 +442,7 @@ public class IonThrusterBlockEntity extends ThrusterBlockEntity {
                 .forGoggles(tooltip);
     }
 
-    private void addIonThrusterOutputDetails(final List<Component> tooltip) {
+    protected void addIonThrusterOutputDetails(final List<Component> tooltip) {
         float obstructionEfficiency = 100;
         ChatFormatting tooltipColor = ChatFormatting.GREEN;
         int scanLength = PropulsionConfig.OBSTRUCTION_SCAN_LENGTH.get();
