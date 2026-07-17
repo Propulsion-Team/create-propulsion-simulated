@@ -609,18 +609,13 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
 
         ParticleOptions particleData = createParticleOptions();
 
-        double nozzleX = worldNozzlePosition.x;
-        double nozzleY = worldNozzlePosition.y;
-        double nozzleZ = worldNozzlePosition.z;
-
         for (int i = 0; i < particlesToSpawn; i++) {
-            // Distribute particles along this tick's exhaust path: i=0 spawns at the nozzle,
-            // later ones spawn progressively further down the plume to fill the visual gap
-            // to the prior tick's particles (which have already moved by `particleVelocity`).
-            double frac = (double) i / (double) particlesToSpawn;
-            double spawnX = nozzleX + particleVelocity.x * frac;
-            double spawnY = nozzleY + particleVelocity.y * frac;
-            double spawnZ = nozzleZ + particleVelocity.z * frac;
+            // Spawn every particle at the nozzle. Pre-spreading along the current velocity
+            // vector makes rapidly turning thrusters draw a straight segment instead of the
+            // curved trail created by particles emitted on preceding ticks.
+            double spawnX = worldNozzlePosition.x;
+            double spawnY = worldNozzlePosition.y;
+            double spawnZ = worldNozzlePosition.z;
 
             if (level instanceof ServerLevel serverLevel) {
                 double maxDistSq = getParticleBroadcastRange() * getParticleBroadcastRange();
