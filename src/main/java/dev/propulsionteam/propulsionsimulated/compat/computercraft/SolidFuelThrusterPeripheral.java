@@ -19,7 +19,7 @@ import java.util.Optional;
 /**
  * Solid item-fuel thrusters use their own peripheral type so Lua can distinguish them from fluid thrusters.
  */
-public class SolidFuelThrusterPeripheral extends SyncedPeripheral<SolidFuelThrusterBlockEntity> {
+public class SolidFuelThrusterPeripheral extends ThrusterPeripheralBase<SolidFuelThrusterBlockEntity> {
     private final InventoryMethods inventoryMethods = new InventoryMethods();
 
     public SolidFuelThrusterPeripheral(SolidFuelThrusterBlockEntity blockEntity) {
@@ -133,18 +133,4 @@ public class SolidFuelThrusterPeripheral extends SyncedPeripheral<SolidFuelThrus
         return false;
     }
 
-    @Override
-    public void attach(@NotNull IComputerAccess computer) {
-        super.attach(computer);
-        blockEntity.setDigitalInput(Mth.clamp(blockEntity.getPower(), 0.0f, 1.0f));
-        blockEntity.setControlMode(ControlMode.PERIPHERAL);
-    }
-
-    @Override
-    public void detach(@NotNull IComputerAccess computer) {
-        super.detach(computer);
-        blockEntity.setDigitalInput(0.0f);
-        blockEntity.setRedstonePower(0);
-        blockEntity.setControlMode(ControlMode.NORMAL);
-    }
 }

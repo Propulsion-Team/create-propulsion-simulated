@@ -9,7 +9,7 @@ import dan200.computercraft.api.peripheral.IPeripheral;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.NotNull;
 
-public class CreativeThrusterPeripheral extends SyncedPeripheral<CreativeThrusterBlockEntity> {
+public class CreativeThrusterPeripheral extends ThrusterPeripheralBase<CreativeThrusterBlockEntity> {
 
     public CreativeThrusterPeripheral(CreativeThrusterBlockEntity blockEntity) {
         super(blockEntity);
@@ -95,18 +95,4 @@ public class CreativeThrusterPeripheral extends SyncedPeripheral<CreativeThruste
         return false;
     }
 
-    @Override
-    public void attach(@NotNull IComputerAccess computer) {
-        super.attach(computer);
-        blockEntity.setDigitalInput(Mth.clamp(blockEntity.getPower(), 0.0f, 1.0f));
-        blockEntity.setControlMode(ControlMode.PERIPHERAL);
-    }
-
-    @Override
-    public void detach(@NotNull IComputerAccess computer) {
-        super.detach(computer);
-        blockEntity.setDigitalInput(0.0f);
-        blockEntity.setRedstonePower(0);
-        blockEntity.setControlMode(ControlMode.NORMAL);
-    }
 }

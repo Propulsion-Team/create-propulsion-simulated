@@ -13,6 +13,7 @@ final class ThrusterComputerHelpers {
 
     static void setThrottleFromRedstone(AbstractThrusterBlockEntity be, int redstonePower) {
         int clamped = Mth.clamp(redstonePower, 0, 15);
+        be.setControlMode(AbstractThrusterBlockEntity.ControlMode.PERIPHERAL);
         be.setDigitalInput(clamped / 15.0f);
     }
 

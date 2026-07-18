@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 import java.util.Optional;
 
-public class LiquidVectorThrusterPeripheral extends SyncedPeripheral<LiquidVectorThrusterBlockEntity> {
+public class LiquidVectorThrusterPeripheral extends ThrusterPeripheralBase<LiquidVectorThrusterBlockEntity> {
     private final FluidMethods fluidMethods = new FluidMethods();
 
     public LiquidVectorThrusterPeripheral(LiquidVectorThrusterBlockEntity blockEntity) {
@@ -117,18 +117,4 @@ public class LiquidVectorThrusterPeripheral extends SyncedPeripheral<LiquidVecto
         return handler;
     }
 
-    @Override
-    public void attach(@NotNull IComputerAccess computer) {
-        super.attach(computer);
-        blockEntity.setDigitalInput(Mth.clamp(blockEntity.getPower(), 0.0f, 1.0f));
-        blockEntity.setControlMode(ControlMode.PERIPHERAL);
-    }
-
-    @Override
-    public void detach(@NotNull IComputerAccess computer) {
-        super.detach(computer);
-        blockEntity.setDigitalInput(0.0f);
-        blockEntity.setRedstonePower(0);
-        blockEntity.setControlMode(ControlMode.NORMAL);
-    }
 }

@@ -753,8 +753,15 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
 
         redstoneInput = compound.getInt("RedstoneInput");
         digitalInput = compound.getFloat("DigitalInput");
-        if (compound.contains("ControlMode")) {
-            controlMode = ControlMode.values()[compound.getInt("ControlMode")];
+        if (clientPacket && compound.contains("ControlMode")) {
+            int ordinal = compound.getInt("ControlMode");
+            controlMode = ordinal >= 0 && ordinal < ControlMode.values().length
+                ? ControlMode.values()[ordinal]
+                : ControlMode.NORMAL;
+        } else if (!clientPacket) {
+            // Peripheral attachments do not survive a server restart. Never restore a
+            // stale ownership mode before ComputerCraft has reattached and run code.
+            controlMode = ControlMode.NORMAL;
         }
         // Read thrust value from sync packets if present
         if (compound.contains("Thrust")) {
