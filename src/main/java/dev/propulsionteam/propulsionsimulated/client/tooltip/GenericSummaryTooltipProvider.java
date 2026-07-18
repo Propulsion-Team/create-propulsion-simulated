@@ -2,6 +2,7 @@ package dev.propulsionteam.propulsionsimulated.client.tooltip;
 
 import com.simibubi.create.foundation.item.TooltipHelper;
 import dev.propulsionteam.propulsionsimulated.CreatePropulsion;
+import dev.propulsionteam.propulsionsimulated.assemblerstick.item.CreateStyleTooltipItem;
 import net.createmod.catnip.lang.FontHelper.Palette;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -16,6 +17,11 @@ public final class GenericSummaryTooltipProvider implements ITooltipProvider {
     @Override
     public void addText(final ItemTooltipEvent event, final List<Component> tooltipList) {
         final Item item = event.getItemStack().getItem();
+        if (item instanceof CreateStyleTooltipItem) {
+            // These items already append ItemDescription, including conditions and
+            // behaviour lines. Adding the generic summary would duplicate the Shift prompt.
+            return;
+        }
         final ResourceLocation id = BuiltInRegistries.ITEM.getKey(item);
         if (id == null || !CreatePropulsion.ID.equals(id.getNamespace())) {
             return;
