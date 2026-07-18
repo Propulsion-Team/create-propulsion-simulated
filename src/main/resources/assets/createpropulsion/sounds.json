@@ -1,4 +1,10 @@
 {
+  "thruster_startup": {
+    "subtitle": "createpropulsion.subtitle.thruster_loop",
+    "sounds": [
+      "createpropulsion:thruster_startup"
+    ]
+  },
   "thruster_loop": {
     "subtitle": "createpropulsion.subtitle.thruster_loop",
     "sounds": [
@@ -6,6 +12,33 @@
         "name": "createpropulsion:thruster_loop",
         "stream": true
       }
+    ]
+  },
+  "thruster_off": {
+    "subtitle": "createpropulsion.subtitle.thruster_loop",
+    "sounds": [
+      "createpropulsion:thruster_off"
+    ]
+  },
+  "ion_thruster_startup": {
+    "subtitle": "createpropulsion.subtitle.thruster_loop",
+    "sounds": [
+      "createpropulsion:ion_thruster_startup"
+    ]
+  },
+  "ion_thruster_loop": {
+    "subtitle": "createpropulsion.subtitle.thruster_loop",
+    "sounds": [
+      {
+        "name": "createpropulsion:ion_thruster_loop",
+        "stream": true
+      }
+    ]
+  },
+  "ion_thruster_off": {
+    "subtitle": "createpropulsion.subtitle.thruster_loop",
+    "sounds": [
+      "createpropulsion:ion_thruster_off"
     ]
   }
 }
