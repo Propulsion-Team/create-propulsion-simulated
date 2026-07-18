@@ -4,6 +4,7 @@ import com.simibubi.create.foundation.block.IBE;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntityTicker;
 import com.simibubi.create.content.equipment.wrench.IWrenchable;
 import dev.propulsionteam.propulsionsimulated.content.cable.relay.CableRelayBlockEntity;
+import dev.propulsionteam.propulsionsimulated.content.cable.CableNetworkManager;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -79,7 +80,16 @@ public class FeCableBlock extends Block implements IBE<FeCableBlockEntity>, IWre
     @Override
     protected BlockState updateShape(BlockState state, Direction direction, BlockState neighborState, LevelAccessor level, BlockPos pos, BlockPos neighborPos) {
         boolean disabled = state.getValue(disabledPropertyFor(direction));
+        CableNetworkManager.invalidateAround(level, pos);
         return state.setValue(propertyFor(direction), !disabled && canConnect(level, neighborPos, direction.getOpposite()));
+    }
+
+    @Override
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+        if (!state.is(newState.getBlock())) {
+            CableNetworkManager.invalidateAround(level, pos);
+        }
+        super.onRemove(state, level, pos, newState, movedByPiston);
     }
 
     public static BlockState refreshConnections(LevelAccessor level, BlockPos pos, BlockState state) {

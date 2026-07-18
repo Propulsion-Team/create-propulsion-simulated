@@ -3,6 +3,7 @@ package dev.propulsionteam.propulsionsimulated.content.cable.fe;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
+import dev.propulsionteam.propulsionsimulated.content.cable.CableNetworkManager;
 import dev.propulsionteam.propulsionsimulated.content.cable.hub.CableHubBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.cable.relay.CableRelayBlockEntity;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionBlockEntities;
@@ -52,210 +53,17 @@ public class FeCableBlockEntity extends SmartBlockEntity {
     }
 
     @Override
+    public void initialize() {
+        super.initialize();
+        if (level != null) {
+            CableNetworkManager.invalidateAround(level, worldPosition);
+        }
+    }
+
+    @Override
     public void tick() {
         super.tick();
-        if (level == null || level.isClientSide) {
-            return;
-        }
-        tickNetworkAt(worldPosition);
-    }
-
-    public void tickNetworkAt(BlockPos startPos) {
-        if (level == null || level.isClientSide) {
-            return;
-        }
-
-        Set<BlockPos> network = collectNetwork(startPos);
-        if (network.isEmpty()) {
-            return;
-        }
-
-        BlockPos controller = network.stream().min(Comparator
-            .comparingInt((BlockPos p) -> p.getY())
-            .thenComparingInt(p -> p.getX())
-            .thenComparingInt(p -> p.getZ())).orElse(startPos);
-
-        if (!worldPosition.equals(controller)) {
-            return;
-        }
-
-        routeNetworkEnergy(network);
-    }
-
-    private void routeNetworkEnergy(Set<BlockPos> network) {
-        List<Endpoint> sources = new ArrayList<>();
-        List<Endpoint> sinks = new ArrayList<>();
-
-        for (BlockPos cablePos : network) {
-            BlockState state = level.getBlockState(cablePos);
-            boolean nodeIsCable = state.getBlock() instanceof FeCableBlock;
-            for (Direction direction : Direction.values()) {
-                // Only cables have per-side enable/connect state; relays are open on all sides.
-                if (nodeIsCable && (!FeCableBlock.isSideEnabled(state, direction)
-                        || !FeCableBlock.isSideConnected(state, direction))) {
-                    continue;
-                }
-
-                BlockPos neighborPos = cablePos.relative(direction);
-                if (isTransitNode(neighborPos)) {
-                    continue;
-                }
-
-                IEnergyStorage cap = level.getCapability(Capabilities.EnergyStorage.BLOCK, neighborPos, direction.getOpposite());
-                if (cap == null) {
-                    continue;
-                }
-
-                Endpoint endpoint = new Endpoint(cablePos, direction, cap);
-                if (cap.canExtract()) {
-                    sources.add(endpoint);
-                }
-                if (cap.canReceive()) {
-                    sinks.add(endpoint);
-                }
-            }
-        }
-
-        if (sources.isEmpty() || sinks.isEmpty()) {
-            return;
-        }
-
-        sources.sort(Endpoint::compare);
-        sinks.sort(Endpoint::compare);
-
-        int budget = Math.max(0, getTransferPerTick()) * network.size();
-        if (budget <= 0) {
-            return;
-        }
-
-        boolean madeProgress;
-        do {
-            madeProgress = false;
-
-            int activeSinkCount = 0;
-            for (Endpoint sink : sinks) {
-                int sinkWant = sink.storage.receiveEnergy(Math.max(1, budget / Math.max(1, sinks.size())), true);
-                if (sinkWant > 0) {
-                    activeSinkCount++;
-                }
-            }
-            if (activeSinkCount <= 0) {
-                break;
-            }
-
-            int baseShare = Math.max(1, budget / activeSinkCount);
-            int remainder = budget % activeSinkCount;
-
-            for (Endpoint sink : sinks) {
-                if (budget <= 0) {
-                    break;
-                }
-
-                int request = baseShare;
-                if (remainder > 0) {
-                    request++;
-                    remainder--;
-                }
-                request = Math.min(request, budget);
-
-                int canAccept = sink.storage.receiveEnergy(request, true);
-                if (canAccept <= 0) {
-                    continue;
-                }
-
-                int extracted = extractFromSources(sources, canAccept);
-                if (extracted <= 0) {
-                    continue;
-                }
-
-                int accepted = sink.storage.receiveEnergy(extracted, false);
-                if (accepted <= 0) {
-                    continue;
-                }
-
-                budget -= accepted;
-                madeProgress = true;
-            }
-        } while (budget > 0 && madeProgress);
-    }
-
-    private int extractFromSources(List<Endpoint> sources, int needed) {
-        int remaining = needed;
-        int totalExtracted = 0;
-
-        for (Endpoint source : sources) {
-            if (remaining <= 0) {
-                break;
-            }
-            int available = source.storage.extractEnergy(remaining, true);
-            if (available <= 0) {
-                continue;
-            }
-            int extracted = source.storage.extractEnergy(available, false);
-            if (extracted <= 0) {
-                continue;
-            }
-            totalExtracted += extracted;
-            remaining -= extracted;
-        }
-
-        return totalExtracted;
-    }
-
-    private Set<BlockPos> collectNetwork(BlockPos start) {
-        Set<BlockPos> visited = new HashSet<>();
-        ArrayDeque<BlockPos> queue = new ArrayDeque<>();
-        queue.add(start);
-
-        while (!queue.isEmpty()) {
-            BlockPos current = queue.removeFirst();
-            if (!visited.add(current)) {
-                continue;
-            }
-
-            BlockState state = level.getBlockState(current);
-            boolean currentIsCable = state.getBlock() instanceof FeCableBlock;
-            boolean currentIsRelay = level.getBlockEntity(current) instanceof CableRelayBlockEntity;
-            if (!currentIsCable && !currentIsRelay) {
-                continue;
-            }
-
-            for (Direction direction : Direction.values()) {
-                // Cables respect per-side enabled/connected state; relays are open on all sides.
-                if (currentIsCable && (!FeCableBlock.isSideEnabled(state, direction)
-                        || !FeCableBlock.isSideConnected(state, direction))) {
-                    continue;
-                }
-
-                BlockPos neighbor = current.relative(direction);
-                var be = level.getBlockEntity(neighbor);
-                boolean neighborIsCable = be instanceof FeCableBlockEntity;
-                boolean neighborIsRelay = be instanceof CableRelayBlockEntity;
-                if (!neighborIsCable && !neighborIsRelay) {
-                    continue;
-                }
-
-                // Cables also require the neighbour's back-face to be enabled/connected.
-                if (neighborIsCable) {
-                    BlockState neighborState = level.getBlockState(neighbor);
-                    if (!FeCableBlock.isSideEnabled(neighborState, direction.getOpposite())
-                            || !FeCableBlock.isSideConnected(neighborState, direction.getOpposite())) {
-                        continue;
-                    }
-                }
-
-                if (!visited.contains(neighbor)) {
-                    queue.add(neighbor);
-                }
-            }
-        }
-
-        return visited;
-    }
-
-    private boolean isTransitNode(BlockPos pos) {
-        var be = level != null ? level.getBlockEntity(pos) : null;
-        return be instanceof FeCableBlockEntity || be instanceof CableHubBlockEntity || be instanceof CableRelayBlockEntity;
+        CableNetworkManager.tick(level, worldPosition);
     }
 
     @Override
@@ -266,19 +74,4 @@ public class FeCableBlockEntity extends SmartBlockEntity {
         return storage;
     }
 
-    private static int getTransferPerTick() {
-        return PropulsionConfig.CABLE_ENERGY_TRANSFER.get();
-    }
-
-    private record Endpoint(BlockPos cablePos, Direction direction, IEnergyStorage storage) {
-        private static int compare(Endpoint a, Endpoint b) {
-            int byY = Integer.compare(a.cablePos.getY(), b.cablePos.getY());
-            if (byY != 0) return byY;
-            int byX = Integer.compare(a.cablePos.getX(), b.cablePos.getX());
-            if (byX != 0) return byX;
-            int byZ = Integer.compare(a.cablePos.getZ(), b.cablePos.getZ());
-            if (byZ != 0) return byZ;
-            return Integer.compare(a.direction.ordinal(), b.direction.ordinal());
-        }
-    }
 }

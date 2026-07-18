@@ -4,6 +4,7 @@ import com.simibubi.create.content.equipment.wrench.IWrenchable;
 import com.simibubi.create.foundation.block.IBE;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntityTicker;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionBlockEntities;
+import dev.propulsionteam.propulsionsimulated.content.cable.CableNetworkManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionResult;
@@ -52,12 +53,14 @@ public class CableRelayBlock extends Block implements IBE<CableRelayBlockEntity>
     @Override
     public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
         if (level.isClientSide) return;
+        CableNetworkManager.invalidateAround(level, pos);
         level.scheduleTick(pos, this, 1);
     }
 
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
         if (!level.isClientSide && !state.is(newState.getBlock())) {
+            CableNetworkManager.invalidateAround(level, pos);
             for (Direction dir : Direction.values()) {
                 BlockPos neighbor = pos.relative(dir);
                 if (level.getBlockState(neighbor).getBlock() instanceof CableRelayBlock) {
