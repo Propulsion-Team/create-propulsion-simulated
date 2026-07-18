@@ -1,6 +1,9 @@
 package dev.propulsionteam.propulsionsimulated.events;
 
 import com.simibubi.create.api.boiler.BoilerHeater;
+import com.simibubi.create.api.contraption.storage.fluid.MountedFluidStorageType;
+import com.simibubi.create.api.registry.CreateBuiltInRegistries;
+import com.simibubi.create.Create;
 import com.simibubi.create.content.processing.burner.BlazeBurnerBlock;
 import com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HeatLevel;
 
@@ -17,6 +20,14 @@ public class ModSetupEvents {
         event.enqueueWork(() -> {
             BoilerHeater.REGISTRY.register(PropulsionBlocks.SOLID_BURNER.get(), ModSetupEvents::propulsionBurnerHeat);
             BoilerHeater.REGISTRY.register(PropulsionBlocks.LIQUID_BURNER.get(), ModSetupEvents::propulsionBurnerHeat);
+            MountedFluidStorageType<?> fluidTankStorage =
+                CreateBuiltInRegistries.MOUNTED_FLUID_STORAGE_TYPE.get(Create.asResource("fluid_tank"));
+            if (fluidTankStorage != null) {
+                MountedFluidStorageType.REGISTRY.register(
+                    PropulsionBlocks.PLATINUM_FLUID_TANK.get(), fluidTankStorage);
+                MountedFluidStorageType.REGISTRY.register(
+                    PropulsionBlocks.PLATINUM_FLUID_VESSEL.get(), fluidTankStorage);
+            }
         });
     }
 
