@@ -59,6 +59,7 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
     // Ticks to skip multiblock-validity checks after a sublevel move to tolerate transient invalidity.
     private static final int DISASSEMBLY_GRACE_TICKS = 5;
     private int disassemblyCooldown = 0;
+    private boolean reconcileLoadedTopology = true;
 
     public ThrusterBlockEntity(BlockEntityType<?> typeIn, BlockPos pos, BlockState state) {
         super(typeIn, pos, state);
@@ -131,14 +132,23 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
             }
             return;
         }
+        if (disassemblyCooldown > 0) {
+            disassemblyCooldown--;
+            return;
+        }
+        if (reconcileLoadedTopology) {
+            reconcileLoadedTopology = false;
+            if (!hasConsistentLoadedTopology()) {
+                resetLocalMultiblockState();
+                return;
+            }
+        }
         if (isController() && isMultiblock()) {
-            if (disassemblyCooldown > 0) {
-                disassemblyCooldown--;
-            } else if (!SimulatedThrustAdapter.isOutsideWorldBuildHeight(level, worldPosition)) {
+            if (!SimulatedThrustAdapter.isOutsideWorldBuildHeight(level, worldPosition)) {
                 // Fix: Skip multiblock validation when outside build height to prevent disassembly.
                 Direction facing = getFacing();
                 if (!isValidFormedCube(worldPosition, width, facing)) {
-                    disassembleMulti();
+                    resetLocalMultiblockState();
                     return;
                 }
             }
@@ -149,6 +159,46 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
                 tryAssemble();
             }
         }
+    }
+
+    private boolean hasConsistentLoadedTopology() {
+        BlockState state = getBlockState();
+        boolean renderedAsMultiblock = state.hasProperty(ThrusterBlock.MULTIBLOCK)
+            && state.getValue(ThrusterBlock.MULTIBLOCK);
+        if (!isMultiblock()) {
+            return controllerPos == null && !renderedAsMultiblock;
+        }
+
+        ThrusterBlockEntity controller = getControllerBE();
+        if (controller == null || controller.width != width || controller.getClass() != getClass()) {
+            return false;
+        }
+        BlockPos origin = controller.getBlockPos();
+        BlockPos relative = worldPosition.subtract(origin);
+        if (relative.getX() < 0 || relative.getY() < 0 || relative.getZ() < 0
+            || relative.getX() >= width || relative.getY() >= width || relative.getZ() >= width) {
+            return false;
+        }
+        return renderedAsMultiblock
+            && controller.isValidFormedCube(origin, width, controller.getFacing());
+    }
+
+    private void resetLocalMultiblockState() {
+        width = 1;
+        controllerPos = null;
+        updateConnectivity = true;
+        isThrustDirty = true;
+        thrusterData.setThrust(0);
+
+        BlockState state = getBlockState();
+        if (state.hasProperty(ThrusterBlock.MULTIBLOCK) && state.getValue(ThrusterBlock.MULTIBLOCK)) {
+            level.setBlock(worldPosition, state.setValue(ThrusterBlock.MULTIBLOCK, false), Block.UPDATE_CLIENTS);
+            state = getBlockState();
+        }
+        setRedstoneInput(level.getBestNeighborSignal(worldPosition));
+        calculateObstruction(level, worldPosition, state.getValue(AbstractThrusterBlock.FACING));
+        setChanged();
+        notifyUpdate();
     }
 
     protected void tryAssemble() {
@@ -409,6 +459,7 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
         // moved. Each afterMove call resets the counter, so the final afterMove determines
         // when reassembly actually runs.
         disassemblyCooldown = DISASSEMBLY_GRACE_TICKS;
+        reconcileLoadedTopology = true;
     }
 
     @Override
@@ -1297,7 +1348,13 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
         } else {
             controllerPos = null;
         }
-        updateConnectivity = compound.getBoolean("UpdateConnectivity");
+        updateConnectivity = compound.getBoolean("UpdateConnectivity") || !compound.contains("Width");
+        if (!clientPacket) {
+            // Create schematics place the copied blockstates before all block entities.
+            // Defer topology validation until the complete placement has settled.
+            disassemblyCooldown = DISASSEMBLY_GRACE_TICKS;
+            reconcileLoadedTopology = true;
+        }
     }
 
     protected int getBaseTankCapacityMb() {
