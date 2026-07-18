@@ -78,7 +78,10 @@ public class TiltAdapterBlockEntity extends SplitShaftBlockEntity {
 
             if (activeSequenceLimit <= 0) {
                 activeSequenceLimit = 0;
-                currentAngle = clampToAngleLimits(targetAngle);
+                // The propagated network completed the target captured when this
+                // sequence began. A newer command may still be waiting in the
+                // flicker-aware scheduler and has not physically moved yet.
+                currentAngle = clampToAngleLimits(networkTargetAngle);
                 flickerTicker.scheduleUpdate(this::syncNetworkState);
             }
             sendData();
@@ -117,11 +120,9 @@ public class TiltAdapterBlockEntity extends SplitShaftBlockEntity {
 
         if (Math.abs(newTarget - targetAngle) > 0.001f) {
             targetAngle = newTarget;
-            if (Math.abs(getTheoreticalSpeed()) > 0) {
-                beginOrExtendKineticMove();
-            } else {
-                flickerTicker.scheduleUpdate(this::syncNetworkState);
-            }
+            // Coalesce rapid analog/CC changes instead of repeatedly detaching the
+            // same kinetic network in one burst.
+            flickerTicker.scheduleUpdate(this::syncNetworkState);
         }
     }
 
