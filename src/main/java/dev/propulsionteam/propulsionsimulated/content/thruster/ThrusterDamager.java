@@ -46,7 +46,7 @@ public class ThrusterDamager extends AbstractAreaDamagerBehaviour {
         AbstractThrusterBlockEntity thruster = getThruster();
         Direction plumeDirection = thruster.getFacing().getOpposite();
 
-        float currentPower = thruster.getPower();
+        float currentPower = thruster.getEffectiveThrottle();
         float threshold = AbstractThrusterBlockEntity.LOWEST_POWER_THRESHOLD;
         if (currentPower < threshold) return Optional.empty();
 

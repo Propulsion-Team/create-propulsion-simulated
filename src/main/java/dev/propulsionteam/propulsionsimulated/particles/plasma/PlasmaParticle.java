@@ -45,6 +45,8 @@ public class PlasmaParticle extends SimpleAnimatedParticle {
     private float baseSize;
     private final List<ResourceLocation> overrideTextures;
     private TextureAtlasSprite[] cachedOverrideSprites;
+    private final float startupProgress;
+    private final boolean startupHalo;
 
     double dx; double dy; double dz;
 
@@ -54,17 +56,31 @@ public class PlasmaParticle extends SimpleAnimatedParticle {
         super(level, x, y, z, spriteSet, 0);
         this.spriteSet = spriteSet;
         this.overrideTextures = data.overrideTextures();
+        this.startupProgress = data.startupProgress() == null ? 1.0f : Mth.clamp(data.startupProgress(), 0.0f, 1.0f);
+        this.startupHalo = this.startupProgress < 1.0f
+                && this.random.nextFloat() < (1.0f - this.startupProgress) * 0.55f;
 
         //Initialize plasma state
-        this.quadSize *= getPlasmaBaseQuadSize() * (data.overrideSize() == null ? 1.0f : data.overrideSize());
+        float startupSize = this.startupHalo
+                ? Mth.lerp(this.startupProgress, 1.65f, 1.0f)
+                : Mth.lerp(this.startupProgress, 0.62f, 1.0f);
+        this.quadSize *= getPlasmaBaseQuadSize()
+                * (data.overrideSize() == null ? 1.0f : data.overrideSize())
+                * startupSize;
         this.baseSize = this.quadSize;
-        this.lifetime = getPlasmaBaseLifetime();
+        this.lifetime = Math.round(Mth.lerp(this.startupProgress,
+                this.startupHalo ? 24.0f : 32.0f, getPlasmaBaseLifetime()));
         this.friction = getPlasmaFriction();
-        this.dx = dxSource + getRandomSpread();
-        this.dy = dySource + getRandomSpread();
-        this.dz = dzSource + getRandomSpread();
+        float startupSpread = this.startupHalo
+                ? Mth.lerp(this.startupProgress, 4.0f, 1.0f)
+                : Mth.lerp(this.startupProgress, 0.35f, 1.0f);
+        this.dx = dxSource + getRandomSpread() * startupSpread;
+        this.dy = dySource + getRandomSpread() * startupSpread;
+        this.dz = dzSource + getRandomSpread() * startupSpread;
         this.hasPhysics = true;
-        this.currentSpeedMultiplier = getPlasmaSpeedMultiplier();
+        this.currentSpeedMultiplier = getPlasmaSpeedMultiplier() * (this.startupHalo
+                ? Mth.lerp(this.startupProgress, 1.35f, 1.0f)
+                : Mth.lerp(this.startupProgress, 0.82f, 1.0f));
 
         //Calculate spread direction (perpendicular to velocity)
         Vec3 initialVel = new Vec3(this.dx, this.dy, this.dz).normalize();

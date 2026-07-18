@@ -479,16 +479,15 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
         final double prevConsumedMbPerTick = lastConsumedMbPerTick;
         final int prevFuelAmount = tank != null ? tank.getPrimaryHandler().getFluidAmount() : 0;
         float thrust = 0;
-        float currentPower = getPower();
+        float currentPower = getEffectiveThrottle();
         lastConsumedMbPerTick = 0.0d;
         if (isWorking() && currentPower > 0) {
             FluidThrusterProperties properties = getFuelProperties(fluidStack().getFluid());
-            float obstructionEffect = calculateObstructionEffect();
-            float thrustPercentage = Math.min(currentPower, obstructionEffect);
+            float thrustPercentage = getEffectiveThrustPercentage();
 
             if (thrustPercentage > 0 && properties != null) {
-                final int tickRate = 10;
-                double requestedConsumption = calculateFuelConsumption(currentPower, properties.consumptionMultiplier(), tickRate);
+                final int tickRate = getThrustUpdateIntervalTicks();
+                double requestedConsumption = calculateFuelConsumption(thrustPercentage, properties.consumptionMultiplier(), tickRate);
                 int consumption = consumeFuelWithAccumulator(requestedConsumption);
                 FluidStack drainedStack = tank.getPrimaryHandler().drain(consumption, IFluidHandler.FluidAction.EXECUTE);
                 int fuelConsumed = drainedStack.getAmount();
@@ -531,17 +530,16 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
         final int prevOxidizerAmount = oxidizerTank != null ? oxidizerTank.getPrimaryHandler().getFluidAmount() : 0;
         int n = width * width * width;
         float totalThrust = 0;
-        float currentPower = getPower();
+        float currentPower = getEffectiveThrottle();
         lastConsumedMbPerTick = 0.0d;
         lastOxidizerConsumedMbPerTick = 0.0d;
 
         if (isWorking() && currentPower > 0) {
             FluidThrusterProperties properties = getFuelProperties(fluidStack().getFluid());
-            float obstructionEffect = calculateObstructionEffect();
-            float thrustPercentage = Math.min(currentPower, obstructionEffect);
+            float thrustPercentage = getEffectiveThrustPercentage();
             if (thrustPercentage > 0 && properties != null) {
-                final int tickRate = 10;
-                double baseConsumption = calculateFuelConsumption(currentPower, properties.consumptionMultiplier(), tickRate);
+                final int tickRate = getThrustUpdateIntervalTicks();
+                double baseConsumption = calculateFuelConsumption(thrustPercentage, properties.consumptionMultiplier(), tickRate);
                 
                 boolean canUseOxidizer = validOxidizer();
                 // Multiblock fuel efficiency always applies; oxidizer adds an extra multiplier.
@@ -809,6 +807,17 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
         return super.getCurrentThrust();
     }
 
+    @Override
+    public float getStartupProgress() {
+        if (!isController() && isMultiblock()) {
+            ThrusterBlockEntity controller = getControllerBE();
+            if (controller != null) {
+                return controller.getStartupProgress();
+            }
+        }
+        return super.getStartupProgress();
+    }
+
     private int getAggregatedRedstone() {
         int max = redstoneInput;
         if (level == null) return max;
@@ -872,7 +881,7 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
         if (!isController() && isMultiblock()) return;
         if (!validFluid()) return;
 
-        float power = getPower();
+        float power = getEffectiveThrottle();
         if (power <= 0.035f) return;
         if (getEmptyBlocks() <= 0) return;
 

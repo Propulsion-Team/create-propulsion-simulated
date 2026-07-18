@@ -37,6 +37,7 @@ public class SolidFuelThrusterBlockEntity extends AbstractThrusterBlockEntity im
 
     private int burnTime = 0;
     private int totalBurnTicks = 0;
+    private double burnDrainAccumulator = 0.0d;
     private boolean superHeated = false;
     private boolean hatchOpen = false;
     private boolean wasPoweredLastTick = false;
@@ -69,7 +70,12 @@ public class SolidFuelThrusterBlockEntity extends AbstractThrusterBlockEntity im
         boolean powered = isPowered();
 
         if (burnTime > 0 && powered && !SolidFuelThrusterFuelHelper.isInfiniteBurnTime(burnTime)) {
-            burnTime--;
+            burnDrainAccumulator += getEffectiveThrustPercentage();
+            int burnTicks = (int) Math.floor(burnDrainAccumulator);
+            if (burnTicks > 0) {
+                burnDrainAccumulator -= burnTicks;
+                burnTime = Math.max(0, burnTime - burnTicks);
+            }
         }
 
         if (burnTime > 0 && powered != wasPoweredLastTick) {
@@ -87,6 +93,7 @@ public class SolidFuelThrusterBlockEntity extends AbstractThrusterBlockEntity im
             }
             superHeated = false;
             totalBurnTicks = 0;
+            burnDrainAccumulator = 0.0d;
             tryStartBurning();
         }
     }
@@ -286,13 +293,12 @@ public class SolidFuelThrusterBlockEntity extends AbstractThrusterBlockEntity im
     @Override
     public void updateThrust(BlockState currentBlockState) {
         float thrust = 0;
-        float currentPower = getPower();
+        float currentPower = getEffectiveThrottle();
 
         if (isWorking() && currentPower > 0) {
             ItemStack fuel = getFuelStack();
             ItemThrusterProperties properties = SolidThrusterFuelManager.getProperties(fuel);
-            float obstructionEffect = calculateObstructionEffect();
-            float thrustPercentage = Math.min(currentPower, obstructionEffect);
+            float thrustPercentage = getEffectiveThrustPercentage();
 
             if (thrustPercentage > 0 && properties != null) {
                 float fuelEfficiency = SolidThrusterFuelManager.getEfficiency(fuel.getItem());
@@ -435,6 +441,7 @@ public class SolidFuelThrusterBlockEntity extends AbstractThrusterBlockEntity im
         setFuelStack(ItemStack.EMPTY);
         burnTime = 0;
         totalBurnTicks = 0;
+        burnDrainAccumulator = 0.0d;
         superHeated = false;
     }
 
@@ -443,6 +450,7 @@ public class SolidFuelThrusterBlockEntity extends AbstractThrusterBlockEntity im
         super.write(compound, registries, clientPacket);
         compound.putInt("BurnTime", burnTime);
         compound.putInt("TotalBurnTicks", totalBurnTicks);
+        compound.putDouble("BurnDrainAccumulator", burnDrainAccumulator);
         compound.putBoolean("SuperHeated", superHeated);
         compound.putBoolean("HatchOpen", hatchOpen);
         compound.put("Inventory", inventory.serializeNBT(registries));
@@ -454,7 +462,8 @@ public class SolidFuelThrusterBlockEntity extends AbstractThrusterBlockEntity im
         burnTime = compound.getInt("BurnTime");
         totalBurnTicks = compound.contains("TotalBurnTicks")
                 ? compound.getInt("TotalBurnTicks")
-                : burnTime;
+            : burnTime;
+        burnDrainAccumulator = compound.getDouble("BurnDrainAccumulator");
         superHeated = compound.getBoolean("SuperHeated");
         hatchOpen = compound.getBoolean("HatchOpen");
         if (compound.contains("Inventory")) {

@@ -99,12 +99,12 @@ public final class ThrusterPlumeResolver {
             default -> 2.08f;
         };
         if (particle instanceof PlumeParticleData plume)
-            return new PlumeParticleData(plume.overrideTextures(), plume.overrideColor(), scale);
+            return new PlumeParticleData(plume.overrideTextures(), plume.overrideColor(), scale, plume.startupProgress());
         if (particle instanceof PlasmaParticleData plasma)
-            return new PlasmaParticleData(plasma.overrideTextures(), plasma.overrideColor(), scale);
+            return new PlasmaParticleData(plasma.overrideTextures(), plasma.overrideColor(), scale, plasma.startupProgress());
         if (particle instanceof IonParticleData ion) {
             float baseSize = ion.overrideSize() == null ? 0.95f : ion.overrideSize();
-            return new IonParticleData(ion.overrideTextures(), ion.overrideColor(), baseSize * scale);
+            return new IonParticleData(ion.overrideTextures(), ion.overrideColor(), baseSize * scale, ion.startupProgress());
         }
         return particle;
     }

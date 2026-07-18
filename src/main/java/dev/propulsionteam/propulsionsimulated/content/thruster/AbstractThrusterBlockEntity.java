@@ -9,6 +9,8 @@ import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
 import dev.propulsionteam.propulsionsimulated.compat.PropulsionCompatibility;
 import dev.propulsionteam.propulsionsimulated.compat.computercraft.ComputerBehaviour;
 import dev.propulsionteam.propulsionsimulated.particles.plume.PlumeParticleData;
+import dev.propulsionteam.propulsionsimulated.particles.ion.IonParticleData;
+import dev.propulsionteam.propulsionsimulated.particles.plasma.PlasmaParticleData;
 import dev.propulsionteam.propulsionsimulated.utility.GoggleUtils;
 import dev.propulsionteam.propulsionsimulated.utility.math.MathUtility;
 import dev.ryanhcode.sable.Sable;
@@ -47,6 +49,7 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
     protected static final double PARTICLE_BROADCAST_RANGE_BLOCKS = 150.0d;
     //Constants
     protected static final int TICKS_PER_ENTITY_CHECK = 5;
+    public static final int STARTUP_DURATION_TICKS = 10;
     protected static final float PARTICLE_VELOCITY = 4.0f;
     /** Used by server emit logic and client preview so plume segments stay visually continuous. */
     public static final double TARGET_PARTICLE_SPACING_BLOCKS = 0.5d;
@@ -70,6 +73,10 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
 
     //Ticking
     private int currentTick = 0;
+    private int startupTicks = 0;
+    private boolean wasOperational = false;
+    private long lastThrustUpdateGameTime = -1L;
+    private int thrustUpdateIntervalTicks = 10;
 
     protected double getParticleBroadcastRange() { return PARTICLE_BROADCAST_RANGE_BLOCKS; }
     protected float getParticleVelocity() { return PARTICLE_VELOCITY; }
@@ -197,6 +204,8 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
             ThrusterSoundHooks.clientTick(this);
             return;
         }
+
+        boolean startupChanged = updateStartupState();
         if (!PropulsionConfig.useShaderPlumes()) {
             emitResolvedParticles(level, worldPosition, currentBlockState);
         }
@@ -216,9 +225,50 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         }
 
         //Update thrust periodically or when marked dirty
-        if (isThrustDirty || currentTick % tick_rate == 0) {
+        if (startupChanged || isThrustDirty || currentTick % tick_rate == 0) {
+            updateThrustUpdateInterval();
             updateThrust(currentBlockState);
         }
+    }
+
+    private boolean updateStartupState() {
+        boolean operational = isController()
+                && getPower() > MathUtility.epsilon
+                && isWorking()
+                && emptyBlocks > 0;
+        int previousTicks = startupTicks;
+        boolean previousOperational = wasOperational;
+
+        if (!operational) {
+            startupTicks = 0;
+        } else if (!wasOperational) {
+            startupTicks = 0;
+        } else if (startupTicks < STARTUP_DURATION_TICKS) {
+            startupTicks++;
+        }
+        wasOperational = operational;
+
+        boolean changed = previousTicks != startupTicks || previousOperational != operational;
+        if (changed) {
+            isThrustDirty = true;
+            setChanged();
+            notifyUpdate();
+        }
+        return changed;
+    }
+
+    private void updateThrustUpdateInterval() {
+        if (level == null) {
+            thrustUpdateIntervalTicks = isStartingUp() ? 1 : 10;
+            return;
+        }
+        long gameTime = level.getGameTime();
+        if (lastThrustUpdateGameTime < 0L) {
+            thrustUpdateIntervalTicks = isStartingUp() ? 1 : 10;
+        } else {
+            thrustUpdateIntervalTicks = (int) java.lang.Math.max(1L, gameTime - lastThrustUpdateGameTime);
+        }
+        lastThrustUpdateGameTime = gameTime;
     }
 
     public abstract void updateThrust(BlockState currentBlockState);
@@ -296,6 +346,30 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         return (float) thrusterData.getThrust();
     }
 
+    public float getStartupProgress() {
+        if (!wasOperational) {
+            return 0.0f;
+        }
+        return org.joml.Math.clamp(0.0f, 1.0f, (float) startupTicks / (float) STARTUP_DURATION_TICKS);
+    }
+
+    public boolean isStartingUp() {
+        return wasOperational && startupTicks < STARTUP_DURATION_TICKS;
+    }
+
+    public float getEffectiveThrottle() {
+        return getPower() * getStartupProgress();
+    }
+
+    /** Actual output fraction after obstruction and startup are both accounted for. */
+    public float getEffectiveThrustPercentage() {
+        return Math.min(getPower(), calculateObstructionEffect()) * getStartupProgress();
+    }
+
+    protected int getThrustUpdateIntervalTicks() {
+        return thrustUpdateIntervalTicks;
+    }
+
     public boolean isVisuallyActive() {
         return getThrottle() > 0 && isWorking();
     }
@@ -309,7 +383,7 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
     }
 
     public double getDisplayedAirflowMsForTooltip() {
-        return getPower() * calculateObstructionEffect() * 200.0;
+        return getEffectiveThrottle() * calculateObstructionEffect() * 200.0;
     }
     protected float getFuelEfficiencyMultiplier() { return 1.0f; }
     
@@ -585,7 +659,8 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         ThrusterPlumeSpec plume = ThrusterPlumeResolver.resolve(this);
         if (!plume.active() || plume.particle() == null) return;
         if (emptyBlocks == 0) return;
-        float power = plume.power();
+        float power = getEffectiveThrottle();
+        if (power <= MathUtility.epsilon) return;
 
         double particleCountMultiplier = org.joml.Math.clamp(0.0d, PARTICLE_MULTIPLIER_CAP, getParticleCountMultiplier());
         if (particleCountMultiplier <= 0) return;
@@ -627,10 +702,11 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
 
         // Enough particles each tick so spacing along the velocity vector stays near TARGET_PARTICLE_SPACING_BLOCKS (no fractional carry → no skipped ticks).
         double speedPerTick = particleVelocity.length();
-        double density = speedPerTick / TARGET_PARTICLE_SPACING_BLOCKS * particleCountMultiplier * multiblockWidth;
+        ParticleOptions particleData = withStartupProgress(plume.particle(), getStartupProgress());
+        double startupDensityScale = startupDensityScale(particleData);
+        double density = speedPerTick / TARGET_PARTICLE_SPACING_BLOCKS
+                * particleCountMultiplier * multiblockWidth * startupDensityScale;
         int particlesToSpawn = Math.max(1, (int) Math.ceil(density));
-
-        ParticleOptions particleData = plume.particle();
 
         for (int i = 0; i < particlesToSpawn; i++) {
             // Spawn every particle at the nozzle. Pre-spreading along the current velocity
@@ -665,6 +741,30 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
                 );
             }
         }
+    }
+
+    private ParticleOptions withStartupProgress(ParticleOptions particle, float progress) {
+        if (!isStartingUp()) return particle;
+        if (particle instanceof PlumeParticleData plume) {
+            return new PlumeParticleData(plume.overrideTextures(), plume.overrideColor(), plume.overrideSize(), progress);
+        }
+        if (particle instanceof IonParticleData ion) {
+            return new IonParticleData(ion.overrideTextures(), ion.overrideColor(), ion.overrideSize(), progress);
+        }
+        if (particle instanceof PlasmaParticleData plasma) {
+            return new PlasmaParticleData(plasma.overrideTextures(), plasma.overrideColor(), plasma.overrideSize(), progress);
+        }
+        return particle;
+    }
+
+    private static double startupDensityScale(ParticleOptions particle) {
+        if (particle instanceof PlumeParticleData plume && plume.startupProgress() != null) {
+            return org.joml.Math.lerp(plume.startupProgress(), 2.8d, 1.0d);
+        }
+        if (particle instanceof PlasmaParticleData plasma && plasma.startupProgress() != null) {
+            return org.joml.Math.lerp(plasma.startupProgress(), 2.0d, 1.0d);
+        }
+        return 1.0d;
     }
 
     @SuppressWarnings("deprecation") // i hate compilers let me use ts
@@ -734,6 +834,8 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         super.write(compound, registries, clientPacket);
         compound.putInt("emptyBlocks", emptyBlocks);
         compound.putInt("currentTick", currentTick);
+        compound.putInt("StartupTicks", startupTicks);
+        compound.putBoolean("StartupOperational", wasOperational);
         
         compound.putInt("RedstoneInput", redstoneInput);
         compound.putFloat("DigitalInput", digitalInput);
@@ -752,6 +854,9 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         super.read(compound, registries, clientPacket);
         emptyBlocks = compound.getInt("emptyBlocks");
         currentTick = compound.getInt("currentTick");
+        startupTicks = Math.clamp(compound.getInt("StartupTicks"), 0, STARTUP_DURATION_TICKS);
+        wasOperational = compound.getBoolean("StartupOperational");
+        lastThrustUpdateGameTime = -1L;
 
         redstoneInput = compound.getInt("RedstoneInput");
         digitalInput = compound.getFloat("DigitalInput");

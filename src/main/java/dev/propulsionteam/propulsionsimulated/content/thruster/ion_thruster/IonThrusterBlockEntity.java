@@ -120,11 +120,10 @@ public class IonThrusterBlockEntity extends ThrusterBlockEntity {
         }
 
         float thrust = 0;
-        float currentPower = getPower();
+        float currentPower = getEffectiveThrottle();
 
         if (currentPower > 0 && energyStored > 0) {
-            float obstructionEffect = calculateObstructionEffect();
-            float thrustPercentage = Math.min(currentPower, obstructionEffect);
+            float thrustPercentage = getEffectiveThrustPercentage();
 
             if (thrustPercentage > 0) {
                 long currentGameTime = level != null ? level.getGameTime() : 0L;
@@ -143,8 +142,10 @@ public class IonThrusterBlockEntity extends ThrusterBlockEntity {
                 int consumed = Math.min(energyStored, totalDrain);
                 if (consumed > 0) {
                     energyStored -= consumed;
-                    float consumptionRatio = (float) consumed / (float) totalDrain;
-                        float baseThrustPn = (float) (PropulsionConfig.ION_THRUSTER_BASE_THRUST.get() * getThrustUnitsPerKn());
+                }
+                if (totalDrain == 0 || consumed > 0) {
+                    float consumptionRatio = totalDrain > 0 ? (float) consumed / (float) totalDrain : 1.0f;
+                    float baseThrustPn = (float) (PropulsionConfig.ION_THRUSTER_BASE_THRUST.get() * getThrustUnitsPerKn());
                     baseThrustPn *= (float) calculateAtmosphericFactor();
                     thrust = baseThrustPn * thrustPercentage * consumptionRatio;
                 }
@@ -174,11 +175,10 @@ public class IonThrusterBlockEntity extends ThrusterBlockEntity {
         }
         int n = width * width * width;
         float thrust = 0.0f;
-        float currentPower = getPower();
+        float currentPower = getEffectiveThrottle();
 
         if (currentPower > 0) {
-            float obstructionEffect = calculateObstructionEffect();
-            float thrustPercentage = Math.min(currentPower, obstructionEffect);
+            float thrustPercentage = getEffectiveThrustPercentage();
             if (thrustPercentage > 0) {
                 long currentGameTime = level.getGameTime();
                 int ticksElapsed = 1;
@@ -193,8 +193,8 @@ public class IonThrusterBlockEntity extends ThrusterBlockEntity {
                 energyDrainAccumulator = requestedDrain - totalDrain;
 
                 int consumed = drainEnergyFromMultiblock(totalDrain);
-                if (consumed > 0 && totalDrain > 0) {
-                    float consumptionRatio = (float) consumed / (float) totalDrain;
+                if (totalDrain == 0 || consumed > 0) {
+                    float consumptionRatio = totalDrain > 0 ? (float) consumed / (float) totalDrain : 1.0f;
                     float baseThrustPn = (float) (PropulsionConfig.ION_THRUSTER_BASE_THRUST.get() * getThrustUnitsPerKn());
                     baseThrustPn *= (float) calculateAtmosphericFactor();
                     thrust = baseThrustPn * thrustPercentage * consumptionRatio * n * getIonMultiblockThrustMultiplier(width);
@@ -350,7 +350,7 @@ public class IonThrusterBlockEntity extends ThrusterBlockEntity {
 
     @Override
     public boolean isVisuallyActive() {
-        return this.getThrottle() > 0.0d && this.energyStored > 0;
+        return this.getThrottle() > 0.0d && this.getTotalEnergyStoredFe() > 0;
     }
 
     @Override

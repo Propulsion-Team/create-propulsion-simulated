@@ -20,15 +20,21 @@ public class IonParticleData implements ParticleOptions, ICustomParticleDataWith
     private final List<ResourceLocation> overrideTextures;
     private final Integer overrideColor;
     private final Float overrideSize;
+    private final Float startupProgress;
 
     public IonParticleData() {
-        this(List.of(), null, null);
+        this(List.of(), null, null, null);
     }
 
     public IonParticleData(List<ResourceLocation> overrideTextures, Integer overrideColor, Float overrideSize) {
+        this(overrideTextures, overrideColor, overrideSize, null);
+    }
+
+    public IonParticleData(List<ResourceLocation> overrideTextures, Integer overrideColor, Float overrideSize, Float startupProgress) {
         this.overrideTextures = overrideTextures == null ? List.of() : List.copyOf(overrideTextures);
         this.overrideColor = overrideColor;
         this.overrideSize = overrideSize;
+        this.startupProgress = startupProgress;
     }
 
     public List<ResourceLocation> overrideTextures() {
@@ -43,6 +49,8 @@ public class IonParticleData implements ParticleOptions, ICustomParticleDataWith
         return overrideSize;
     }
 
+    public Float startupProgress() { return startupProgress; }
+
     @Override
     public ParticleType<?> getType(){
         return ParticleTypes.getIonType();
@@ -52,8 +60,9 @@ public class IonParticleData implements ParticleOptions, ICustomParticleDataWith
         return RecordCodecBuilder.mapCodec(instance -> instance.group(
             ResourceLocation.CODEC.listOf().optionalFieldOf("override_textures", List.of()).forGetter(IonParticleData::overrideTextures),
             Codec.INT.optionalFieldOf("override_color").forGetter(data -> java.util.Optional.ofNullable(data.overrideColor())),
-            Codec.FLOAT.optionalFieldOf("override_size").forGetter(data -> java.util.Optional.ofNullable(data.overrideSize()))
-        ).apply(instance, (textures, color, size) -> new IonParticleData(textures, color.orElse(null), size.orElse(null))));
+            Codec.FLOAT.optionalFieldOf("override_size").forGetter(data -> java.util.Optional.ofNullable(data.overrideSize())),
+            Codec.FLOAT.optionalFieldOf("startup_progress").forGetter(data -> java.util.Optional.ofNullable(data.startupProgress()))
+        ).apply(instance, (textures, color, size, startup) -> new IonParticleData(textures, color.orElse(null), size.orElse(null), startup.orElse(null))));
     }
 
     @Override
@@ -68,11 +77,14 @@ public class IonParticleData implements ParticleOptions, ICustomParticleDataWith
             if (data.overrideSize != null) {
                 buf.writeFloat(data.overrideSize);
             }
+            buf.writeBoolean(data.startupProgress != null);
+            if (data.startupProgress != null) buf.writeFloat(data.startupProgress);
         }, buf -> {
             List<ResourceLocation> textures = buf.readCollection(ArrayList::new, b -> b.readResourceLocation());
             Integer color = buf.readBoolean() ? buf.readInt() : null;
             Float size = buf.readBoolean() ? buf.readFloat() : null;
-            return new IonParticleData(textures, color, size);
+            Float startup = buf.readBoolean() ? buf.readFloat() : null;
+            return new IonParticleData(textures, color, size, startup);
         });
     }
 

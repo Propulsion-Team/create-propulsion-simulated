@@ -20,19 +20,25 @@ public class PlasmaParticleData implements ParticleOptions, ICustomParticleDataW
     private final List<ResourceLocation> overrideTextures;
     private final Integer overrideColor;
     private final Float overrideSize;
+    private final Float startupProgress;
 
     public PlasmaParticleData() {
-        this(List.of(), null);
+        this(List.of(), null, null, null);
     }
 
     public PlasmaParticleData(List<ResourceLocation> overrideTextures, Integer overrideColor) {
-        this(overrideTextures, overrideColor, null);
+        this(overrideTextures, overrideColor, null, null);
     }
 
     public PlasmaParticleData(List<ResourceLocation> overrideTextures, Integer overrideColor, Float overrideSize) {
+        this(overrideTextures, overrideColor, overrideSize, null);
+    }
+
+    public PlasmaParticleData(List<ResourceLocation> overrideTextures, Integer overrideColor, Float overrideSize, Float startupProgress) {
         this.overrideTextures = overrideTextures == null ? List.of() : List.copyOf(overrideTextures);
         this.overrideColor = overrideColor;
         this.overrideSize = overrideSize;
+        this.startupProgress = startupProgress;
     }
 
     public List<ResourceLocation> overrideTextures() {
@@ -47,6 +53,8 @@ public class PlasmaParticleData implements ParticleOptions, ICustomParticleDataW
         return overrideSize;
     }
 
+    public Float startupProgress() { return startupProgress; }
+
     @Override
     public ParticleType<?> getType(){
         return ParticleTypes.getPlasmaType();
@@ -56,8 +64,9 @@ public class PlasmaParticleData implements ParticleOptions, ICustomParticleDataW
         return RecordCodecBuilder.mapCodec(instance -> instance.group(
             ResourceLocation.CODEC.listOf().optionalFieldOf("override_textures", List.of()).forGetter(PlasmaParticleData::overrideTextures),
             Codec.INT.optionalFieldOf("override_color").forGetter(data -> java.util.Optional.ofNullable(data.overrideColor)),
-            Codec.FLOAT.optionalFieldOf("override_size").forGetter(data -> java.util.Optional.ofNullable(data.overrideSize))
-        ).apply(instance, (textures, color, size) -> new PlasmaParticleData(textures, color.orElse(null), size.orElse(null))));
+            Codec.FLOAT.optionalFieldOf("override_size").forGetter(data -> java.util.Optional.ofNullable(data.overrideSize)),
+            Codec.FLOAT.optionalFieldOf("startup_progress").forGetter(data -> java.util.Optional.ofNullable(data.startupProgress))
+        ).apply(instance, (textures, color, size, startup) -> new PlasmaParticleData(textures, color.orElse(null), size.orElse(null), startup.orElse(null))));
     }
 
     @Override
@@ -72,11 +81,14 @@ public class PlasmaParticleData implements ParticleOptions, ICustomParticleDataW
             if (data.overrideSize != null) {
                 buf.writeFloat(data.overrideSize);
             }
+            buf.writeBoolean(data.startupProgress != null);
+            if (data.startupProgress != null) buf.writeFloat(data.startupProgress);
         }, buf -> {
             List<ResourceLocation> textures = buf.readCollection(ArrayList::new, b -> b.readResourceLocation());
             Integer color = buf.readBoolean() ? buf.readInt() : null;
             Float size = buf.readBoolean() ? buf.readFloat() : null;
-            return new PlasmaParticleData(textures, color, size);
+            Float startup = buf.readBoolean() ? buf.readFloat() : null;
+            return new PlasmaParticleData(textures, color, size, startup);
         });
     }
 

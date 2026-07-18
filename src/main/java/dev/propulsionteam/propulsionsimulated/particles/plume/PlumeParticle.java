@@ -59,6 +59,7 @@ public class PlumeParticle extends SimpleAnimatedParticle {
     private boolean hasCollided = false;
     private final List<ResourceLocation> overrideTextures;
     private TextureAtlasSprite[] cachedOverrideSprites;
+    private final float startupProgress;
 
     double dx; double dy; double dz;
     float baseSize;
@@ -70,16 +71,20 @@ public class PlumeParticle extends SimpleAnimatedParticle {
         super(level, x, y, z, spriteSet, 0);
         this.spriteSet = spriteSet;
         this.overrideTextures = data.overrideTextures();
+        this.startupProgress = data.startupProgress() == null ? 1.0f : Mth.clamp(data.startupProgress(), 0.0f, 1.0f);
         //Initialize plume state
-        this.quadSize *= getPlumeBaseQuadSize() * (data.overrideSize() == null ? 1.0f : data.overrideSize());
+        this.quadSize *= getPlumeBaseQuadSize()
+                * (data.overrideSize() == null ? 1.0f : data.overrideSize())
+                * Mth.lerp(this.startupProgress, 1.7f, 1.0f);
         this.baseSize = this.quadSize;
-        this.lifetime = getPlumeBaseLifetime() + random.nextInt(5);
+        this.lifetime = Math.round(Mth.lerp(this.startupProgress, 28.0f, getPlumeBaseLifetime())) + random.nextInt(5);
         this.friction = getPlumeFriction();
-        this.dx = dxSource + getRandomSpread();
-        this.dy = dySource + getRandomSpread();
-        this.dz = dzSource + getRandomSpread();
+        float ignitionSpread = Mth.lerp(this.startupProgress, 4.0f, 1.0f);
+        this.dx = dxSource + getRandomSpread() * ignitionSpread;
+        this.dy = dySource + getRandomSpread() * ignitionSpread;
+        this.dz = dzSource + getRandomSpread() * ignitionSpread;
         this.hasPhysics = true;
-        this.currentSpeedMultiplier = getPlumeSpeedMultiplier();
+        this.currentSpeedMultiplier = getPlumeSpeedMultiplier() * Mth.lerp(this.startupProgress, 1.45f, 1.0f);
         this.currentFriction = getPlumeFriction();
         this.currentState = ParticleState.PLUME;
         //Calculate spread direction
@@ -92,7 +97,8 @@ public class PlumeParticle extends SimpleAnimatedParticle {
         Vec3 v = initialVel.cross(u).normalize();
         double randomAngle = this.random.nextDouble() * 2.0 * Math.PI;
         this.spreadDirection = u.scale(Math.cos(randomAngle)).add(v.scale(Math.sin(randomAngle)));
-        this.spreadMagnitude = 0.1f + this.random.nextFloat() * (0.8f - 0.1f); //0.1 - 0.8
+        this.spreadMagnitude = (0.1f + this.random.nextFloat() * (0.8f - 0.1f))
+                * Mth.lerp(this.startupProgress, 2.0f, 1.0f); // ignition begins wide, then settles
         this.smokeTransitionAge = BASE_SMOKE_TRANSITION_AGE + this.random.nextIntBetweenInclusive(-2, 2);
         this.smokeLift = getSmokeBaseLift() + -0.01f + this.random.nextFloat() * (0.03f - -0.01f); //-0.1 - 0.03
 

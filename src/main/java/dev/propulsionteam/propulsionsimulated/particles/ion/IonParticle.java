@@ -40,6 +40,7 @@ public class IonParticle extends SimpleAnimatedParticle {
     private final float endSize;
     private final List<ResourceLocation> overrideTextures;
     private TextureAtlasSprite[] cachedOverrideSprites;
+    private final float startupProgress;
     double dx;
     double dy;
     double dz;
@@ -50,15 +51,17 @@ public class IonParticle extends SimpleAnimatedParticle {
         super(level, x, y, z, spriteSet, 0);
         this.spriteSet = spriteSet;
         this.overrideTextures = data.overrideTextures();
+        this.startupProgress = data.startupProgress() == null ? 1.0f : Mth.clamp(data.startupProgress(), 0.0f, 1.0f);
         this.hasPhysics = true;
         this.friction = getParticleFriction();
-        this.lifetime = getBaseLifetime();
+        this.lifetime = Math.round(Mth.lerp(this.startupProgress, 10.0f, getBaseLifetime()));
 
         this.dx = dx;
         this.dy = dy;
         this.dz = dz;
 
-        this.quadSize = data.overrideSize() != null ? data.overrideSize() : getBaseQuadSize();
+        this.quadSize = (data.overrideSize() != null ? data.overrideSize() : getBaseQuadSize())
+                * Mth.lerp(this.startupProgress, 0.38f, 1.0f);
         float scale = data.overrideSize() != null ? (data.overrideSize() / getBaseQuadSize()) : 1.0f;
         this.endSize = getEndQuadSize() * scale;
         this.startSize = this.quadSize;
@@ -225,9 +228,10 @@ public class IonParticle extends SimpleAnimatedParticle {
             }
         }
 
-        this.dx += (this.random.nextDouble() - 0.5d) * getFluctuation();
-        this.dy += (this.random.nextDouble() - 0.5d) * getFluctuation();
-        this.dz += (this.random.nextDouble() - 0.5d) * getFluctuation();
+        double controlledFluctuation = getFluctuation() * Mth.lerp(this.startupProgress, 0.12f, 1.0f);
+        this.dx += (this.random.nextDouble() - 0.5d) * controlledFluctuation;
+        this.dy += (this.random.nextDouble() - 0.5d) * controlledFluctuation;
+        this.dz += (this.random.nextDouble() - 0.5d) * controlledFluctuation;
         this.dx *= this.friction;
         this.dy *= this.friction;
         this.dz *= this.friction;
@@ -237,6 +241,10 @@ public class IonParticle extends SimpleAnimatedParticle {
 
     private void pickSpriteAndSize() {
         final float progress = Mth.clamp((float) this.age / (float) this.lifetime, 0.0f, 1.0f);
+        if (startupProgress < 1.0f) {
+            float pulse = 0.82f + 0.18f * Mth.sin((this.age + startupProgress * 10.0f) * 1.7f);
+            this.setAlpha(Mth.clamp(pulse, 0.55f, 1.0f));
+        }
         final int frameIndex = Mth.clamp((int) (progress * SPRITE_COUNT), 0, SPRITE_COUNT - 1);
 
         if (this.cachedOverrideSprites != null) {
