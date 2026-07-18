@@ -431,6 +431,14 @@ public class CreativeThrusterBlockEntity extends AbstractThrusterBlockEntity {
         return localCubeCenter.add(localExhaustDirection.scale(half + 0.45d));
     }
 
+    @Override
+    public Vec3 getParticleDebugNozzlePositionLocal() {
+        if (isController() && isMultiblock()) {
+            return getMultiblockCenterNozzlePositionLocal();
+        }
+        return super.getParticleDebugNozzlePositionLocal();
+    }
+
     private boolean hasPlumeSpace() {
         if (level == null)
             return false;

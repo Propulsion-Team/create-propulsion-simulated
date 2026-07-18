@@ -26,7 +26,7 @@ public final class ThrusterPlumeResolver {
         boolean active = isActive(be);
         if (!active) return ThrusterPlumeSpec.inactive(style);
 
-        return new ThrusterPlumeSpec(true, Math.max(0.0f, be.getPower()), particleFor(be), style);
+        return new ThrusterPlumeSpec(true, Math.max(0.0f, be.getPower()), scaleForMultiblock(particleFor(be), be.width), style);
     }
 
     private static boolean isActive(AbstractThrusterBlockEntity be) {
@@ -90,5 +90,22 @@ public final class ThrusterPlumeResolver {
             case ION -> new IonParticleData();
             case PLUME, NONE -> new PlumeParticleData();
         };
+    }
+
+    private static ParticleOptions scaleForMultiblock(ParticleOptions particle, int width) {
+        float scale = switch (Math.max(1, width)) {
+            case 1 -> 1.0f;
+            case 2 -> 1.46f;
+            default -> 2.08f;
+        };
+        if (particle instanceof PlumeParticleData plume)
+            return new PlumeParticleData(plume.overrideTextures(), plume.overrideColor(), scale);
+        if (particle instanceof PlasmaParticleData plasma)
+            return new PlasmaParticleData(plasma.overrideTextures(), plasma.overrideColor(), scale);
+        if (particle instanceof IonParticleData ion) {
+            float baseSize = ion.overrideSize() == null ? 0.95f : ion.overrideSize();
+            return new IonParticleData(ion.overrideTextures(), ion.overrideColor(), baseSize * scale);
+        }
+        return particle;
     }
 }

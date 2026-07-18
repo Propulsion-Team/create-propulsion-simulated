@@ -4,6 +4,7 @@ import dev.propulsionteam.propulsionsimulated.content.thruster.AbstractThrusterB
 import dev.propulsionteam.propulsionsimulated.content.thruster.AbstractThrusterBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterShapes;
 import dev.propulsionteam.propulsionsimulated.content.thruster.thruster.ThrusterBlock;
+import dev.propulsionteam.propulsionsimulated.content.thruster.thruster.ThrusterBlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour.Properties;
 
 import com.mojang.serialization.MapCodec;
@@ -66,6 +67,20 @@ public class IonThrusterBlock extends AbstractThrusterBlock {
             return new SmartBlockEntityTicker<>();
         }
         return null;
+    }
+
+    @Override
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+        if (!state.is(newState.getBlock())) {
+            BlockEntity be = level.getBlockEntity(pos);
+            if (be instanceof ThrusterBlockEntity thruster) {
+                ThrusterBlockEntity controller = thruster.isController() ? thruster : thruster.getControllerBE();
+                if (controller != null) {
+                    controller.disassembleMulti();
+                }
+            }
+        }
+        super.onRemove(state, level, pos, newState, movedByPiston);
     }
 
     @Override

@@ -71,7 +71,7 @@ public class PlumeParticle extends SimpleAnimatedParticle {
         this.spriteSet = spriteSet;
         this.overrideTextures = data.overrideTextures();
         //Initialize plume state
-        this.quadSize *= getPlumeBaseQuadSize();
+        this.quadSize *= getPlumeBaseQuadSize() * (data.overrideSize() == null ? 1.0f : data.overrideSize());
         this.baseSize = this.quadSize;
         this.lifetime = getPlumeBaseLifetime() + random.nextInt(5);
         this.friction = getPlumeFriction();

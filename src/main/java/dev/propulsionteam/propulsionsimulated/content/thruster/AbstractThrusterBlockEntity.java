@@ -590,6 +590,8 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         double particleCountMultiplier = org.joml.Math.clamp(0.0d, PARTICLE_MULTIPLIER_CAP, getParticleCountMultiplier());
         if (particleCountMultiplier <= 0) return;
         double particleVelocityMultiplier = org.joml.Math.clamp(0.0d, PARTICLE_MULTIPLIER_CAP, getParticleVelocityMultiplier());
+        int multiblockWidth = Math.max(1, width);
+        double multiblockVelocityScale = 1.0d + 0.30d * (multiblockWidth - 1);
 
         float emissionScale = (float) Math.max(power, MathUtility.epsilon);
 
@@ -620,12 +622,12 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         previousParticleNozzleWorld = worldNozzlePosition;
 
         Vector3d particleVelocity = new Vector3d(worldExhaustDirection.x, worldExhaustDirection.y, worldExhaustDirection.z)
-            .mul(getParticleVelocity() * emissionScale * particleVelocityMultiplier)
+            .mul(getParticleVelocity() * emissionScale * particleVelocityMultiplier * multiblockVelocityScale)
             .add(nozzleVelocity);
 
         // Enough particles each tick so spacing along the velocity vector stays near TARGET_PARTICLE_SPACING_BLOCKS (no fractional carry → no skipped ticks).
         double speedPerTick = particleVelocity.length();
-        double density = speedPerTick / TARGET_PARTICLE_SPACING_BLOCKS * particleCountMultiplier;
+        double density = speedPerTick / TARGET_PARTICLE_SPACING_BLOCKS * particleCountMultiplier * multiblockWidth;
         int particlesToSpawn = Math.max(1, (int) Math.ceil(density));
 
         ParticleOptions particleData = plume.particle();

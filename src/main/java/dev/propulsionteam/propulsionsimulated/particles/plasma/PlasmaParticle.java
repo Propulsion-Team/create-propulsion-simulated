@@ -56,7 +56,7 @@ public class PlasmaParticle extends SimpleAnimatedParticle {
         this.overrideTextures = data.overrideTextures();
 
         //Initialize plasma state
-        this.quadSize *= getPlasmaBaseQuadSize();
+        this.quadSize *= getPlasmaBaseQuadSize() * (data.overrideSize() == null ? 1.0f : data.overrideSize());
         this.baseSize = this.quadSize;
         this.lifetime = getPlasmaBaseLifetime();
         this.friction = getPlasmaFriction();
