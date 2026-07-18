@@ -386,6 +386,10 @@ public class IonThrusterBlockEntity extends ThrusterBlockEntity {
         return PropulsionConfig.ION_THRUSTER_ENERGY_CAPACITY_FE.get();
     }
 
+    public int getTotalEnergyCapacityForComputer() {
+        return this.getTotalEnergyCapacityFe();
+    }
+
     protected Direction getEnergyInputSide() {
         return this.getFacing();
     }

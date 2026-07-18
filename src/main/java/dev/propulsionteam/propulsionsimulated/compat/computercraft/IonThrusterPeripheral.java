@@ -24,7 +24,7 @@ public class IonThrusterPeripheral extends ThrusterPeripheralBase<IonThrusterBlo
         return "ion_thruster";
     }
 
-    @LuaFunction
+    @LuaFunction(mainThread = true)
     public final int getObstruction() {
         return blockEntity.getUnobstructedBlocks();
     }
@@ -44,27 +44,27 @@ public class IonThrusterPeripheral extends ThrusterPeripheralBase<IonThrusterBlo
         return blockEntity.getThrottle();
     }
 
-    @LuaFunction
+    @LuaFunction(mainThread = true)
     public final double getCurrentThrustPN() {
         return blockEntity.getCurrentThrust();
     }
 
-    @LuaFunction
+    @LuaFunction(mainThread = true)
     public final double getCurrentThrustKN() {
         return getCurrentThrustPN() / PropulsionConfig.getThrustUnitsPerKnOrDefault();
     }
 
-    @LuaFunction
+    @LuaFunction(mainThread = true)
     public final double getDisplayedThrustPN() {
         return blockEntity.getDisplayedThrustPnForTooltip();
     }
 
-    @LuaFunction
+    @LuaFunction(mainThread = true)
     public final double getDisplayedThrustKN() {
         return getDisplayedThrustPN() / PropulsionConfig.getThrustUnitsPerKnOrDefault();
     }
 
-    @LuaFunction
+    @LuaFunction(mainThread = true)
     public final double getAirflowMs() {
         return blockEntity.getDisplayedAirflowMsForTooltip();
     }
@@ -76,7 +76,7 @@ public class IonThrusterPeripheral extends ThrusterPeripheralBase<IonThrusterBlo
 
     @LuaFunction(mainThread = true)
     public final int getEnergyCapacityFe() {
-        return blockEntity.getEnergyCapacity();
+        return blockEntity.getTotalEnergyCapacityForComputer();
     }
 
     @Override

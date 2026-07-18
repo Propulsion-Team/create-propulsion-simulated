@@ -20,7 +20,7 @@ public class CreativeThrusterPeripheral extends ThrusterPeripheralBase<CreativeT
         return "creative_thruster";
     }
 
-    @LuaFunction
+    @LuaFunction(mainThread = true)
     public final int getObstruction() {
         return blockEntity.getUnobstructedBlocks();
     }
@@ -45,42 +45,42 @@ public class CreativeThrusterPeripheral extends ThrusterPeripheralBase<CreativeT
         blockEntity.setThrustConfig(percent);
     }
 
-    @LuaFunction
+    @LuaFunction(mainThread = true)
     public final int getThrustConfig() {
         return blockEntity.getThrustConfig();
     }
 
-    @LuaFunction
+    @LuaFunction(mainThread = true)
     public final float getTargetThrustPN() {
         return blockEntity.getCreativeTargetThrust();
     }
 
-    @LuaFunction
+    @LuaFunction(mainThread = true)
     public final float getTargetThrustKN() {
         return (float) (getTargetThrustPN() / PropulsionConfig.getThrustUnitsPerKnOrDefault());
     }
 
-    @LuaFunction
+    @LuaFunction(mainThread = true)
     public final double getCurrentThrustPN() {
         return blockEntity.getCurrentThrust();
     }
 
-    @LuaFunction
+    @LuaFunction(mainThread = true)
     public final double getCurrentThrustKN() {
         return getCurrentThrustPN() / PropulsionConfig.getThrustUnitsPerKnOrDefault();
     }
 
-    @LuaFunction
+    @LuaFunction(mainThread = true)
     public final double getDisplayedThrustPN() {
         return blockEntity.getDisplayedThrustPnForTooltip();
     }
 
-    @LuaFunction
+    @LuaFunction(mainThread = true)
     public final double getDisplayedThrustKN() {
         return getDisplayedThrustPN() / PropulsionConfig.getThrustUnitsPerKnOrDefault();
     }
 
-    @LuaFunction
+    @LuaFunction(mainThread = true)
     public final double getAirflowMs() {
         return blockEntity.getDisplayedAirflowMsForTooltip();
     }

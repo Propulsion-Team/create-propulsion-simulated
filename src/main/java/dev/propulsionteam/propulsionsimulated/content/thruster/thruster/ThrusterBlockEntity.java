@@ -723,6 +723,41 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
         return redstoneInput / 15.0f;
     }
 
+    @Override
+    public void setDigitalInput(float power) {
+        if (!isController() && isMultiblock()) {
+            ThrusterBlockEntity controller = getControllerBE();
+            if (controller != null) {
+                controller.setDigitalInput(power);
+                return;
+            }
+        }
+        super.setDigitalInput(power);
+    }
+
+    @Override
+    public void setControlMode(ControlMode mode) {
+        if (!isController() && isMultiblock()) {
+            ThrusterBlockEntity controller = getControllerBE();
+            if (controller != null) {
+                controller.setControlMode(mode);
+                return;
+            }
+        }
+        super.setControlMode(mode);
+    }
+
+    @Override
+    public float getCurrentThrust() {
+        if (!isController() && isMultiblock()) {
+            ThrusterBlockEntity controller = getControllerBE();
+            if (controller != null) {
+                return controller.getCurrentThrust();
+            }
+        }
+        return super.getCurrentThrust();
+    }
+
     private int getAggregatedRedstone() {
         int max = redstoneInput;
         if (level == null) return max;
@@ -1138,6 +1173,18 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
         ThrusterBlockEntity ctrl = isController() ? this : getControllerBE();
         if (ctrl == null) ctrl = this;
         return ctrl.tank.getPrimaryHandler().getFluid();
+    }
+
+    @Override
+    public int getFuelAmountMb() {
+        ThrusterBlockEntity ctrl = isController() ? this : getControllerBE();
+        return ctrl != null && ctrl.tank != null ? ctrl.tank.getPrimaryHandler().getFluidAmount() : 0;
+    }
+
+    @Override
+    public int getFuelCapacityMb() {
+        ThrusterBlockEntity ctrl = isController() ? this : getControllerBE();
+        return ctrl != null && ctrl.tank != null ? ctrl.tank.getPrimaryHandler().getCapacity() : 0;
     }
 
     public boolean validFluid() {
