@@ -40,6 +40,11 @@ public class SolidFuelThrusterBlock extends AbstractThrusterBlock {
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         Direction direction = state.getValue(FACING);
+        if (direction == Direction.UP) {
+            direction = Direction.DOWN;
+        } else if (direction == Direction.DOWN) {
+            direction = Direction.UP;
+        }
         return ThrusterShapes.SOLID_FUEL_THRUSTER.get(direction);
     }
 

@@ -1,0 +1,7 @@
+{
+  "parent": "createpropulsion:block/solid_fuel_thruster",
+  "transform": {
+    "rotation": { "y": -90 },
+    "origin": "center"
+  }
+}

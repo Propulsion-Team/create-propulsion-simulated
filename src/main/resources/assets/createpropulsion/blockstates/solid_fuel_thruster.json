@@ -1,10 +1,10 @@
 {
   "variants": {
-    "facing=north": { "model": "createpropulsion:block/solid_fuel_thruster", "y": 90 },
-    "facing=south": { "model": "createpropulsion:block/solid_fuel_thruster", "y": 270 },
-    "facing=west":  { "model": "createpropulsion:block/solid_fuel_thruster", "y": 0 },
-    "facing=east":  { "model": "createpropulsion:block/solid_fuel_thruster", "y": 180 },
-    "facing=up":    { "model": "createpropulsion:block/solid_fuel_thruster", "x": 270, "y": 90 },
-    "facing=down":  { "model": "createpropulsion:block/solid_fuel_thruster", "x": 90, "y": 90 }
+    "facing=north": { "model": "createpropulsion:block/solid_fuel_thruster_placed" },
+    "facing=south": { "model": "createpropulsion:block/solid_fuel_thruster_placed", "y": 180 },
+    "facing=west":  { "model": "createpropulsion:block/solid_fuel_thruster_placed", "y": 270 },
+    "facing=east":  { "model": "createpropulsion:block/solid_fuel_thruster_placed", "y": 90 },
+    "facing=up":    { "model": "createpropulsion:block/solid_fuel_thruster_placed", "x": 270 },
+    "facing=down":  { "model": "createpropulsion:block/solid_fuel_thruster_placed", "x": 90 }
   }
 }
