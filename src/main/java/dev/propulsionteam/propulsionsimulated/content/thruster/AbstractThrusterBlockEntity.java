@@ -70,6 +70,13 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
     protected boolean isDirty = false;
     @javax.annotation.Nullable
     private Vec3 previousParticleNozzleWorld;
+    @javax.annotation.Nullable
+    private Vec3 previousParticleExhaustWorld;
+    private Vec3 previousParticleNozzleVelocity = Vec3.ZERO;
+    private double particleEmissionCarry;
+    private float adaptiveTrailCoverage;
+    private boolean adaptiveTrailActive;
+    private int adaptiveTrailQuietTicks;
 
     //Ticking
     private int currentTick = 0;
@@ -88,6 +95,15 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
 
     protected double getParticleVelocityMultiplier() {
         return 1.0;
+    }
+
+    /** First-tick visual exhaust displacement used by the adaptive client trail. */
+    public double getParticleTrailInitialStep() {
+        int multiblockWidth = Math.max(1, width);
+        double multiblockVelocityScale = 1.0d + 0.30d * (multiblockWidth - 1);
+        return getParticleVelocity() * Math.max(getEffectiveThrottle(), MathUtility.epsilon)
+                * org.joml.Math.clamp(0.0d, PARTICLE_MULTIPLIER_CAP, getParticleVelocityMultiplier())
+                * multiblockVelocityScale * 0.144d;
     }
 
     //CC Peripheral
@@ -643,6 +659,12 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
     public void afterMove(ServerLevel oldLevel, ServerLevel newLevel, BlockState state, BlockPos oldPos, BlockPos newPos) {
         // Recompute obstruction and refresh redstone-derived power after assembly/disassembly moves.
         previousParticleNozzleWorld = null;
+        previousParticleExhaustWorld = null;
+        previousParticleNozzleVelocity = Vec3.ZERO;
+        particleEmissionCarry = 0.0d;
+        adaptiveTrailCoverage = 0.0f;
+        adaptiveTrailActive = false;
+        adaptiveTrailQuietTicks = 0;
         if (newLevel != null) {
             setRedstoneInput(newLevel.getBestNeighborSignal(newPos));
             calculateObstruction(newLevel, newPos, state.getValue(AbstractThrusterBlock.FACING));
@@ -656,6 +678,38 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
     }
 
     private void emitResolvedParticles(Level level, BlockPos pos, BlockState state) {
+        // Sample the nozzle every tick, including while idle. This avoids a stale accumulated
+        // displacement when a moving thruster is switched back on.
+        Vec3 localNozzlePosition = getParticleDebugNozzlePositionLocal();
+        Vec3 worldNozzlePosition = Sable.HELPER.projectOutOfSubLevel(level, localNozzlePosition);
+        Vec3 finiteDifferenceVelocity = previousParticleNozzleWorld == null
+            ? Vec3.ZERO
+            : worldNozzlePosition.subtract(previousParticleNozzleWorld);
+
+        Vec3 localExhaustDirection = getParticleDebugExhaustDirectionLocal();
+        Vec3 worldAheadPosition = Sable.HELPER.projectOutOfSubLevel(level, localNozzlePosition.add(localExhaustDirection));
+        Vec3 worldExhaustDirection = worldAheadPosition.subtract(worldNozzlePosition);
+        if (worldExhaustDirection.lengthSqr() < MathUtility.epsilon) {
+            worldExhaustDirection = localExhaustDirection.normalize();
+        } else {
+            worldExhaustDirection = worldExhaustDirection.normalize();
+        }
+
+        Vec3 nozzleVelocity = sampleNozzleVelocity(level, localNozzlePosition, finiteDifferenceVelocity);
+        Vec3 oldNozzlePosition = previousParticleNozzleWorld;
+        Vec3 oldExhaustDirection = previousParticleExhaustWorld;
+        Vec3 oldNozzleVelocity = previousParticleNozzleVelocity;
+
+        double angleChange = oldExhaustDirection == null ? 0.0d
+                : PlumeTrailMath.angleDegrees(oldExhaustDirection, worldExhaustDirection);
+        double reconstructedGap = oldNozzlePosition == null ? 0.0d
+                : worldNozzlePosition.distanceTo(oldNozzlePosition.add(oldNozzleVelocity));
+        updateAdaptiveTrailCoverage(angleChange, reconstructedGap);
+
+        previousParticleNozzleWorld = worldNozzlePosition;
+        previousParticleExhaustWorld = worldExhaustDirection;
+        previousParticleNozzleVelocity = nozzleVelocity;
+
         ThrusterPlumeSpec plume = ThrusterPlumeResolver.resolve(this);
         if (!plume.active() || plume.particle() == null) return;
         if (emptyBlocks == 0) return;
@@ -670,51 +724,54 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
 
         float emissionScale = (float) Math.max(power, MathUtility.epsilon);
 
-        Vec3 localExhaustDirection = getParticleDebugExhaustDirectionLocal();
-        Vec3 localNozzlePosition = getParticleDebugNozzlePositionLocal();
-
-        // Convert local sublevel coordinates into world-space coordinates so particles align
-        // with ship rotation instead of sticking to global axes.
-        Vec3 worldNozzlePosition = Sable.HELPER.projectOutOfSubLevel(level, localNozzlePosition);
-        Vec3 worldAheadPosition = Sable.HELPER.projectOutOfSubLevel(level, localNozzlePosition.add(localExhaustDirection));
-        Vec3 worldExhaustDirection = worldAheadPosition.subtract(worldNozzlePosition);
-        if (worldExhaustDirection.lengthSqr() < MathUtility.epsilon) {
-            worldExhaustDirection = localExhaustDirection;
-        } else {
-            worldExhaustDirection = worldExhaustDirection.normalize();
-        }
-
-        // Particles live in world space, so they must inherit the nozzle's motion. Without
-        // this tangential velocity, particles emitted from a rotating sublevel can be swept
-        // back through the thruster and appear stuck inside it.
-        Vector3d nozzleVelocity = previousParticleNozzleWorld == null
-            ? new Vector3d()
-            : new Vector3d(
-                worldNozzlePosition.x - previousParticleNozzleWorld.x,
-                worldNozzlePosition.y - previousParticleNozzleWorld.y,
-                worldNozzlePosition.z - previousParticleNozzleWorld.z
-            );
-        previousParticleNozzleWorld = worldNozzlePosition;
-
+        // The particle implementation applies its own speed multiplier and drag to this
+        // exhaust component. Nozzle motion is carried separately in the particle data so it
+        // remains in world units and the moving craft cannot overtake the plume.
         Vector3d particleVelocity = new Vector3d(worldExhaustDirection.x, worldExhaustDirection.y, worldExhaustDirection.z)
-            .mul(getParticleVelocity() * emissionScale * particleVelocityMultiplier * multiblockVelocityScale)
-            .add(nozzleVelocity);
+            .mul(getParticleVelocity() * emissionScale * particleVelocityMultiplier * multiblockVelocityScale);
 
         // Enough particles each tick so spacing along the velocity vector stays near TARGET_PARTICLE_SPACING_BLOCKS (no fractional carry → no skipped ticks).
         double speedPerTick = particleVelocity.length();
-        ParticleOptions particleData = withStartupProgress(plume.particle(), getStartupProgress());
-        double startupDensityScale = startupDensityScale(particleData);
+        ParticleOptions baseParticleData = withStartupProgress(plume.particle(), getStartupProgress());
+        double startupDensityScale = startupDensityScale(baseParticleData);
         double density = speedPerTick / TARGET_PARTICLE_SPACING_BLOCKS
                 * particleCountMultiplier * multiblockWidth * startupDensityScale;
-        int particlesToSpawn = Math.max(1, (int) Math.ceil(density));
+        int particleCap = Math.max(0, PropulsionConfig.CLIENT_PARTICLES_PER_TICK.get());
+        PlumeTrailMath.EmissionBudget emissionBudget = PlumeTrailMath.emissionBudget(
+                density, particleEmissionCarry, particleCap);
+        int particlesToSpawn = emissionBudget.count();
+        particleEmissionCarry = emissionBudget.carry();
+
+        if (particlesToSpawn == 0) return;
 
         for (int i = 0; i < particlesToSpawn; i++) {
-            // Spawn every particle at the nozzle. Pre-spreading along the current velocity
-            // vector makes rapidly turning thrusters draw a straight segment instead of the
-            // curved trail created by particles emitted on preceding ticks.
-            double spawnX = worldNozzlePosition.x;
-            double spawnY = worldNozzlePosition.y;
-            double spawnZ = worldNozzlePosition.z;
+            double sampleT = oldNozzlePosition == null || oldExhaustDirection == null
+                    ? 1.0d
+                    : (i + 0.5d) / particlesToSpawn;
+            Vec3 sampleDirection = oldExhaustDirection == null
+                    ? worldExhaustDirection
+                    : PlumeTrailMath.slerpDirection(oldExhaustDirection, worldExhaustDirection, sampleT);
+            Vec3 sampleVelocity = oldNozzlePosition == null
+                    ? nozzleVelocity
+                    : oldNozzleVelocity.lerp(nozzleVelocity, sampleT);
+            Vec3 samplePosition = oldNozzlePosition == null
+                    ? worldNozzlePosition
+                    : PlumeTrailMath.hermite(oldNozzlePosition, oldNozzleVelocity,
+                            worldNozzlePosition, nozzleVelocity, sampleT);
+
+            // Advance historical sub-tick samples to the current tick. Unlike the removed
+            // straight pre-spread, every sample uses its own interpolated orientation.
+            double sampleAge = 1.0d - sampleT;
+            double visualExhaustStep = speedPerTick * 0.144d;
+            samplePosition = samplePosition.add(sampleVelocity.scale(sampleAge))
+                    .add(sampleDirection.scale(visualExhaustStep * sampleAge));
+
+            ParticleOptions particleData = withMotion(baseParticleData, sampleVelocity, adaptiveTrailCoverage);
+            Vector3d sampleParticleVelocity = new Vector3d(sampleDirection.x, sampleDirection.y, sampleDirection.z)
+                    .mul(speedPerTick);
+            double spawnX = samplePosition.x;
+            double spawnY = samplePosition.y;
+            double spawnZ = samplePosition.z;
 
             if (level instanceof ServerLevel serverLevel) {
                 double maxDistSq = getParticleBroadcastRange() * getParticleBroadcastRange();
@@ -728,7 +785,7 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
                         true,
                         spawnX, spawnY, spawnZ,
                         0,
-                        particleVelocity.x, particleVelocity.y, particleVelocity.z,
+                        sampleParticleVelocity.x, sampleParticleVelocity.y, sampleParticleVelocity.z,
                         1.0
                     );
                 }
@@ -737,7 +794,7 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
                     particleData,
                     true,
                     spawnX, spawnY, spawnZ,
-                    particleVelocity.x, particleVelocity.y, particleVelocity.z
+                    sampleParticleVelocity.x, sampleParticleVelocity.y, sampleParticleVelocity.z
                 );
             }
         }
@@ -746,15 +803,65 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
     private ParticleOptions withStartupProgress(ParticleOptions particle, float progress) {
         if (!isStartingUp()) return particle;
         if (particle instanceof PlumeParticleData plume) {
-            return new PlumeParticleData(plume.overrideTextures(), plume.overrideColor(), plume.overrideSize(), progress);
+            return new PlumeParticleData(plume.overrideTextures(), plume.overrideColor(), plume.overrideSize(), progress,
+                    plume.inheritedVelocity(), plume.trailCoverage());
         }
         if (particle instanceof IonParticleData ion) {
-            return new IonParticleData(ion.overrideTextures(), ion.overrideColor(), ion.overrideSize(), progress);
+            return new IonParticleData(ion.overrideTextures(), ion.overrideColor(), ion.overrideSize(), progress,
+                    ion.inheritedVelocity(), ion.trailCoverage());
         }
         if (particle instanceof PlasmaParticleData plasma) {
-            return new PlasmaParticleData(plasma.overrideTextures(), plasma.overrideColor(), plasma.overrideSize(), progress);
+            return new PlasmaParticleData(plasma.overrideTextures(), plasma.overrideColor(), plasma.overrideSize(), progress,
+                    plasma.inheritedVelocity(), plasma.trailCoverage());
         }
         return particle;
+    }
+
+    private static ParticleOptions withMotion(ParticleOptions particle, Vec3 velocity, float trailCoverage) {
+        if (particle instanceof PlumeParticleData plume) {
+            return new PlumeParticleData(plume.overrideTextures(), plume.overrideColor(), plume.overrideSize(),
+                    plume.startupProgress(), velocity, trailCoverage);
+        }
+        if (particle instanceof IonParticleData ion) {
+            return new IonParticleData(ion.overrideTextures(), ion.overrideColor(), ion.overrideSize(),
+                    ion.startupProgress(), velocity, trailCoverage);
+        }
+        if (particle instanceof PlasmaParticleData plasma) {
+            return new PlasmaParticleData(plasma.overrideTextures(), plasma.overrideColor(), plasma.overrideSize(),
+                    plasma.startupProgress(), velocity, trailCoverage);
+        }
+        return particle;
+    }
+
+    private Vec3 sampleNozzleVelocity(Level level, Vec3 localNozzlePosition, Vec3 fallback) {
+        try {
+            if (Sable.HELPER.getContaining(level, localNozzlePosition) != null) {
+                Vec3 velocityPerSecond = Sable.HELPER.getVelocity(level, localNozzlePosition);
+                if (Double.isFinite(velocityPerSecond.x)
+                        && Double.isFinite(velocityPerSecond.y)
+                        && Double.isFinite(velocityPerSecond.z)) {
+                    return velocityPerSecond.scale(1.0d / 20.0d);
+                }
+            }
+        } catch (RuntimeException ignored) {
+            // Sublevel physics may not be ready during assembly/chunk transitions.
+        }
+        return fallback;
+    }
+
+    private void updateAdaptiveTrailCoverage(double angleChange, double reconstructedGap) {
+        float target = PlumeTrailMath.activationTarget(angleChange, reconstructedGap, adaptiveTrailActive);
+        if (target > 0.0f) {
+            adaptiveTrailActive = true;
+            adaptiveTrailQuietTicks = 0;
+        } else if (adaptiveTrailActive && ++adaptiveTrailQuietTicks >= 4) {
+            adaptiveTrailActive = false;
+            adaptiveTrailQuietTicks = 0;
+        }
+        float resolvedTarget = adaptiveTrailActive ? Math.max(target, 0.35f) : 0.0f;
+        float blend = resolvedTarget > adaptiveTrailCoverage ? 0.34f : 0.15f;
+        adaptiveTrailCoverage += (resolvedTarget - adaptiveTrailCoverage) * blend;
+        if (adaptiveTrailCoverage < 0.01f && !adaptiveTrailActive) adaptiveTrailCoverage = 0.0f;
     }
 
     private static double startupDensityScale(ParticleOptions particle) {

@@ -32,6 +32,16 @@ public final class ThrusterLoopSoundController {
     private ThrusterLoopSoundController() {
     }
 
+    /** Invalidates channels discarded by a sound-engine/device reload. */
+    public static void onSoundEngineReload() {
+        final Iterator<Map.Entry<String, ThrusterSoundState>> iterator = ACTIVE_SOUNDS.entrySet().iterator();
+        while (iterator.hasNext()) {
+            if (!iterator.next().getValue().prepareForSoundEngineReload()) {
+                iterator.remove();
+            }
+        }
+    }
+
     public static void tick(final AbstractThrusterBlockEntity blockEntity) {
         final Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.player == null || minecraft.getSoundManager() == null) {
@@ -172,6 +182,18 @@ public final class ThrusterLoopSoundController {
 
         private boolean isFor(AbstractThrusterBlockEntity candidate) {
             return blockEntity == candidate;
+        }
+
+        private boolean prepareForSoundEngineReload() {
+            // SoundEngine.stopAll() drops its channels without stopping our instance object.
+            sound = null;
+            if (!active || !isBlockEntityUsable(blockEntity)) {
+                active = false;
+                return false;
+            }
+            phase = Phase.LOOPING;
+            phaseTicks = 0;
+            return true;
         }
 
         private boolean isFinished() {

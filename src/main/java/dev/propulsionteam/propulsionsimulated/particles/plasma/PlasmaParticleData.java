@@ -14,6 +14,8 @@ import net.minecraft.core.particles.ParticleType;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
 import dev.propulsionteam.propulsionsimulated.particles.ParticleTypes;
 
 public class PlasmaParticleData implements ParticleOptions, ICustomParticleDataWithSprite<PlasmaParticleData> {
@@ -21,24 +23,38 @@ public class PlasmaParticleData implements ParticleOptions, ICustomParticleDataW
     private final Integer overrideColor;
     private final Float overrideSize;
     private final Float startupProgress;
+    private final Vec3 inheritedVelocity;
+    private final float trailCoverage;
 
     public PlasmaParticleData() {
-        this(List.of(), null, null, null);
+        this(List.of(), null, null, null, Vec3.ZERO);
     }
 
     public PlasmaParticleData(List<ResourceLocation> overrideTextures, Integer overrideColor) {
-        this(overrideTextures, overrideColor, null, null);
+        this(overrideTextures, overrideColor, null, null, Vec3.ZERO);
     }
 
     public PlasmaParticleData(List<ResourceLocation> overrideTextures, Integer overrideColor, Float overrideSize) {
-        this(overrideTextures, overrideColor, overrideSize, null);
+        this(overrideTextures, overrideColor, overrideSize, null, Vec3.ZERO);
     }
 
     public PlasmaParticleData(List<ResourceLocation> overrideTextures, Integer overrideColor, Float overrideSize, Float startupProgress) {
+        this(overrideTextures, overrideColor, overrideSize, startupProgress, Vec3.ZERO);
+    }
+
+    public PlasmaParticleData(List<ResourceLocation> overrideTextures, Integer overrideColor, Float overrideSize,
+                              Float startupProgress, Vec3 inheritedVelocity) {
+        this(overrideTextures, overrideColor, overrideSize, startupProgress, inheritedVelocity, 0.0f);
+    }
+
+    public PlasmaParticleData(List<ResourceLocation> overrideTextures, Integer overrideColor, Float overrideSize,
+                              Float startupProgress, Vec3 inheritedVelocity, float trailCoverage) {
         this.overrideTextures = overrideTextures == null ? List.of() : List.copyOf(overrideTextures);
         this.overrideColor = overrideColor;
         this.overrideSize = overrideSize;
         this.startupProgress = startupProgress;
+        this.inheritedVelocity = inheritedVelocity == null ? Vec3.ZERO : inheritedVelocity;
+        this.trailCoverage = Mth.clamp(trailCoverage, 0.0f, 1.0f);
     }
 
     public List<ResourceLocation> overrideTextures() {
@@ -55,6 +71,9 @@ public class PlasmaParticleData implements ParticleOptions, ICustomParticleDataW
 
     public Float startupProgress() { return startupProgress; }
 
+    public Vec3 inheritedVelocity() { return inheritedVelocity; }
+    public float trailCoverage() { return trailCoverage; }
+
     @Override
     public ParticleType<?> getType(){
         return ParticleTypes.getPlasmaType();
@@ -65,8 +84,13 @@ public class PlasmaParticleData implements ParticleOptions, ICustomParticleDataW
             ResourceLocation.CODEC.listOf().optionalFieldOf("override_textures", List.of()).forGetter(PlasmaParticleData::overrideTextures),
             Codec.INT.optionalFieldOf("override_color").forGetter(data -> java.util.Optional.ofNullable(data.overrideColor)),
             Codec.FLOAT.optionalFieldOf("override_size").forGetter(data -> java.util.Optional.ofNullable(data.overrideSize)),
-            Codec.FLOAT.optionalFieldOf("startup_progress").forGetter(data -> java.util.Optional.ofNullable(data.startupProgress))
-        ).apply(instance, (textures, color, size, startup) -> new PlasmaParticleData(textures, color.orElse(null), size.orElse(null), startup.orElse(null))));
+            Codec.FLOAT.optionalFieldOf("startup_progress").forGetter(data -> java.util.Optional.ofNullable(data.startupProgress)),
+            Codec.DOUBLE.optionalFieldOf("inherited_velocity_x", 0.0d).forGetter(data -> data.inheritedVelocity.x),
+            Codec.DOUBLE.optionalFieldOf("inherited_velocity_y", 0.0d).forGetter(data -> data.inheritedVelocity.y),
+            Codec.DOUBLE.optionalFieldOf("inherited_velocity_z", 0.0d).forGetter(data -> data.inheritedVelocity.z),
+            Codec.FLOAT.optionalFieldOf("trail_coverage", 0.0f).forGetter(PlasmaParticleData::trailCoverage)
+        ).apply(instance, (textures, color, size, startup, vx, vy, vz, coverage) -> new PlasmaParticleData(
+                textures, color.orElse(null), size.orElse(null), startup.orElse(null), new Vec3(vx, vy, vz), coverage)));
     }
 
     @Override
@@ -83,12 +107,18 @@ public class PlasmaParticleData implements ParticleOptions, ICustomParticleDataW
             }
             buf.writeBoolean(data.startupProgress != null);
             if (data.startupProgress != null) buf.writeFloat(data.startupProgress);
+            buf.writeDouble(data.inheritedVelocity.x);
+            buf.writeDouble(data.inheritedVelocity.y);
+            buf.writeDouble(data.inheritedVelocity.z);
+            buf.writeFloat(data.trailCoverage);
         }, buf -> {
             List<ResourceLocation> textures = buf.readCollection(ArrayList::new, b -> b.readResourceLocation());
             Integer color = buf.readBoolean() ? buf.readInt() : null;
             Float size = buf.readBoolean() ? buf.readFloat() : null;
             Float startup = buf.readBoolean() ? buf.readFloat() : null;
-            return new PlasmaParticleData(textures, color, size, startup);
+            Vec3 inheritedVelocity = new Vec3(buf.readDouble(), buf.readDouble(), buf.readDouble());
+            float coverage = buf.readFloat();
+            return new PlasmaParticleData(textures, color, size, startup, inheritedVelocity, coverage);
         });
     }
 

@@ -60,6 +60,9 @@ public class PlumeParticle extends SimpleAnimatedParticle {
     private final List<ResourceLocation> overrideTextures;
     private TextureAtlasSprite[] cachedOverrideSprites;
     private final float startupProgress;
+    /** World-space nozzle motion, kept separate so plume drag cannot make the craft overtake its exhaust. */
+    private final Vec3 inheritedVelocity;
+    private final float trailCoverage;
 
     double dx; double dy; double dz;
     float baseSize;
@@ -72,6 +75,8 @@ public class PlumeParticle extends SimpleAnimatedParticle {
         this.spriteSet = spriteSet;
         this.overrideTextures = data.overrideTextures();
         this.startupProgress = data.startupProgress() == null ? 1.0f : Mth.clamp(data.startupProgress(), 0.0f, 1.0f);
+        this.inheritedVelocity = data.inheritedVelocity();
+        this.trailCoverage = data.trailCoverage();
         //Initialize plume state
         this.quadSize *= getPlumeBaseQuadSize()
                 * (data.overrideSize() == null ? 1.0f : data.overrideSize())
@@ -121,7 +126,7 @@ public class PlumeParticle extends SimpleAnimatedParticle {
             int rgb = data.overrideColor() & 0xFFFFFF;
             this.setColor(((rgb >> 16) & 0xFF) / 255f, ((rgb >> 8) & 0xFF) / 255f, (rgb & 0xFF) / 255f);
         }
-        setAlpha(1);
+        setAlpha(1.0f - this.trailCoverage);
     }
 
     @Override
@@ -137,9 +142,9 @@ public class PlumeParticle extends SimpleAnimatedParticle {
         }
 
         //Velocity before possible collision
-        double intendedMoveX = this.dx * this.currentSpeedMultiplier;
-        double intendedMoveY = this.dy * this.currentSpeedMultiplier;
-        double intendedMoveZ = this.dz * this.currentSpeedMultiplier;
+        double intendedMoveX = this.dx * this.currentSpeedMultiplier + this.inheritedVelocity.x;
+        double intendedMoveY = this.dy * this.currentSpeedMultiplier + this.inheritedVelocity.y;
+        double intendedMoveZ = this.dz * this.currentSpeedMultiplier + this.inheritedVelocity.z;
 
         double prevX = this.x;
         double prevY = this.y;
@@ -295,6 +300,8 @@ public class PlumeParticle extends SimpleAnimatedParticle {
         this.dz *= this.currentFriction;
 
         this.pickSprite();
+        float reveal = Mth.clamp(this.age / 2.0f, 0.0f, 1.0f);
+        this.setAlpha(Mth.lerp(reveal, 1.0f - this.trailCoverage, 1.0f));
     }
 
     //Helpers

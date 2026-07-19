@@ -189,6 +189,13 @@ dependencies {
     implementation("dev.eriksonn.aeronautics:aeronautics-neoforge-1.21.1:${bundled_version}")
     //https://maven.ryanhcode.dev/#/releases/dev/ryanhcode/offroad/offroad-neoforge-1.21.1/1.2.1
     implementation "dev.ryanhcode.offroad:offroad-neoforge-1.21.1:${bundled_version}"
+
+    testImplementation platform("org.junit:junit-bom:5.11.4")
+    testImplementation "org.junit.jupiter:junit-jupiter"
+}
+
+tasks.named('test', Test).configure {
+    useJUnitPlatform()
 }
 
 tasks.named('processResources', ProcessResources).configure {

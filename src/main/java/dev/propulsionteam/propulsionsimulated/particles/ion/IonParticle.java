@@ -41,6 +41,9 @@ public class IonParticle extends SimpleAnimatedParticle {
     private final List<ResourceLocation> overrideTextures;
     private TextureAtlasSprite[] cachedOverrideSprites;
     private final float startupProgress;
+    /** World-space nozzle motion, kept separate so ion drag cannot make the craft overtake its exhaust. */
+    private final Vec3 inheritedVelocity;
+    private final float trailCoverage;
     double dx;
     double dy;
     double dz;
@@ -52,6 +55,8 @@ public class IonParticle extends SimpleAnimatedParticle {
         this.spriteSet = spriteSet;
         this.overrideTextures = data.overrideTextures();
         this.startupProgress = data.startupProgress() == null ? 1.0f : Mth.clamp(data.startupProgress(), 0.0f, 1.0f);
+        this.inheritedVelocity = data.inheritedVelocity();
+        this.trailCoverage = data.trailCoverage();
         this.hasPhysics = true;
         this.friction = getParticleFriction();
         this.lifetime = Math.round(Mth.lerp(this.startupProgress, 10.0f, getBaseLifetime()));
@@ -84,7 +89,7 @@ public class IonParticle extends SimpleAnimatedParticle {
             int rgb = data.overrideColor() & 0xFFFFFF;
             this.setColor(((rgb >> 16) & 0xFF) / 255f, ((rgb >> 8) & 0xFF) / 255f, (rgb & 0xFF) / 255f);
         }
-        this.setAlpha(1.0f);
+        this.setAlpha(1.0f - this.trailCoverage);
         this.pickSpriteAndSize();
     }
 
@@ -101,9 +106,9 @@ public class IonParticle extends SimpleAnimatedParticle {
         }
 
         //Velocity before possible collision
-        double intendedMoveX = this.dx * getSpeedMultiplier();
-        double intendedMoveY = this.dy * getSpeedMultiplier();
-        double intendedMoveZ = this.dz * getSpeedMultiplier();
+        double intendedMoveX = this.dx * getSpeedMultiplier() + this.inheritedVelocity.x;
+        double intendedMoveY = this.dy * getSpeedMultiplier() + this.inheritedVelocity.y;
+        double intendedMoveZ = this.dz * getSpeedMultiplier() + this.inheritedVelocity.z;
 
         double prevX = this.x;
         double prevY = this.y;
@@ -243,7 +248,9 @@ public class IonParticle extends SimpleAnimatedParticle {
         final float progress = Mth.clamp((float) this.age / (float) this.lifetime, 0.0f, 1.0f);
         if (startupProgress < 1.0f) {
             float pulse = 0.82f + 0.18f * Mth.sin((this.age + startupProgress * 10.0f) * 1.7f);
-            this.setAlpha(Mth.clamp(pulse, 0.55f, 1.0f));
+            this.setAlpha(Mth.clamp(pulse, 0.55f, 1.0f) * presentationReveal());
+        } else {
+            this.setAlpha(presentationReveal());
         }
         final int frameIndex = Mth.clamp((int) (progress * SPRITE_COUNT), 0, SPRITE_COUNT - 1);
 
@@ -254,6 +261,11 @@ public class IonParticle extends SimpleAnimatedParticle {
         }
 
         this.quadSize = Mth.lerp(progress, this.startSize, this.endSize);
+    }
+
+    private float presentationReveal() {
+        float reveal = Mth.clamp(this.age / 2.0f, 0.0f, 1.0f);
+        return Mth.lerp(reveal, 1.0f - this.trailCoverage, 1.0f);
     }
 
     @Nonnull

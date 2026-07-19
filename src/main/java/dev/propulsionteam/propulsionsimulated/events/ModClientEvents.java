@@ -4,6 +4,7 @@ import com.simibubi.create.CreateClient;
 import com.simibubi.create.content.decoration.encasing.EncasedCTBehaviour;
 import com.simibubi.create.foundation.block.connected.CTModel;
 import com.simibubi.create.foundation.model.ModelSwapper;
+import dev.createpropulsionsimulated.client.sound.ThrusterLoopSoundController;
 import dev.propulsionteam.propulsionsimulated.CreatePropulsion;
 import dev.propulsionteam.propulsionsimulated.content.heat.burners.liquid.LiquidBurnerRenderer;
 import dev.propulsionteam.propulsionsimulated.content.platinum.PlatinumFluidTankModel;
@@ -44,6 +45,7 @@ import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.event.ModelEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
+import net.neoforged.neoforge.client.event.sound.SoundEngineLoadEvent;
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 import net.neoforged.neoforge.fluids.FluidStack;
@@ -52,6 +54,11 @@ import dev.propulsionteam.propulsionsimulated.content.thruster.solid_fuel_thrust
 @SuppressWarnings("removal")
 @EventBusSubscriber(modid = CreatePropulsion.ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class ModClientEvents {
+
+    @SubscribeEvent
+    public static void onSoundEngineLoad(SoundEngineLoadEvent event) {
+        ThrusterLoopSoundController.onSoundEngineReload();
+    }
 
     @SubscribeEvent
     public static void registerItemColors(RegisterColorHandlersEvent.Item event) {

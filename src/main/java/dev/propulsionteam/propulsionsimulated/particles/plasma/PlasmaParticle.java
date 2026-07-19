@@ -47,6 +47,9 @@ public class PlasmaParticle extends SimpleAnimatedParticle {
     private TextureAtlasSprite[] cachedOverrideSprites;
     private final float startupProgress;
     private final boolean startupHalo;
+    /** World-space nozzle motion, kept separate so plasma drag cannot make the craft overtake its exhaust. */
+    private final Vec3 inheritedVelocity;
+    private final float trailCoverage;
 
     double dx; double dy; double dz;
 
@@ -57,6 +60,8 @@ public class PlasmaParticle extends SimpleAnimatedParticle {
         this.spriteSet = spriteSet;
         this.overrideTextures = data.overrideTextures();
         this.startupProgress = data.startupProgress() == null ? 1.0f : Mth.clamp(data.startupProgress(), 0.0f, 1.0f);
+        this.inheritedVelocity = data.inheritedVelocity();
+        this.trailCoverage = data.trailCoverage();
         this.startupHalo = this.startupProgress < 1.0f
                 && this.random.nextFloat() < (1.0f - this.startupProgress) * 0.55f;
 
@@ -108,7 +113,7 @@ public class PlasmaParticle extends SimpleAnimatedParticle {
             int rgb = data.overrideColor() & 0xFFFFFF;
             this.setColor(((rgb >> 16) & 0xFF) / 255f, ((rgb >> 8) & 0xFF) / 255f, (rgb & 0xFF) / 255f);
         }
-        setAlpha(1);
+        setAlpha(1.0f - this.trailCoverage);
     }
 
     @Override
@@ -125,9 +130,9 @@ public class PlasmaParticle extends SimpleAnimatedParticle {
         }
 
         //Velocity before possible collision
-        double intendedMoveX = this.dx * this.currentSpeedMultiplier;
-        double intendedMoveY = this.dy * this.currentSpeedMultiplier;
-        double intendedMoveZ = this.dz * this.currentSpeedMultiplier;
+        double intendedMoveX = this.dx * this.currentSpeedMultiplier + this.inheritedVelocity.x;
+        double intendedMoveY = this.dy * this.currentSpeedMultiplier + this.inheritedVelocity.y;
+        double intendedMoveZ = this.dz * this.currentSpeedMultiplier + this.inheritedVelocity.z;
 
         double prevX = this.x;
         double prevY = this.y;
@@ -270,6 +275,8 @@ public class PlasmaParticle extends SimpleAnimatedParticle {
         this.dz *= this.friction;
 
         this.pickSprite();
+        float reveal = Mth.clamp(this.age / 2.0f, 0.0f, 1.0f);
+        this.setAlpha(Mth.lerp(reveal, 1.0f - this.trailCoverage, 1.0f));
     }
 
     private void pickSprite() {
