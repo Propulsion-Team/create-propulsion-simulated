@@ -511,7 +511,13 @@ public class PropulsionConfig {
 
 
     public static boolean useShaderPlumes() {
-        return PLUME_RENDER_MODE.get() == PlumeRenderMode.SHADER;
+        try {
+            return PLUME_RENDER_MODE.get() == PlumeRenderMode.SHADER;
+        } catch (IllegalStateException ignored) {
+            // Client configs are not loaded on dedicated servers. Particle plumes are the
+            // safe fallback because server-side thruster ticking uses this value too.
+            return false;
+        }
     }
 
 }
