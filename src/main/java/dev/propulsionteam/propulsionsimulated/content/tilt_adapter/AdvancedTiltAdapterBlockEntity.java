@@ -14,6 +14,7 @@ import net.minecraft.world.level.block.state.BlockState;
 
 public class AdvancedTiltAdapterBlockEntity extends TiltAdapterBlockEntity {
     public static final int DEFAULT_ANGLE_LIMIT = 45;
+    private static final int ANGLE_STATE_VERSION = 1;
 
     public AdvancedTiltAdapterAngleScrollBehaviour leftAngleBehaviour;
     public AdvancedTiltAdapterAngleScrollBehaviour rightAngleBehaviour;
@@ -72,14 +73,7 @@ public class AdvancedTiltAdapterBlockEntity extends TiltAdapterBlockEntity {
         }
         setChanged();
         if (level != null && !level.isClientSide) {
-            targetAngle = clampToAngleLimits(computeTargetAngle());
-            currentAngle = clampToAngleLimits(currentAngle);
-            if (Math.abs(getTheoreticalSpeed()) > 0) {
-                beginOrExtendKineticMove();
-            } else {
-                flickerTicker.scheduleUpdate(this::syncNetworkState);
-            }
-            sendData();
+            requestTargetRecalculation();
         }
     }
 
@@ -109,7 +103,7 @@ public class AdvancedTiltAdapterBlockEntity extends TiltAdapterBlockEntity {
 
     @Override
     protected float getNeutralTargetAngle() {
-        return -DEFAULT_ANGLE_LIMIT;
+        return 0;
     }
 
     @Override
@@ -128,6 +122,7 @@ public class AdvancedTiltAdapterBlockEntity extends TiltAdapterBlockEntity {
         compound.putInt("LeftAngle", leftAngleLimit);
         compound.putInt("RightAngle", rightAngleLimit);
         compound.putBoolean("SharedAngles", sharedAngles);
+        compound.putInt("AngleStateVersion", ANGLE_STATE_VERSION);
     }
 
     @Override
@@ -136,6 +131,17 @@ public class AdvancedTiltAdapterBlockEntity extends TiltAdapterBlockEntity {
         leftAngleLimit = compound.contains("LeftAngle") ? compound.getInt("LeftAngle") : DEFAULT_ANGLE_LIMIT;
         rightAngleLimit = compound.contains("RightAngle") ? compound.getInt("RightAngle") : DEFAULT_ANGLE_LIMIT;
         sharedAngles = compound.getBoolean("SharedAngles");
+
+        if (!compound.contains("AngleStateVersion")) {
+            // Old advanced adapters used -45 degrees as their logical neutral.
+            // Rebase the coordinates without asking the attached mechanism to move.
+            motion.offsetAngles(DEFAULT_ANGLE_LIMIT);
+            computerTargetAngle += DEFAULT_ANGLE_LIMIT;
+        }
+
+        float minimum = -getNegativeSideAngleRange();
+        float maximum = getPositiveSideAngleRange();
+        motion.clampTargets(minimum, maximum);
         if (leftAngleBehaviour != null) {
             leftAngleBehaviour.setStoredValue(leftAngleLimit);
         }

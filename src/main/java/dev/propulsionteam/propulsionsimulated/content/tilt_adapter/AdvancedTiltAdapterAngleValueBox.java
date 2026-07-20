@@ -22,10 +22,10 @@ public class AdvancedTiltAdapterAngleValueBox extends ValueBoxTransform {
     private static final float LEFT_X = INSET + 4.5f - SIDE_OFFSET_PIXELS;
     private static final float RIGHT_X = 16f - INSET - 4.5f + SIDE_OFFSET_PIXELS;
 
-    private final boolean controlsLeftLimit;
+    private final boolean positionedOnLeft;
 
-    public AdvancedTiltAdapterAngleValueBox(boolean controlsLeftLimit) {
-        this.controlsLeftLimit = controlsLeftLimit;
+    public AdvancedTiltAdapterAngleValueBox(boolean positionedOnLeft) {
+        this.positionedOnLeft = positionedOnLeft;
     }
 
     private Direction getFace(BlockState state) {
@@ -34,7 +34,7 @@ public class AdvancedTiltAdapterAngleValueBox extends ValueBoxTransform {
 
     @Override
     public Vec3 getLocalOffset(LevelAccessor level, BlockPos pos, BlockState state) {
-        float x = controlsLeftLimit ? LEFT_X : RIGHT_X;
+        float x = positionedOnLeft ? LEFT_X : RIGHT_X;
         Vec3 onModelTop = VecHelper.voxelSpace(x, AbstractTiltAdapterBlock.VALUE_BOX_MODEL_TOP, DEPTH_CENTER);
         return AbstractTiltAdapterBlock.applyBlockstateModelRotation(onModelTop, state);
     }

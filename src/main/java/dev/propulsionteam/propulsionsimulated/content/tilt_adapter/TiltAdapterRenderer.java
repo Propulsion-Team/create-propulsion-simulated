@@ -73,7 +73,7 @@ public class TiltAdapterRenderer extends KineticBlockEntityRenderer<TiltAdapterB
     /** Smooth client display between synced {@link TiltAdapterBlockEntity#getCurrentAngle()} updates. */
     private static float getGantryTiltRadians(TiltAdapterBlockEntity blockEntity, float partialTicks) {
         float degrees = blockEntity.getCurrentAngle();
-        float target = blockEntity.getTargetAngle();
+        float target = blockEntity.getRenderTargetAngle();
         float speed = Math.abs(blockEntity.getSpeed());
         if (speed > 0 && Math.abs(target - degrees) > 0.001f) {
             float maxStep = KineticBlockEntity.convertToAngular(speed) * partialTicks;

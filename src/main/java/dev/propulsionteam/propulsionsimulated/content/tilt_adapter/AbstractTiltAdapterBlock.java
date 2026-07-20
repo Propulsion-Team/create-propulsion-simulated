@@ -8,6 +8,7 @@ import dev.propulsionteam.propulsionsimulated.registries.PropulsionShapes;
 import com.simibubi.create.content.kinetics.base.AbstractEncasedShaftBlock;
 import com.simibubi.create.content.kinetics.base.DirectionalAxisKineticBlock;
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
+import com.simibubi.create.content.kinetics.base.IRotate;
 import com.simibubi.create.foundation.block.IBE;
 
 import net.minecraft.core.BlockPos;
@@ -61,10 +62,12 @@ public abstract class AbstractTiltAdapterBlock<T extends TiltAdapterBlockEntity>
     public BlockState getStateForPlacement(BlockPlaceContext context) {
         Direction baseDirection = context.getNearestLookingDirection();
         Player player = context.getPlayer();
+        boolean manualPlacement = player != null && player.isShiftKeyDown();
         Direction placeDirection;
 
-        if (player != null && !player.isShiftKeyDown()) {
-            placeDirection = baseDirection.getOpposite();
+        if (!manualPlacement) {
+            Direction inputSide = getPreferredShaftInput(context);
+            placeDirection = inputSide == null ? baseDirection.getOpposite() : inputSide.getOpposite();
         } else {
             placeDirection = baseDirection;
         }
@@ -72,6 +75,37 @@ public abstract class AbstractTiltAdapterBlock<T extends TiltAdapterBlockEntity>
         Direction.Axis axis = placeDirection.getAxis();
         boolean alignedX = axis == Direction.Axis.Y && context.getHorizontalDirection().getAxis() == Direction.Axis.X;
         return fromFacingAndAlignment(defaultBlockState(), placeDirection, alignedX);
+    }
+
+    @Nullable
+    private static Direction getPreferredShaftInput(BlockPlaceContext context) {
+        BlockPos placementPos = context.getClickedPos();
+        Direction clickedInputSide = context.getClickedFace().getOpposite();
+
+        if (hasShaftFacingPlacement(context, placementPos, clickedInputSide)) {
+            return clickedInputSide;
+        }
+
+        Direction preferred = null;
+
+        for (Direction side : Direction.values()) {
+            if (!hasShaftFacingPlacement(context, placementPos, side)) {
+                continue;
+            }
+
+            if (preferred != null && preferred.getAxis() != side.getAxis()) {
+                return null;
+            }
+            preferred = side;
+        }
+        return preferred;
+    }
+
+    private static boolean hasShaftFacingPlacement(BlockPlaceContext context, BlockPos placementPos, Direction side) {
+        BlockPos neighbourPos = placementPos.relative(side);
+        BlockState neighbourState = context.getLevel().getBlockState(neighbourPos);
+        return neighbourState.getBlock() instanceof IRotate rotate
+            && rotate.hasShaftTowards(context.getLevel(), neighbourPos, neighbourState, side.getOpposite());
     }
 
     @Override

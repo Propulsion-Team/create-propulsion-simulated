@@ -25,7 +25,8 @@ public class AdvancedTiltAdapterAngleScrollBehaviour extends ScrollValueBehaviou
     private final boolean controlsLeftLimit;
 
     public AdvancedTiltAdapterAngleScrollBehaviour(Component label, SmartBlockEntity be, boolean controlsLeftLimit) {
-        super(label, be, new AdvancedTiltAdapterAngleValueBox(controlsLeftLimit));
+        // The control for each limit is intentionally shown on the opposite side.
+        super(label, be, new AdvancedTiltAdapterAngleValueBox(!controlsLeftLimit));
         this.controlsLeftLimit = controlsLeftLimit;
         between(0, MAX_ANGLE);
         withFormatter(v -> v + "\u00b0");

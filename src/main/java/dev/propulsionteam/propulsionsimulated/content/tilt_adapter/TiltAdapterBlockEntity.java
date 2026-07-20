@@ -29,16 +29,17 @@ import com.simibubi.create.content.kinetics.base.RotatedPillarKineticBlock;
 
 public class TiltAdapterBlockEntity extends SplitShaftBlockEntity {
     public static final float SIGNAL_RANGE = 15.0f;
+    private static final int SEGMENT_SETTLE_TICKS = 2;
+    // Avoid Create's ambiguous shortest-angle interpolation at exactly 180 degrees.
+    private static final float MAX_PROPAGATED_SEGMENT_ANGLE = 179.0f;
 
     protected int redstoneLeft = 0;
     protected int redstoneRight = 0;
     
-    protected float targetAngle = 0f;
-    protected float networkTargetAngle = 0f;
-    protected float currentAngle = 0f;
-    protected int activeMoveDirection = 0;
-    protected float activeSequenceLimit = 0f;
+    protected final TiltAdapterMotionState motion = new TiltAdapterMotionState();
     protected float computerTargetAngle = 0f;
+    private boolean segmentStartQueued;
+    private int segmentSettleTicks;
 
     public FlickerAwareTicker flickerTicker;
     public AbstractComputerBehaviour computerBehaviour;
@@ -69,37 +70,40 @@ public class TiltAdapterBlockEntity extends SplitShaftBlockEntity {
         if (level == null || level.isClientSide) return;
 
         float speed = Math.abs(getTheoreticalSpeed());
-        if (activeMoveDirection != 0 && speed > 0 && activeSequenceLimit > 0) {
-            float step = KineticBlockEntity.convertToAngular(speed);
-            float actualStep = Math.min(step, activeSequenceLimit);
-
-            currentAngle += actualStep * activeMoveDirection;
-            activeSequenceLimit -= actualStep;
-
-            if (activeSequenceLimit <= 0) {
-                activeSequenceLimit = 0;
-                // The propagated network completed the target captured when this
-                // sequence began. A newer command may still be waiting in the
-                // flicker-aware scheduler and has not physically moved yet.
-                currentAngle = clampToAngleLimits(networkTargetAngle);
-                flickerTicker.scheduleUpdate(this::syncNetworkState);
+        if (motion.isActive()) {
+            if (speed <= 0) {
+                cancelActiveSegment();
+            } else if (segmentSettleTicks > 0) {
+                segmentSettleTicks--;
+                if (segmentSettleTicks == 0) {
+                    finishActiveSegment();
+                }
+            } else if (motion.advance(KineticBlockEntity.convertToAngular(speed))) {
+                // Create's sequenced gearshift deliberately allows two extra ticks
+                // after the calculated duration. This lets downstream consumers
+                // clamp to the propagated endpoint regardless of BE tick order.
+                segmentSettleTicks = SEGMENT_SETTLE_TICKS;
+                sendData();
+            } else {
+                sendData();
             }
-            sendData();
         }
 
-        checkRedstoneAndSpeed();
+        checkRedstoneTarget();
+        queueSegmentStartIfNeeded();
     }
 
     public int getLeft() { return redstoneLeft; }
     public int getRight() { return redstoneRight; }
-    public float getCurrentAngle() { return currentAngle; }
-    public float getTargetAngle() { return targetAngle; }
+    public float getCurrentAngle() { return motion.currentAngle(); }
+    public float getTargetAngle() { return motion.requestedTarget(); }
+    public float getRenderTargetAngle() { return motion.renderTarget(); }
 
     public void setComputerTargetAngle(float angle) {
         computerTargetAngle = angle;
     }
 
-    protected void checkRedstoneAndSpeed() {
+    protected void checkRedstoneTarget() {
         Level level = getLevel();
         if (level == null) return;
 
@@ -118,34 +122,62 @@ public class TiltAdapterBlockEntity extends SplitShaftBlockEntity {
 
         float newTarget = clampToAngleLimits(computeTargetAngle());
 
-        if (Math.abs(newTarget - targetAngle) > 0.001f) {
-            targetAngle = newTarget;
-            // Coalesce rapid analog/CC changes instead of repeatedly detaching the
-            // same kinetic network in one burst.
-            flickerTicker.scheduleUpdate(this::syncNetworkState);
+        if (Math.abs(newTarget - motion.requestedTarget()) > TiltAdapterMotionState.EPSILON) {
+            motion.requestTarget(newTarget);
+            sendData();
         }
     }
 
-    /** Starts or extends a kinetic move toward {@link #targetAngle} (call when speed &gt; 0). */
-    protected void beginOrExtendKineticMove() {
-        float speed = Math.abs(getTheoreticalSpeed());
-        float delta = targetAngle - currentAngle;
-        if (speed <= 0 || Math.abs(delta) <= 0.001f) {
+    protected void requestTargetRecalculation() {
+        motion.requestTarget(clampToAngleLimits(computeTargetAngle()));
+        queueSegmentStartIfNeeded();
+        sendData();
+    }
+
+    private void queueSegmentStartIfNeeded() {
+        if (segmentStartQueued || motion.isActive() || !motion.needsSegment()
+            || Math.abs(getTheoreticalSpeed()) <= 0) {
             return;
         }
 
-        networkTargetAngle = targetAngle;
-        activeMoveDirection = (int) Math.signum(delta);
-        activeSequenceLimit = Math.abs(delta);
+        segmentStartQueued = true;
+        flickerTicker.scheduleUpdate(() -> {
+            segmentStartQueued = false;
+            startPendingSegment();
+        });
+    }
 
-        float kineticSpeed = speed * activeMoveDirection;
+    /** Starts one immutable kinetic segment toward the newest requested target. */
+    protected void startPendingSegment() {
+        float speed = Math.abs(getTheoreticalSpeed());
+        if (speed <= 0 || motion.isActive() || !motion.startSegment(MAX_PROPAGATED_SEGMENT_ANGLE)) {
+            return;
+        }
+
         sequenceContext = new SequenceContext(
             SequencerInstructions.TURN_ANGLE,
-            activeSequenceLimit / Math.abs(kineticSpeed)
+            motion.remainingAngle() / speed
         );
 
-        detachKinetics();
         attachKinetics();
+        sendData();
+    }
+
+    private void finishActiveSegment() {
+        // Detach while the old modifier is still visible so the complete output
+        // subtree is stopped before the active segment is cleared.
+        detachKinetics();
+        motion.finishSegment();
+        segmentSettleTicks = 0;
+        sequenceContext = null;
+        sendData();
+    }
+
+    private void cancelActiveSegment() {
+        detachKinetics();
+        motion.cancelSegment();
+        segmentSettleTicks = 0;
+        sequenceContext = null;
         sendData();
     }
 
@@ -163,9 +195,13 @@ public class TiltAdapterBlockEntity extends SplitShaftBlockEntity {
         }
 
         // Each redstone face scales to its own limit (matches left/right value boxes).
-        float fromLeft = (redstoneLeft / SIGNAL_RANGE) * getPositiveSideAngleRange();
-        float fromRight = (redstoneRight / SIGNAL_RANGE) * getNegativeSideAngleRange();
-        return getNeutralTargetAngle() + fromLeft - fromRight;
+        return TiltAdapterMotionState.computeRedstoneTarget(
+            redstoneLeft,
+            redstoneRight,
+            getNeutralTargetAngle(),
+            getPositiveSideAngleRange(),
+            getNegativeSideAngleRange()
+        );
     }
 
     protected float clampToAngleLimits(float angle) {
@@ -181,23 +217,6 @@ public class TiltAdapterBlockEntity extends SplitShaftBlockEntity {
         return getPositiveSideAngleRange();
     }
 
-    protected void syncNetworkState() {
-        float speed = Math.abs(getTheoreticalSpeed());
-        float delta = targetAngle - currentAngle;
-
-        if (Math.abs(delta) > 0.001f && speed > 0) {
-            beginOrExtendKineticMove();
-        } else {
-            activeMoveDirection = 0;
-            activeSequenceLimit = 0;
-            sequenceContext = null;
-            currentAngle = clampToAngleLimits(targetAngle);
-            detachKinetics();
-            attachKinetics();
-            sendData();
-        }
-    }
-
     @Override
     public float propagateRotationTo(KineticBlockEntity target, BlockState stateFrom, BlockState stateTo, BlockPos diff, boolean connectedViaAxes, boolean connectedViaCogs) {
         Direction directionToTarget = Direction.getNearest(diff.getX(), diff.getY(), diff.getZ());
@@ -207,7 +226,7 @@ public class TiltAdapterBlockEntity extends SplitShaftBlockEntity {
 
     @Override
     public float getRotationSpeedModifier(Direction face) {
-        if (face == AbstractTiltAdapterBlock.getDirection(getBlockState())) return activeMoveDirection;
+        if (face == AbstractTiltAdapterBlock.getDirection(getBlockState())) return motion.activeDirection();
         if (hasSource() && getSourceFacing() != getBackFace(getBlockState())) return 0;
         return 1;
     }
@@ -222,20 +241,13 @@ public class TiltAdapterBlockEntity extends SplitShaftBlockEntity {
     }
 
     @Override
-    public void initialize() {
-        super.initialize();
-        Level level = getLevel();
-        if (level != null && !level.isClientSide) flickerTicker.scheduleUpdate(this::syncNetworkState);
-    }
-
-    @Override
     protected void write(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
         super.write(compound, registries, clientPacket);
-        compound.putFloat("targetAngle", targetAngle);
-        compound.putFloat("networkTargetAngle", networkTargetAngle);
-        compound.putFloat("currentAngle", currentAngle);
-        compound.putInt("activeMoveDirection", activeMoveDirection);
-        compound.putFloat("activeSequenceLimit", activeSequenceLimit);
+        compound.putFloat("targetAngle", motion.requestedTarget());
+        compound.putFloat("networkTargetAngle", motion.activeTarget());
+        compound.putFloat("currentAngle", motion.currentAngle());
+        compound.putInt("activeMoveDirection", motion.activeDirection());
+        compound.putFloat("activeSequenceLimit", motion.remainingAngle());
         compound.putInt("redstoneLeft", redstoneLeft);
         compound.putInt("redstoneRight", redstoneRight);
         compound.putFloat("computerTargetAngle", computerTargetAngle);
@@ -244,11 +256,13 @@ public class TiltAdapterBlockEntity extends SplitShaftBlockEntity {
     @Override
     protected void read(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
         super.read(compound, registries, clientPacket);
-        targetAngle = compound.getFloat("targetAngle");
-        networkTargetAngle = compound.getFloat("networkTargetAngle");
-        currentAngle = compound.getFloat("currentAngle");
-        activeMoveDirection = compound.getInt("activeMoveDirection");
-        activeSequenceLimit = compound.getFloat("activeSequenceLimit");
+        motion.restore(
+            compound.getFloat("targetAngle"),
+            compound.getFloat("networkTargetAngle"),
+            compound.getFloat("currentAngle"),
+            compound.getFloat("activeSequenceLimit"),
+            compound.getInt("activeMoveDirection")
+        );
         redstoneLeft = compound.getInt("redstoneLeft");
         redstoneRight = compound.getInt("redstoneRight");
         computerTargetAngle = compound.getFloat("computerTargetAngle");
