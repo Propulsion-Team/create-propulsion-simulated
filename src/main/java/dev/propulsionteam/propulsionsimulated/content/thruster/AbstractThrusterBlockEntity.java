@@ -639,7 +639,9 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
 
     @Override
     public void sable$physicsTick(final ServerSubLevel subLevel, final RigidBodyHandle handle, final double timeStep) {
-        if (this.getCurrentThrust() <= 0.0d) {
+        // Resource/control state is authoritative. Never apply a previously cached force
+        // after a cable disconnect, empty tank/buffer, or shutdown input.
+        if (!this.isActive() || this.getCurrentThrust() <= 0.0d) {
             return;
         }
 

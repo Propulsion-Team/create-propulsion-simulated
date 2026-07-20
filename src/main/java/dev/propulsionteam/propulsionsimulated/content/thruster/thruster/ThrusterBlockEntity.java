@@ -298,6 +298,9 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
             t.controllerPos = (t == controller) ? null : origin;
             t.width = size;
             t.isThrustDirty = true;
+            // A newly formed member may still carry its former single-block force.
+            // Clear every cache before the controller calculates the combined thrust.
+            t.thrusterData.setThrust(0.0f);
             BlockPos cellPos = t.getBlockPos();
             BlockState liveState = SimulatedThrustAdapter.getBlockStateSafe(level,cellPos);
             if (liveState.hasProperty(ThrusterBlock.MULTIBLOCK)
@@ -465,6 +468,7 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
     @Override
     public void updateThrust(BlockState currentBlockState) {
         if (!isController()) {
+            setThrustAndSync(0.0f);
             isThrustDirty = false;
             return;
         }
@@ -718,6 +722,7 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
     public void sable$physicsTick(final dev.ryanhcode.sable.sublevel.ServerSubLevel subLevel, final dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle handle, final double timeStep) {
         if (isMultiblock() && !isController()) return;
         if (isMultiblock()) {
+            if (!isActive()) return;
             float thrust = getCurrentThrust();
             if (thrust <= 0.0f || !Float.isFinite(thrust)) return;
             Vector3d directionLocal = new Vector3d(getThrustDirectionLocal()).normalize();

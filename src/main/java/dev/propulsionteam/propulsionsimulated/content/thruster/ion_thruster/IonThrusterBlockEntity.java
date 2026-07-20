@@ -36,7 +36,6 @@ import java.util.Locale;
 public class IonThrusterBlockEntity extends ThrusterBlockEntity {
     private int energyStored;
     private double energyDrainAccumulator;
-    private long lastEnergyDrainGameTime = -1L;
     private double lastConsumedFePerTick;
 
     private final IEnergyStorage energyHandler = new IEnergyStorage() {
@@ -111,6 +110,7 @@ public class IonThrusterBlockEntity extends ThrusterBlockEntity {
     @Override
     public void updateThrust(BlockState currentBlockState) {
         if (!isController() && isMultiblock()) {
+            setThrustAndSync(0.0f);
             isThrustDirty = false;
             return;
         }
@@ -126,12 +126,7 @@ public class IonThrusterBlockEntity extends ThrusterBlockEntity {
             float thrustPercentage = getEffectiveThrustPercentage();
 
             if (thrustPercentage > 0) {
-                long currentGameTime = level != null ? level.getGameTime() : 0L;
-                int ticksElapsed = 1;
-                if (lastEnergyDrainGameTime >= 0L) {
-                    ticksElapsed = (int) Math.max(0L, currentGameTime - lastEnergyDrainGameTime);
-                }
-                lastEnergyDrainGameTime = currentGameTime;
+                int ticksElapsed = getThrustUpdateIntervalTicks();
 
                 // Config value is FE/t at full throttle; scale by throttle and elapsed ticks.
                 double requestedDrain = energyDrainAccumulator
@@ -143,8 +138,8 @@ public class IonThrusterBlockEntity extends ThrusterBlockEntity {
                 if (consumed > 0) {
                     energyStored -= consumed;
                 }
-                if (totalDrain == 0 || consumed > 0) {
-                    float consumptionRatio = totalDrain > 0 ? (float) consumed / (float) totalDrain : 1.0f;
+                float consumptionRatio = IonThrusterEnergyMath.poweredFraction(energyStored + consumed, totalDrain, consumed);
+                if (consumptionRatio > 0.0f) {
                     float baseThrustPn = (float) (PropulsionConfig.ION_THRUSTER_BASE_THRUST.get() * getThrustUnitsPerKn());
                     baseThrustPn *= (float) calculateAtmosphericFactor();
                     thrust = baseThrustPn * thrustPercentage * consumptionRatio;
@@ -180,21 +175,17 @@ public class IonThrusterBlockEntity extends ThrusterBlockEntity {
         if (currentPower > 0) {
             float thrustPercentage = getEffectiveThrustPercentage();
             if (thrustPercentage > 0) {
-                long currentGameTime = level.getGameTime();
-                int ticksElapsed = 1;
-                if (lastEnergyDrainGameTime >= 0L) {
-                    ticksElapsed = (int) Math.max(0L, currentGameTime - lastEnergyDrainGameTime);
-                }
-                lastEnergyDrainGameTime = currentGameTime;
+                int ticksElapsed = getThrustUpdateIntervalTicks();
 
                 double requestedDrain = energyDrainAccumulator
                         + (double) ticksElapsed * thrustPercentage * PropulsionConfig.ION_THRUSTER_FE_PER_TICK_AT_FULL_THROTTLE.get() * n;
                 int totalDrain = (int) Math.floor(requestedDrain);
                 energyDrainAccumulator = requestedDrain - totalDrain;
 
+                int energyBeforeDrain = getTotalEnergyStoredFe();
                 int consumed = drainEnergyFromMultiblock(totalDrain);
-                if (totalDrain == 0 || consumed > 0) {
-                    float consumptionRatio = totalDrain > 0 ? (float) consumed / (float) totalDrain : 1.0f;
+                float consumptionRatio = IonThrusterEnergyMath.poweredFraction(energyBeforeDrain, totalDrain, consumed);
+                if (consumptionRatio > 0.0f) {
                     float baseThrustPn = (float) (PropulsionConfig.ION_THRUSTER_BASE_THRUST.get() * getThrustUnitsPerKn());
                     baseThrustPn *= (float) calculateAtmosphericFactor();
                     thrust = baseThrustPn * thrustPercentage * consumptionRatio * n * getIonMultiblockThrustMultiplier(width);
@@ -526,7 +517,6 @@ public class IonThrusterBlockEntity extends ThrusterBlockEntity {
         this.energyStored = tag.getInt("EnergyStored");
         this.energyDrainAccumulator = tag.getDouble("EnergyDrainAccumulator");
         this.lastConsumedFePerTick = tag.getDouble("LastConsumedFePerTick");
-        this.lastEnergyDrainGameTime = -1L;
         this.clampEnergyToCapacity();
         super.read(tag, registries, clientPacket);
         // Preserve multiblock connectivity state loaded by base class.
