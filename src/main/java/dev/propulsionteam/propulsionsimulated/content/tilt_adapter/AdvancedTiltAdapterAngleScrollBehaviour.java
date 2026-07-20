@@ -7,6 +7,7 @@ import com.simibubi.create.foundation.blockEntity.behaviour.ValueSettingsBoard;
 import com.simibubi.create.foundation.blockEntity.behaviour.ValueSettingsFormatter;
 import com.simibubi.create.foundation.blockEntity.behaviour.scrollValue.ScrollValueBehaviour;
 import com.simibubi.create.foundation.utility.CreateLang;
+import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
 
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -17,7 +18,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.BlockHitResult;
 
 public class AdvancedTiltAdapterAngleScrollBehaviour extends ScrollValueBehaviour {
-    public static final int MAX_ANGLE = 180;
     public static final BehaviourType<AdvancedTiltAdapterAngleScrollBehaviour> LEFT_TYPE = new BehaviourType<>();
     public static final BehaviourType<AdvancedTiltAdapterAngleScrollBehaviour> RIGHT_TYPE = new BehaviourType<>();
 
@@ -28,12 +28,20 @@ public class AdvancedTiltAdapterAngleScrollBehaviour extends ScrollValueBehaviou
         // The control for each limit is intentionally shown on the opposite side.
         super(label, be, new AdvancedTiltAdapterAngleValueBox(!controlsLeftLimit));
         this.controlsLeftLimit = controlsLeftLimit;
-        between(0, MAX_ANGLE);
+        between(0, getMaximumAngle());
         withFormatter(v -> v + "\u00b0");
     }
 
     public void setStoredValue(int storedValue) {
-        value = Mth.clamp(storedValue, 0, MAX_ANGLE);
+        value = clampToConfiguredRange(storedValue);
+    }
+
+    public static int getMaximumAngle() {
+        return PropulsionConfig.ADVANCED_TILT_ADAPTER_MAX_ANGLE.get();
+    }
+
+    public static int clampToConfiguredRange(int angle) {
+        return Mth.clamp(angle, 0, getMaximumAngle());
     }
 
     private String nbtKey() {
@@ -65,7 +73,7 @@ public class AdvancedTiltAdapterAngleScrollBehaviour extends ScrollValueBehaviou
 
     @Override
     public void setValue(int newValue) {
-        int clamped = Mth.clamp(newValue, 0, MAX_ANGLE);
+        int clamped = clampToConfiguredRange(newValue);
         if (getValue() == clamped) {
             return;
         }
@@ -81,7 +89,10 @@ public class AdvancedTiltAdapterAngleScrollBehaviour extends ScrollValueBehaviou
     @Override
     public ValueSettingsBoard createBoard(Player player, BlockHitResult hitResult) {
         ImmutableList<Component> row = ImmutableList.of(Component.literal("\u00b0"));
-        return new ValueSettingsBoard(label, MAX_ANGLE, 18, row, new ValueSettingsFormatter(this::formatBoardValue));
+        int maximumAngle = getMaximumAngle();
+        int milestoneInterval = Math.max(1, maximumAngle / 10);
+        return new ValueSettingsBoard(label, maximumAngle, milestoneInterval, row,
+            new ValueSettingsFormatter(this::formatBoardValue));
     }
 
     @Override
@@ -91,7 +102,7 @@ public class AdvancedTiltAdapterAngleScrollBehaviour extends ScrollValueBehaviou
             playFeedbackSound(this);
             return;
         }
-        int newValue = Math.max(0, Math.min(valueSetting.value(), MAX_ANGLE));
+        int newValue = clampToConfiguredRange(valueSetting.value());
         if (getValue() == newValue) {
             return;
         }

@@ -34,6 +34,9 @@ public class AdvancedTiltAdapterBlockEntity extends TiltAdapterBlockEntity {
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
         super.addBehaviours(behaviours);
 
+        leftAngleLimit = AdvancedTiltAdapterAngleScrollBehaviour.clampToConfiguredRange(leftAngleLimit);
+        rightAngleLimit = AdvancedTiltAdapterAngleScrollBehaviour.clampToConfiguredRange(rightAngleLimit);
+
         leftAngleBehaviour = new AdvancedTiltAdapterAngleScrollBehaviour(
             Component.translatable("createpropulsion.advanced_tilt_adapter.left_angle"),
             this,
@@ -54,6 +57,7 @@ public class AdvancedTiltAdapterBlockEntity extends TiltAdapterBlockEntity {
 
     /** Called when a side's scroll value changes; keeps independent limits unless shared mode is on. */
     public void onAngleLimitChanged(boolean fromLeft, int value) {
+        value = AdvancedTiltAdapterAngleScrollBehaviour.clampToConfiguredRange(value);
         if (fromLeft) {
             leftAngleLimit = value;
             if (sharedAngles) {
@@ -108,12 +112,12 @@ public class AdvancedTiltAdapterBlockEntity extends TiltAdapterBlockEntity {
 
     @Override
     protected float getPositiveSideAngleRange() {
-        return leftAngleLimit;
+        return AdvancedTiltAdapterAngleScrollBehaviour.clampToConfiguredRange(leftAngleLimit);
     }
 
     @Override
     protected float getNegativeSideAngleRange() {
-        return rightAngleLimit;
+        return AdvancedTiltAdapterAngleScrollBehaviour.clampToConfiguredRange(rightAngleLimit);
     }
 
     @Override
@@ -128,8 +132,10 @@ public class AdvancedTiltAdapterBlockEntity extends TiltAdapterBlockEntity {
     @Override
     protected void read(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
         super.read(compound, registries, clientPacket);
-        leftAngleLimit = compound.contains("LeftAngle") ? compound.getInt("LeftAngle") : DEFAULT_ANGLE_LIMIT;
-        rightAngleLimit = compound.contains("RightAngle") ? compound.getInt("RightAngle") : DEFAULT_ANGLE_LIMIT;
+        leftAngleLimit = AdvancedTiltAdapterAngleScrollBehaviour.clampToConfiguredRange(
+            compound.contains("LeftAngle") ? compound.getInt("LeftAngle") : DEFAULT_ANGLE_LIMIT);
+        rightAngleLimit = AdvancedTiltAdapterAngleScrollBehaviour.clampToConfiguredRange(
+            compound.contains("RightAngle") ? compound.getInt("RightAngle") : DEFAULT_ANGLE_LIMIT);
         sharedAngles = compound.getBoolean("SharedAngles");
 
         if (!compound.contains("AngleStateVersion")) {

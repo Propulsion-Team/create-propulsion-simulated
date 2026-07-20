@@ -76,6 +76,7 @@ public class PropulsionConfig {
     // Stirling engine
     public static final ModConfigSpec.ConfigValue<Double> STIRLING_GENERATED_SU;
     public static final ModConfigSpec.ConfigValue<Double> TILT_ADAPTER_ANGLE_RANGE;
+    public static final ModConfigSpec.IntValue ADVANCED_TILT_ADAPTER_MAX_ANGLE;
     public static final ModConfigSpec.ConfigValue<Double> STIRLING_REVOLUTION_PERIOD;
     public static final ModConfigSpec.ConfigValue<Double> STIRLING_CRANK_RADIUS;
     public static final ModConfigSpec.ConfigValue<Double> STIRLING_CONROD_LENGTH;
@@ -219,7 +220,10 @@ public class PropulsionConfig {
 
         COMMON_BUILDER.push("Tilt Adapter");
         TILT_ADAPTER_ANGLE_RANGE = COMMON_BUILDER.comment("Maximum absolute output angle in degrees, reached at full redstone differential.")
-                .defineInRange("Maximum angle range", 90.0, 0.0, 180.0);
+                .defineInRange("Maximum angle range", 45.0, 0.0, 180.0);
+        ADVANCED_TILT_ADAPTER_MAX_ANGLE = COMMON_BUILDER.comment(
+                        "Maximum configurable angle per side for the Advanced Tilt Adapter.")
+                .defineInRange("Advanced maximum angle", 90, 1, 180);
         COMMON_BUILDER.pop();
 
         COMMON_BUILDER.push("Burners");
