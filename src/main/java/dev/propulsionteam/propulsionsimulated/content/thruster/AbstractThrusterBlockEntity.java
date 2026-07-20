@@ -82,6 +82,7 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
     private int currentTick = 0;
     private int startupTicks = 0;
     private boolean wasOperational = false;
+    private float fadePower = 0.0f;
     private long lastThrustUpdateGameTime = -1L;
     private int thrustUpdateIntervalTicks = 10;
 
@@ -248,23 +249,35 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
     }
 
     private boolean updateStartupState() {
+        boolean hasPowerCommand = getPower() > MathUtility.epsilon;
         boolean operational = isController()
-                && getPower() > MathUtility.epsilon
+                && hasPowerCommand
                 && isWorking()
                 && emptyBlocks > 0;
         int previousTicks = startupTicks;
         boolean previousOperational = wasOperational;
+        float previousFadePower = fadePower;
 
-        if (!operational) {
+        if (operational) {
+            fadePower = getPower();
+            if (wasOperational && startupTicks < STARTUP_DURATION_TICKS) {
+                startupTicks++;
+            }
+        } else if (!hasPowerCommand && previousOperational) {
+            // Preserve the exact output at the power-off edge. Subsequent ticks fade it down.
+        } else if (!hasPowerCommand && startupTicks > 0 && getCurrentThrust() > MathUtility.epsilon) {
+            startupTicks--;
+            if (startupTicks == 0) fadePower = 0.0f;
+        } else {
+            // Fuel/energy loss or a blocked exhaust cannot sustain a shutdown burn.
             startupTicks = 0;
-        } else if (!wasOperational) {
-            startupTicks = 0;
-        } else if (startupTicks < STARTUP_DURATION_TICKS) {
-            startupTicks++;
+            fadePower = 0.0f;
         }
         wasOperational = operational;
 
-        boolean changed = previousTicks != startupTicks || previousOperational != operational;
+        boolean changed = previousTicks != startupTicks
+                || previousOperational != operational
+                || java.lang.Math.abs(previousFadePower - fadePower) > 1.0e-4f;
         if (changed) {
             isThrustDirty = true;
             setChanged();
@@ -345,7 +358,7 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
     }
 
     protected boolean shouldDamageEntities() {
-        return PropulsionConfig.DAMAGE_ENTITIES.get() && isPowered() && isWorking();
+        return PropulsionConfig.DAMAGE_ENTITIES.get() && getCurrentThrust() > MathUtility.epsilon;
     }
 
     protected void addSpecificGoggleInfo(List<Component> tooltip, boolean isPlayerSneaking) {}
@@ -363,9 +376,6 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
     }
 
     public float getStartupProgress() {
-        if (!wasOperational) {
-            return 0.0f;
-        }
         return org.joml.Math.clamp(0.0f, 1.0f, (float) startupTicks / (float) STARTUP_DURATION_TICKS);
     }
 
@@ -373,13 +383,21 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         return wasOperational && startupTicks < STARTUP_DURATION_TICKS;
     }
 
+    public boolean isFadingOut() {
+        return !wasOperational && startupTicks > 0 && fadePower > MathUtility.epsilon;
+    }
+
+    private float getEnvelopePower() {
+        return wasOperational ? getPower() : fadePower;
+    }
+
     public float getEffectiveThrottle() {
-        return getPower() * getStartupProgress();
+        return getEnvelopePower() * getStartupProgress();
     }
 
     /** Actual output fraction after obstruction and startup are both accounted for. */
     public float getEffectiveThrustPercentage() {
-        return Math.min(getPower(), calculateObstructionEffect()) * getStartupProgress();
+        return Math.min(getEnvelopePower(), calculateObstructionEffect()) * getStartupProgress();
     }
 
     protected int getThrustUpdateIntervalTicks() {
@@ -387,7 +405,7 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
     }
 
     public boolean isVisuallyActive() {
-        return getThrottle() > 0 && isWorking();
+        return getEffectiveThrottle() > MathUtility.epsilon && (isWorking() || isFadingOut());
     }
 
     public int getUnobstructedBlocks() {
@@ -634,13 +652,13 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
     public net.neoforged.neoforge.fluids.FluidStack fluidStack() { return net.neoforged.neoforge.fluids.FluidStack.EMPTY; }
 
     public boolean isActive() {
-        return isPowered() && isWorking();
+        return (isPowered() && isWorking()) || isFadingOut();
     }
 
     @Override
     public void sable$physicsTick(final ServerSubLevel subLevel, final RigidBodyHandle handle, final double timeStep) {
-        // Resource/control state is authoritative. Never apply a previously cached force
-        // after a cable disconnect, empty tank/buffer, or shutdown input.
+        // Resource loss is immediate, while a commanded shutdown keeps applying the
+        // explicitly tracked fade envelope until it reaches zero.
         if (!this.isActive() || this.getCurrentThrust() <= 0.0d) {
             return;
         }
@@ -945,6 +963,7 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         compound.putInt("currentTick", currentTick);
         compound.putInt("StartupTicks", startupTicks);
         compound.putBoolean("StartupOperational", wasOperational);
+        compound.putFloat("StartupFadePower", fadePower);
         
         compound.putInt("RedstoneInput", redstoneInput);
         compound.putFloat("DigitalInput", digitalInput);
@@ -965,6 +984,7 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         currentTick = compound.getInt("currentTick");
         startupTicks = Math.clamp(compound.getInt("StartupTicks"), 0, STARTUP_DURATION_TICKS);
         wasOperational = compound.getBoolean("StartupOperational");
+        fadePower = org.joml.Math.clamp(0.0f, 1.0f, compound.getFloat("StartupFadePower"));
         lastThrustUpdateGameTime = -1L;
 
         redstoneInput = compound.getInt("RedstoneInput");

@@ -67,7 +67,7 @@ public class SolidFuelThrusterBlockEntity extends AbstractThrusterBlockEntity im
     }
 
     private void tickFuel() {
-        boolean powered = isPowered();
+        boolean powered = isPowered() || isFadingOut();
 
         if (burnTime > 0 && powered && !SolidFuelThrusterFuelHelper.isInfiniteBurnTime(burnTime)) {
             burnDrainAccumulator += getEffectiveThrustPercentage();
@@ -295,7 +295,7 @@ public class SolidFuelThrusterBlockEntity extends AbstractThrusterBlockEntity im
         float thrust = 0;
         float currentPower = getEffectiveThrottle();
 
-        if (isWorking() && currentPower > 0) {
+        if (hasActiveBurn() && currentPower > 0) {
             ItemStack fuel = getFuelStack();
             ItemThrusterProperties properties = SolidThrusterFuelManager.getProperties(fuel);
             float thrustPercentage = getEffectiveThrustPercentage();

@@ -341,7 +341,8 @@ public class IonThrusterBlockEntity extends ThrusterBlockEntity {
 
     @Override
     public boolean isVisuallyActive() {
-        return this.getThrottle() > 0.0d && this.getTotalEnergyStoredFe() > 0;
+        return this.getEffectiveThrottle() > 0.0d
+                && (this.getTotalEnergyStoredFe() > 0 || this.isFadingOut());
     }
 
     @Override

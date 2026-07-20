@@ -26,23 +26,29 @@ public final class ThrusterPlumeResolver {
         boolean active = isActive(be);
         if (!active) return ThrusterPlumeSpec.inactive(style);
 
-        return new ThrusterPlumeSpec(true, Math.max(0.0f, be.getPower()), scaleForMultiblock(particleFor(be), be.width), style);
+        float visualPower = be.isFadingOut() ? be.getEffectiveThrottle() : be.getPower();
+        return new ThrusterPlumeSpec(true, Math.max(0.0f, visualPower), scaleForMultiblock(particleFor(be), be.width), style);
     }
 
     private static boolean isActive(AbstractThrusterBlockEntity be) {
+        if (be.getPower() <= 0.0f && !be.isFadingOut()) return false;
         if (be instanceof CreativeVectorThrusterBlockEntity creativeVector) {
-            return creativeVector.getPlumeType() != CreativeThrusterBlockEntity.PlumeType.NONE
-                    && creativeVector.getPower() > 0.0f;
+            return creativeVector.getPlumeType() != CreativeThrusterBlockEntity.PlumeType.NONE;
         }
         if (be instanceof CreativeThrusterBlockEntity creative) {
-            return creative.getPlumeType() != CreativeThrusterBlockEntity.PlumeType.NONE
-                    && creative.isVisuallyActive();
+            return creative.getPlumeType() != CreativeThrusterBlockEntity.PlumeType.NONE;
         }
         if (be instanceof SolidFuelThrusterBlockEntity solid) {
-            return solid.getBurnTime() > 0 && solid.validFuel() && solid.getPower() > 0.0f;
+            return solid.getBurnTime() > 0 && solid.validFuel();
         }
         if (be instanceof LiquidVectorThrusterBlockEntity liquid) {
-            return liquid.validFluid() && liquid.getPower() > 0.0f;
+            return liquid.validFluid();
+        }
+        if (be instanceof IonThrusterBlockEntity ion) {
+            return ion.getFuelAmountMb() > 0;
+        }
+        if (be instanceof ThrusterBlockEntity thruster) {
+            return thruster.validFluid();
         }
         return be.isVisuallyActive();
     }
