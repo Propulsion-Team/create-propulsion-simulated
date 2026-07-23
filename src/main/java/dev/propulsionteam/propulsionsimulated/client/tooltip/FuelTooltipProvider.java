@@ -33,7 +33,7 @@ public final class FuelTooltipProvider implements ITooltipProvider {
             return;
         }
         TooltipHandler.wrapShiftHoldText(tooltipList, "createpropulsion.tooltip.holdForRocketFuelSummary", () -> {
-            final int thrustPercent = Math.round(properties.thrustMultiplier() * 100.0f);
+            final int thrustPercent = Math.round(ThrusterFuelManager.getEfficiency(fluidStack.getFluid()) * 100.0f);
             final Component thrustLine = Component.translatable("createpropulsion.tooltip.thrust")
                     .append(": ")
                     .withStyle(Palette.STANDARD_CREATE.primary())

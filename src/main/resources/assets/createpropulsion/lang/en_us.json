@@ -47,7 +47,7 @@
     "createpropulsion.gui.goggles.burner.heat.hot": "Hot",
     "createpropulsion.ponder.redstone_transmission_direct.header": "Direct Control Mode",
     "createpropulsion.gui.goggles.burner.thermostat": "Thermostat",
-    "itemGroup.createpropulsion.base": "Propulsion",
+    "itemGroup.createpropulsion.base": "Create Propulsion: Simulated",
     "itemGroup.createpropulsion.tools": "Create: Aeronautics tools",
     "block.createpropulsion.copycat_wing_12": "Copycat Wing (12m)",
     "createpropulsion.ponder.shared.liquid_burner.heat_comparison": "Liquid fuel properties affect heat sustain and performance.",

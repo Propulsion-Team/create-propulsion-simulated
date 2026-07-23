@@ -41,7 +41,7 @@
     "createpropulsion.gui.goggles.burner.heat.hot": "Горячий",
     "createpropulsion.ponder.redstone_transmission_direct.header": "Прямой режим управления",
     "createpropulsion.gui.goggles.burner.thermostat": "Термостат",
-    "itemGroup.createpropulsion.base": "Propulsion",
+    "itemGroup.createpropulsion.base": "Create Propulsion: Simulated",
     "itemGroup.createpropulsion.tools": "Инструменты Create: Aeronautics",
     "block.createpropulsion.copycat_wing_12": "Заполняемое крыло (12 м)",
     "createpropulsion.ponder.shared.liquid_burner.heat_comparison": "Свойства жидкого топлива влияют на поддержание тепла и производительность.",
