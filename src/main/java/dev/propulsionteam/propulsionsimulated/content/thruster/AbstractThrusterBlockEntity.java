@@ -16,6 +16,7 @@ import dev.propulsionteam.propulsionsimulated.utility.math.MathUtility;
 import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.api.block.BlockSubLevelAssemblyListener;
 import dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle;
+import dev.ryanhcode.sable.physics.config.dimension_physics.DimensionPhysicsData;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import net.createmod.catnip.lang.LangBuilder;
 import net.minecraft.ChatFormatting;
@@ -459,7 +460,7 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
     protected abstract double getRawThrustCap();
 
     /**
-     * Returns a multiplier that models atmospheric losses by altitude.
+     * Returns a multiplier based on Sable's pressure data for the current dimension.
      * The effect is configurable and never hard-cuts thrust to zero.
      */
     protected double calculateAtmosphericFactor() {
@@ -468,30 +469,10 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         if (lvl == null) return 1.0;
 
         Vec3 worldPos = Sable.HELPER.projectOutOfSubLevel(lvl, Vec3.atCenterOf(worldPosition));
-        double y = worldPos.y;
-
-        double sea = lvl.getSeaLevel();
-        double worldTop = lvl.getMaxBuildHeight();
-        double normalizedAltitude = 0.0d;
-        if (worldTop > sea + MathUtility.epsilon) {
-            normalizedAltitude = org.joml.Math.clamp(0.0d, 1.0d, (y - sea) / (worldTop - sea));
-        }
-        
-        // Proxy for air pressure (1.0 at sea level, 0.0 at space/build limit)
-        double airPressure = 1.0 - normalizedAltitude;
-        double strength = org.joml.Math.clamp(0.0d, 2.0d, PropulsionConfig.ATMOSPHERIC_PRESSURE_AMOUNT.get());
-
-        if (this.isIon()) {
-            // Ion propulsion suffers strongly in dense air and ramps up toward vacuum.
-            // 1.0 pressure -> ~20% thrust, near-vacuum -> ~100%.
-            double target = org.joml.Math.clamp(0.2d, 1.0d, 1.0d - 0.8d * airPressure);
-            return org.joml.Math.clamp(0.05d, 5.0d, 1.0d + (target - 1.0d) * strength);
-        }
-
-        // Chemical/rocket thrusters stay mostly constant; altitude gives a mild bonus.
-        double vacuumBonus = airPressure < 1.0d ? (1.0d - airPressure) * 0.15d : 0.0d;
-        double target = 1.0d + vacuumBonus;
-        return org.joml.Math.clamp(0.05d, 5.0d, 1.0d + (target - 1.0d) * strength);
+        double airPressure = DimensionPhysicsData.getAirPressure(
+                lvl, new Vector3d(worldPos.x, worldPos.y, worldPos.z));
+        return AtmosphericThrustMath.calculateFactor(
+                isIon(), airPressure, PropulsionConfig.ATMOSPHERIC_PRESSURE_AMOUNT.get());
     }
 
     public float getThrottle() {
