@@ -12,6 +12,8 @@ import dev.propulsionteam.propulsionsimulated.particles.plasma.PlasmaParticleDat
 import dev.propulsionteam.propulsionsimulated.particles.plume.PlumeParticleData;
 import net.minecraft.core.particles.ParticleOptions;
 
+import java.util.List;
+
 /** Resolves the exact plume profile once; emitters and renderers must not add their own gates. */
 public final class ThrusterPlumeResolver {
     private ThrusterPlumeResolver() {}
@@ -78,23 +80,23 @@ public final class ThrusterPlumeResolver {
         if (be instanceof CreativeVectorThrusterBlockEntity creativeVector)
             return creativeVector.createCreativeVectorPlumeParticleOptions();
         if (be instanceof CreativeThrusterBlockEntity creative)
-            return particleForCreative(creative.getPlumeType());
+            return particleForCreative(creative.getPlumeType(), creative.getDyeColor());
         if (be instanceof LiquidVectorThrusterBlockEntity liquid)
             return liquid.createResolvedParticleOptions();
         if (be instanceof ThrusterBlockEntity thruster && !(be instanceof IonThrusterBlockEntity))
             return thruster.createResolvedParticleOptions();
         if (be instanceof VectorThrusterBlockEntity vector)
             return vector.createVectorPlumeParticleOptions();
-        if (be instanceof IonThrusterBlockEntity)
-            return new IonParticleData();
+        if (be instanceof IonThrusterBlockEntity ion)
+            return new IonParticleData(List.of(), ion.getDyeColor(), null);
         return new PlumeParticleData();
     }
 
-    private static ParticleOptions particleForCreative(CreativeThrusterBlockEntity.PlumeType type) {
+    private static ParticleOptions particleForCreative(CreativeThrusterBlockEntity.PlumeType type, Integer color) {
         return switch (type) {
-            case PLASMA -> new PlasmaParticleData();
-            case ION -> new IonParticleData();
-            case PLUME, NONE -> new PlumeParticleData();
+            case PLASMA -> new PlasmaParticleData(List.of(), color);
+            case ION -> new IonParticleData(List.of(), color, null);
+            case PLUME, NONE -> new PlumeParticleData(List.of(), color);
         };
     }
 

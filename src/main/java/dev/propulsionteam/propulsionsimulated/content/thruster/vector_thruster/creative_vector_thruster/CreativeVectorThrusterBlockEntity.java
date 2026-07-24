@@ -117,22 +117,22 @@ public class CreativeVectorThrusterBlockEntity extends VectorThrusterBlockEntity
     @Override
     protected ParticleOptions createParticleOptions() {
         if (plumeType == CreativeThrusterBlockEntity.PlumeType.PLASMA) {
-            return new PlasmaParticleData();
+            return new PlasmaParticleData(List.of(), getDyeColor());
         }
         if (plumeType == CreativeThrusterBlockEntity.PlumeType.ION) {
-            return new IonParticleData();
+            return new IonParticleData(List.of(), getDyeColor(), null);
         }
         if (plumeType == CreativeThrusterBlockEntity.PlumeType.PLUME) {
-            return new PlumeParticleData();
+            return new PlumeParticleData(List.of(), getDyeColor());
         }
-        return new PlumeParticleData();
+        return new PlumeParticleData(List.of(), getDyeColor());
     }
 
     /** Creative-vector Ion mode retains the vector nozzle's redstone-driven particle narrowing. */
     public ParticleOptions createCreativeVectorPlumeParticleOptions() {
         if (plumeType == CreativeThrusterBlockEntity.PlumeType.ION) {
             float size = Mth.lerp(getInterpolatedFlapProgress(1.0f), 0.85f, 0.35f);
-            return new IonParticleData(List.of(), null, size);
+            return new IonParticleData(List.of(), getDyeColor(), size);
         }
         return createParticleOptions();
     }
