@@ -39,7 +39,7 @@ public class CreatePropulsion {
         PropulsionSoundEvents.register(modBus);
         PropulsionFluids.register(modBus);
         PropulsionPartialModels.register();
-        PropulsionCreativeTab.registerAeronauticsSections();
+        PropulsionCreativeTab.register(modBus);
         modBus.addListener(PropulsionPackets::register);
         PropulsionDisplaySources.register();
         PropulsionSableBridge.init();

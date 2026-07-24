@@ -47,7 +47,7 @@
     "createpropulsion.gui.goggles.burner.heat.hot": "Гарячий",
     "createpropulsion.ponder.redstone_transmission_direct.header": "Режим прямого керування",
     "createpropulsion.gui.goggles.burner.thermostat": "Термостат",
-    "itemGroup.createpropulsion.base": "Propulsion",
+    "itemGroup.createpropulsion.base": "Create Propulsion: Simulated",
     "itemGroup.createpropulsion.tools": "Інструменти Create: Aeronautics",
     "block.createpropulsion.copycat_wing_12": "Копіювальне крило (12 м)",
     "createpropulsion.ponder.shared.liquid_burner.heat_comparison": "Властивості рідкого палива впливають на підтримку тепла та продуктивність.",

@@ -178,7 +178,7 @@ dependencies {
     implementation "org.joml:joml-primitives:1.10.0"
 
     //Sable
-    implementation("dev.ryanhcode.sable:sable-neoforge-${minecraft_version}:${bundled_version}")
+    implementation("dev.ryanhcode.sable:sable-neoforge-${minecraft_version}:${sable_version}")
     api("dev.ryanhcode.sable-companion:sable-companion-common-${minecraft_version}:${sable_companion_version}")
     implementation "dev.ryanhcode.sable-companion:sable-companion-common-${minecraft_version}:${sable_companion_version}"
 
@@ -206,6 +206,7 @@ tasks.named('processResources', ProcessResources).configure {
             neoforge_loader_version_range: neoforge_loader_version_range,
             mod_id: mod_id, mod_name: mod_name, mod_license: mod_license, mod_version: mod_version,
             mod_authors: mod_authors, mod_description: mod_description,
+            sable_version: sable_version,
     ]
     inputs.properties replaceProperties
 

@@ -108,13 +108,20 @@ side = "BOTH"
 [[dependencies.createpropulsion]]
 modId = "sable"
 type = "required"
-versionRange = "*"
+versionRange = "[${sable_version},)"
 ordering = "AFTER"
 side = "BOTH"
 
 [[dependencies.createpropulsion]]
 modId = "sablecompanion"
 type = "required"
+versionRange = "*"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.createpropulsion]]
+modId = "rocketnautics"
+type = "optional"
 versionRange = "*"
 ordering = "AFTER"
 side = "BOTH"

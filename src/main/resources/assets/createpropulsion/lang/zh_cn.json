@@ -47,7 +47,7 @@
   "createpropulsion.gui.goggles.burner.heat.hot": "灼热",
   "createpropulsion.ponder.redstone_transmission_direct.header": "变速器控制模式：直接控制模式",
   "createpropulsion.gui.goggles.burner.thermostat": "恒温器",
-  "itemGroup.createpropulsion.base": "机械动力：推进工程",
+  "itemGroup.createpropulsion.base": "Create Propulsion: Simulated",
   "itemGroup.createpropulsion.tools": "机械动力：推进工程 - 工具",
   "block.createpropulsion.copycat_wing_12": "伪装机翼",
   "createpropulsion.ponder.shared.liquid_burner.heat_comparison": "液体燃料燃烧器产生的热量是固体燃料燃烧器的两倍",
