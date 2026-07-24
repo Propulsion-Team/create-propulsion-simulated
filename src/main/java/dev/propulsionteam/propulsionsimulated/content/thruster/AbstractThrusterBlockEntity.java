@@ -682,6 +682,7 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         // Sample the nozzle every tick, including while idle. This avoids a stale accumulated
         // displacement when a moving thruster is switched back on.
         Vec3 localNozzlePosition = getParticleDebugNozzlePositionLocal();
+        var particleSubLevel = Sable.HELPER.getContaining(level, localNozzlePosition);
         Vec3 worldNozzlePosition = Sable.HELPER.projectOutOfSubLevel(level, localNozzlePosition);
         Vec3 finiteDifferenceVelocity = previousParticleNozzleWorld == null
             ? Vec3.ZERO
@@ -725,9 +726,6 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
 
         float emissionScale = (float) Math.max(power, MathUtility.epsilon);
 
-        // The particle implementation applies its own speed multiplier and drag to this
-        // exhaust component. Nozzle motion is carried separately in the particle data so it
-        // remains in world units and the moving craft cannot overtake the plume.
         Vector3d particleVelocity = new Vector3d(worldExhaustDirection.x, worldExhaustDirection.y, worldExhaustDirection.z)
             .mul(getParticleVelocity() * emissionScale * particleVelocityMultiplier * multiblockVelocityScale);
 
@@ -767,17 +765,28 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
             samplePosition = samplePosition.add(sampleVelocity.scale(sampleAge))
                     .add(sampleDirection.scale(visualExhaustStep * sampleAge));
 
-            ParticleOptions particleData = withMotion(baseParticleData, sampleVelocity, adaptiveTrailCoverage);
-            Vector3d sampleParticleVelocity = new Vector3d(sampleDirection.x, sampleDirection.y, sampleDirection.z)
+            Vec3 broadcastPosition = samplePosition;
+            Vec3 spawnPosition = samplePosition;
+            Vec3 spawnDirection = sampleDirection;
+            Vec3 inheritedVelocity = sampleVelocity;
+
+            if (particleSubLevel != null) {
+                spawnPosition = particleSubLevel.logicalPose().transformPositionInverse(samplePosition);
+                spawnDirection = particleSubLevel.logicalPose().transformNormalInverse(sampleDirection).normalize();
+                inheritedVelocity = Vec3.ZERO;
+            }
+
+            ParticleOptions particleData = withMotion(baseParticleData, inheritedVelocity, adaptiveTrailCoverage);
+            Vector3d sampleParticleVelocity = new Vector3d(spawnDirection.x, spawnDirection.y, spawnDirection.z)
                     .mul(speedPerTick);
-            double spawnX = samplePosition.x;
-            double spawnY = samplePosition.y;
-            double spawnZ = samplePosition.z;
+            double spawnX = spawnPosition.x;
+            double spawnY = spawnPosition.y;
+            double spawnZ = spawnPosition.z;
 
             if (level instanceof ServerLevel serverLevel) {
                 double maxDistSq = getParticleBroadcastRange() * getParticleBroadcastRange();
                 for (ServerPlayer player : serverLevel.players()) {
-                    if (player.distanceToSqr(spawnX, spawnY, spawnZ) > maxDistSq) {
+                    if (player.distanceToSqr(broadcastPosition.x, broadcastPosition.y, broadcastPosition.z) > maxDistSq) {
                         continue;
                     }
                     serverLevel.sendParticles(

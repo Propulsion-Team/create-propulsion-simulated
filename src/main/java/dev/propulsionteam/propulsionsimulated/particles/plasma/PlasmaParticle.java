@@ -4,6 +4,8 @@ import java.util.List;
 
 import javax.annotation.Nonnull;
 
+import dev.ryanhcode.sable.api.particle.ParticleSubLevelKickable;
+import dev.ryanhcode.sable.mixinterface.particle.ParticleExtension;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
@@ -17,7 +19,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
-public class PlasmaParticle extends SimpleAnimatedParticle {
+public class PlasmaParticle extends SimpleAnimatedParticle implements ParticleSubLevelKickable {
 
     //Config
     protected float getPlasmaSpread() { return 0.05f; }
@@ -50,8 +52,7 @@ public class PlasmaParticle extends SimpleAnimatedParticle {
     /** World-space nozzle motion, kept separate so plasma drag cannot make the craft overtake its exhaust. */
     private final Vec3 inheritedVelocity;
     private final float trailCoverage;
-
-    double dx; double dy; double dz;
+    private boolean sableManagedMotion;
 
     protected PlasmaParticle(ClientLevel level, double x, double y, double z,
                             double dxSource, double dySource, double dzSource,
@@ -79,16 +80,16 @@ public class PlasmaParticle extends SimpleAnimatedParticle {
         float startupSpread = this.startupHalo
                 ? Mth.lerp(this.startupProgress, 4.0f, 1.0f)
                 : Mth.lerp(this.startupProgress, 0.35f, 1.0f);
-        this.dx = dxSource + getRandomSpread() * startupSpread;
-        this.dy = dySource + getRandomSpread() * startupSpread;
-        this.dz = dzSource + getRandomSpread() * startupSpread;
+        this.xd = dxSource + getRandomSpread() * startupSpread;
+        this.yd = dySource + getRandomSpread() * startupSpread;
+        this.zd = dzSource + getRandomSpread() * startupSpread;
         this.hasPhysics = true;
         this.currentSpeedMultiplier = getPlasmaSpeedMultiplier() * (this.startupHalo
                 ? Mth.lerp(this.startupProgress, 1.35f, 1.0f)
                 : Mth.lerp(this.startupProgress, 0.82f, 1.0f));
 
         //Calculate spread direction (perpendicular to velocity)
-        Vec3 initialVel = new Vec3(this.dx, this.dy, this.dz).normalize();
+        Vec3 initialVel = new Vec3(this.xd, this.yd, this.zd).normalize();
         Vec3 nonParallel = new Vec3(1, 0, 0);
         if (Math.abs(initialVel.dot(nonParallel)) > 0.99) {
             nonParallel = new Vec3(0, 1, 0);
@@ -130,34 +131,19 @@ public class PlasmaParticle extends SimpleAnimatedParticle {
         }
 
         //Velocity before possible collision
-        double intendedMoveX = this.dx * this.currentSpeedMultiplier + this.inheritedVelocity.x;
-        double intendedMoveY = this.dy * this.currentSpeedMultiplier + this.inheritedVelocity.y;
-        double intendedMoveZ = this.dz * this.currentSpeedMultiplier + this.inheritedVelocity.z;
+        double intendedMoveX = this.xd * this.currentSpeedMultiplier + this.inheritedVelocity.x;
+        double intendedMoveY = this.yd * this.currentSpeedMultiplier + this.inheritedVelocity.y;
+        double intendedMoveZ = this.zd * this.currentSpeedMultiplier + this.inheritedVelocity.z;
 
         double prevX = this.x;
         double prevY = this.y;
         double prevZ = this.z;
 
-        //Actual movement
-        Vec3 totalMove = new Vec3(intendedMoveX, intendedMoveY, intendedMoveZ);
-        double totalDist = totalMove.length();
-        if (totalDist > 0.0D) {
-            int steps = (int)Math.ceil(totalDist / 0.5D);
-            Vec3 stepMove = totalMove.scale(1.0D / steps);
-            for (int i = 0; i < steps; ++i) {
-                double stepPrevX = this.x;
-                double stepPrevY = this.y;
-                double stepPrevZ = this.z;
-                this.move(stepMove.x, stepMove.y, stepMove.z);
-                double movedX = this.x - stepPrevX;
-                double movedY = this.y - stepPrevY;
-                double movedZ = this.z - stepPrevZ;
-                final double check = 1.0E-6D;
-                if (Math.abs(movedX - stepMove.x) > check || Math.abs(movedY - stepMove.y) > check || Math.abs(movedZ - stepMove.z) > check) {
-                    break;
-                }
-            }
+        if (((ParticleExtension) this).sable$getTrackingSubLevel() != null) {
+            this.sableManagedMotion = true;
         }
+
+        this.move(intendedMoveX, intendedMoveY, intendedMoveZ);
         double actualMoveX = this.x - prevX;
         double actualMoveY = this.y - prevY;
         double actualMoveZ = this.z - prevZ;
@@ -165,7 +151,9 @@ public class PlasmaParticle extends SimpleAnimatedParticle {
         //Determine collision and its normal
         boolean collisionDetected = false;
         Vec3 collisionNormal = null;
-        if (this.onGround) {
+        if (this.sableManagedMotion) {
+            // Sable already resolved pose movement and world/sub-level collisions.
+        } else if (this.onGround) {
             collisionDetected = true;
             collisionNormal = new Vec3(0, 1, 0);
         } else {
@@ -187,7 +175,7 @@ public class PlasmaParticle extends SimpleAnimatedParticle {
 
         //We actually collided with something, lets resolve velocity!
         if (collisionDetected && collisionNormal != null) {
-            Vec3 incomingVel = new Vec3(this.dx, this.dy, this.dz);
+            Vec3 incomingVel = new Vec3(this.xd, this.yd, this.zd);
             if (incomingVel.normalize().dot(collisionNormal) > COLLISION_IGNORE_DOT_THRESHOLD) {
                 //Nothing ever happens, we collide backwards here, which should not be resolved
             } else {
@@ -242,17 +230,17 @@ public class PlasmaParticle extends SimpleAnimatedParticle {
                     Vec3 newVel = desiredNormalVel.add(desiredTangentialVel);
                     double newVelMagnitude = newVel.length();
                     if (newVelMagnitude > 1e-5) {
-                        this.dx = (newVel.x / newVelMagnitude) * incomingVel.length() * COLLISION_SPEED_RETENTION;
-                        this.dy = (newVel.y / newVelMagnitude) * incomingVel.length() * COLLISION_SPEED_RETENTION;
-                        this.dz = (newVel.z / newVelMagnitude) * incomingVel.length() * COLLISION_SPEED_RETENTION;
+                        this.xd = (newVel.x / newVelMagnitude) * incomingVel.length() * COLLISION_SPEED_RETENTION;
+                        this.yd = (newVel.y / newVelMagnitude) * incomingVel.length() * COLLISION_SPEED_RETENTION;
+                        this.zd = (newVel.z / newVelMagnitude) * incomingVel.length() * COLLISION_SPEED_RETENTION;
                     } else { //Fallback
-                        this.dx = spreadPlaneDirection.x * incomingVel.length() * COLLISION_SPEED_RETENTION * 0.5;
-                        this.dy = spreadPlaneDirection.y * incomingVel.length() * COLLISION_SPEED_RETENTION * 0.5;
-                        this.dz = spreadPlaneDirection.z * incomingVel.length() * COLLISION_SPEED_RETENTION * 0.5;
+                        this.xd = spreadPlaneDirection.x * incomingVel.length() * COLLISION_SPEED_RETENTION * 0.5;
+                        this.yd = spreadPlaneDirection.y * incomingVel.length() * COLLISION_SPEED_RETENTION * 0.5;
+                        this.zd = spreadPlaneDirection.z * incomingVel.length() * COLLISION_SPEED_RETENTION * 0.5;
                     }
 
                 } else { //Incoming speed too low, slow down
-                    this.dx *= 0.1; this.dy *= 0.1; this.dz *= 0.1;
+                    this.xd *= 0.1; this.yd *= 0.1; this.zd *= 0.1;
                 }
             }
         }
@@ -270,9 +258,9 @@ public class PlasmaParticle extends SimpleAnimatedParticle {
         }
 
         //Friction
-        this.dx *= this.friction;
-        this.dy *= this.friction;
-        this.dz *= this.friction;
+        this.xd *= this.friction;
+        this.yd *= this.friction;
+        this.zd *= this.friction;
 
         this.pickSprite();
         float reveal = Mth.clamp(this.age / 2.0f, 0.0f, 1.0f);
@@ -296,6 +284,16 @@ public class PlasmaParticle extends SimpleAnimatedParticle {
     @Nonnull
     public ParticleRenderType getRenderType(){
         return ParticleRenderType.PARTICLE_SHEET_LIT;
+    }
+
+    @Override
+    public boolean sable$shouldKickFromTracking() {
+        return true;
+    }
+
+    @Override
+    public boolean sable$shouldCollideWithTrackingSubLevel() {
+        return false;
     }
 
     public static class Factory implements ParticleProvider<PlasmaParticleData>{
