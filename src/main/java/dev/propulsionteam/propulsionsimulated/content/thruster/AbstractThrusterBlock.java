@@ -115,7 +115,8 @@ public abstract class AbstractThrusterBlock extends DirectionalBlock implements 
         }
         final ItemInteractionResult defaultResult =
                 super.useItemOn(stack, state, level, pos, player, hand, hitResult);
-        if (defaultResult == ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION) {
+        if (!stack.isEmpty()
+                && defaultResult == ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION) {
             return ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION;
         }
         return defaultResult;
