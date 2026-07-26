@@ -58,18 +58,16 @@ public class SolidFuelThrusterBlockEntity extends AbstractThrusterBlockEntity im
     @Override
     public void tick() {
         if (level != null && !level.isClientSide) {
-            tickFuel();
             if (hatchOpen) {
                 tryPullFuelFromBehind();
             }
+            tickFuel();
         }
         super.tick();
     }
 
     private void tickFuel() {
-        boolean powered = isPowered() || isFadingOut();
-
-        if (burnTime > 0 && powered && !SolidFuelThrusterFuelHelper.isInfiniteBurnTime(burnTime)) {
+        if (burnTime > 0 && !SolidFuelThrusterFuelHelper.isInfiniteBurnTime(burnTime)) {
             burnDrainAccumulator += getEffectiveThrustPercentage();
             int burnTicks = (int) Math.floor(burnDrainAccumulator);
             if (burnTicks > 0) {
@@ -78,23 +76,30 @@ public class SolidFuelThrusterBlockEntity extends AbstractThrusterBlockEntity im
             }
         }
 
-        if (burnTime > 0 && powered != wasPoweredLastTick) {
+        boolean burning = burnTime > 0;
+        if (burning != wasPoweredLastTick) {
             syncBurnStateToClient();
-        } else if (burnTime > 0 && powered && level != null
-                && level.getGameTime() % BURN_SYNC_INTERVAL_TICKS == 0) {
+        } else if (burning && level != null && level.getGameTime() % BURN_SYNC_INTERVAL_TICKS == 0) {
             syncBurnStateToClient();
         }
-        wasPoweredLastTick = powered;
+        wasPoweredLastTick = burning;
 
         if (burnTime <= 0) {
-            ItemStack fuel = getFuelStack();
-            if (!fuel.isEmpty() && !SolidFuelThrusterFuelHelper.isInfiniteFuel(fuel)) {
-                setFuelStack(ItemStack.EMPTY);
+            if (totalBurnTicks > 0) {
+                ItemStack fuel = getFuelStack();
+                if (!fuel.isEmpty() && !SolidFuelThrusterFuelHelper.isInfiniteFuel(fuel)) {
+                    setFuelStack(ItemStack.EMPTY);
+                }
+                superHeated = false;
+                totalBurnTicks = 0;
+                burnDrainAccumulator = 0.0d;
+                if (hatchOpen) {
+                    tryPullFuelFromBehind();
+                }
+                tryStartBurning();
+            } else if (isPowered()) {
+                tryStartBurning();
             }
-            superHeated = false;
-            totalBurnTicks = 0;
-            burnDrainAccumulator = 0.0d;
-            tryStartBurning();
         }
     }
 
@@ -132,7 +137,7 @@ public class SolidFuelThrusterBlockEntity extends AbstractThrusterBlockEntity im
 
     void onInventoryChanged(int slot) {
         markFuelChanged();
-        if (burnTime <= 0) {
+        if (burnTime <= 0 && isPowered()) {
             tryStartBurning();
         }
     }
@@ -275,6 +280,7 @@ public class SolidFuelThrusterBlockEntity extends AbstractThrusterBlockEntity im
 
     @Override
     public float getPower() {
+        if (hasActiveBurn()) return 1.0f;
         if (controlMode == ControlMode.PERIPHERAL) {
             return digitalInput > 0.0f ? 1.0f : 0.0f;
         }
@@ -287,7 +293,7 @@ public class SolidFuelThrusterBlockEntity extends AbstractThrusterBlockEntity im
 
     @Override
     protected boolean isWorking() {
-        return isPowered() && hasActiveBurn();
+        return hasActiveBurn();
     }
 
     @Override
@@ -497,7 +503,7 @@ public class SolidFuelThrusterBlockEntity extends AbstractThrusterBlockEntity im
     @Override
     public void initialize() {
         super.initialize();
-        if (level != null && !level.isClientSide && burnTime <= 0) {
+        if (level != null && !level.isClientSide && burnTime <= 0 && isPowered()) {
             tryStartBurning();
         }
     }

@@ -1,6 +1,6 @@
 {
   "item": "minecraft:charcoal",
-  "thrust_multiplier": 0.95,
+  "thrust_multiplier": 2.85,
   "consumption_multiplier": 0.45,
   "burn_ticks": 3600
 }

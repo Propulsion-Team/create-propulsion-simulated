@@ -1,5 +1,5 @@
 {
   "item_tag": "minecraft:logs",
-  "thrust_multiplier": 0.35,
+  "thrust_multiplier": 1.05,
   "consumption_multiplier": 1.0
 }
