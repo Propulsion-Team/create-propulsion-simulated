@@ -18,6 +18,7 @@ import net.minecraft.core.Direction.Axis;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -119,6 +120,21 @@ public abstract class AbstractTiltAdapterBlock<T extends TiltAdapterBlockEntity>
     }
 
     @Override
+    public BlockState getRotatedBlockState(BlockState state, Direction targetedFace) {
+        Direction facing = getDirection(state);
+        if (facing.getAxis() == targetedFace.getAxis()) {
+            return state;
+        }
+
+        Direction rotatedFacing = facing;
+        do {
+            rotatedFacing = rotatedFacing.getClockWise(targetedFace.getAxis());
+        } while (rotatedFacing.getAxis() == targetedFace.getAxis());
+
+        return fromFacingAndAlignment(state, rotatedFacing, isAxisAlongFirst(state));
+    }
+
+    @Override
     @SuppressWarnings("deprecation")
     public BlockState mirror(BlockState state, Mirror mirrorIn) {
         return rotate(state, mirrorIn.getRotation(state.getValue(DirectionalKineticBlock.FACING)));
@@ -149,21 +165,31 @@ public abstract class AbstractTiltAdapterBlock<T extends TiltAdapterBlockEntity>
 
     /** World direction of the left (positive differential) redstone input face. */
     public static boolean isShaftFace(BlockState state, Direction face) {
-        return face.getAxis() == state.getValue(AXIS);
+        return face.getAxis() == getDirection(state).getAxis();
     }
 
     public static Direction getShaftFace(BlockState state, boolean positiveAlongAxis) {
         return Direction.fromAxisAndDirection(
-            state.getValue(AXIS),
+            getDirection(state).getAxis(),
             positiveAlongAxis ? Direction.AxisDirection.POSITIVE : Direction.AxisDirection.NEGATIVE
         );
+    }
+
+    @Override
+    public boolean hasShaftTowards(LevelReader world, BlockPos pos, BlockState state, Direction face) {
+        return isShaftFace(state, face);
+    }
+
+    @Override
+    public Axis getRotationAxis(BlockState state) {
+        return getDirection(state).getAxis();
     }
 
     /**
      * Applies the same rotations as {@code advanced_tilt_adapter.json} / {@code tilt_adapter.json} blockstates.
      */
     public static Vec3 applyBlockstateModelRotation(Vec3 vec, BlockState state) {
-        Axis axis = state.getValue(AXIS);
+        Axis axis = getDirection(state).getAxis();
         Direction facing = getDirection(state);
         boolean alongFirst = isAxisAlongFirst(state);
 
@@ -195,7 +221,7 @@ public abstract class AbstractTiltAdapterBlock<T extends TiltAdapterBlockEntity>
 
     /** Extra Y rotation from blockstate (degrees), for value-box label alignment. */
     public static float getBlockstateModelYRotation(BlockState state) {
-        Axis axis = state.getValue(AXIS);
+        Axis axis = getDirection(state).getAxis();
         Direction facing = getDirection(state);
         if (axis == Axis.Z && facing == Direction.SOUTH) {
             return 180;
@@ -249,8 +275,8 @@ public abstract class AbstractTiltAdapterBlock<T extends TiltAdapterBlockEntity>
     }
 
     public static Direction getRedstoneSide(BlockState state, boolean left) {
-        Axis axis = state.getValue(AXIS);
         Direction facing = getDirection(state);
+        Axis axis = facing.getAxis();
         boolean positiveDir = facing.getAxisDirection() == Direction.AxisDirection.POSITIVE;
         boolean alignedX = isAxisAlongFirst(state);
 
