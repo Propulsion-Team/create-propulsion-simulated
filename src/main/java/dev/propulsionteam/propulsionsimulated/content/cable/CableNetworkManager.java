@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -163,61 +164,20 @@ public final class CableNetworkManager {
         if (network.endpoints == null || network.endpoints.isEmpty()) {
             return;
         }
-        List<IEnergyStorage> sources = new ArrayList<>();
-        List<IEnergyStorage> sinks = new ArrayList<>();
+        Map<BlockPos, EnergyEndpoint> endpointsByPosition = new LinkedHashMap<>();
         for (EndpointLocation endpoint : network.endpoints) {
             IEnergyStorage storage = level.getCapability(
                 Capabilities.EnergyStorage.BLOCK, endpoint.pos, endpoint.face);
-            if (storage == null) {
-                continue;
-            }
-            if (storage.canExtract()) sources.add(storage);
-            if (storage.canReceive()) sinks.add(storage);
-        }
-        if (sources.isEmpty() || sinks.isEmpty()) {
-            return;
-        }
-
-        int budget = Math.max(0, PropulsionConfig.CABLE_ENERGY_TRANSFER.get()) * network.nodes.size();
-        boolean progressed;
-        do {
-            progressed = false;
-            int activeSinks = 0;
-            for (IEnergyStorage sink : sinks) {
-                if (sink.receiveEnergy(Math.max(1, budget / Math.max(1, sinks.size())), true) > 0) {
-                    activeSinks++;
-                }
-            }
-            if (activeSinks == 0) break;
-
-            int share = Math.max(1, budget / activeSinks);
-            int remainder = budget % activeSinks;
-            for (IEnergyStorage sink : sinks) {
-                if (budget <= 0) break;
-                int requested = Math.min(budget, share + (remainder-- > 0 ? 1 : 0));
-                int acceptedSimulation = sink.receiveEnergy(requested, true);
-                if (acceptedSimulation <= 0) continue;
-                int extracted = extract(sources, acceptedSimulation);
-                if (extracted <= 0) continue;
-                int accepted = sink.receiveEnergy(extracted, false);
-                if (accepted > 0) {
-                    budget -= accepted;
-                    progressed = true;
-                }
-            }
-        } while (budget > 0 && progressed);
-    }
-
-    private static int extract(List<IEnergyStorage> sources, int requested) {
-        int remaining = requested;
-        for (IEnergyStorage source : sources) {
-            if (remaining <= 0) break;
-            int available = source.extractEnergy(remaining, true);
-            if (available > 0) {
-                remaining -= source.extractEnergy(available, false);
+            if (storage != null) {
+                endpointsByPosition.computeIfAbsent(endpoint.pos, EnergyEndpoint::new)
+                    .addStorage(storage);
             }
         }
-        return requested - remaining;
+
+        long configuredBudget = (long) Math.max(0, PropulsionConfig.CABLE_ENERGY_TRANSFER.get())
+            * network.nodes.size();
+        int budget = (int) Math.min(Integer.MAX_VALUE, configuredBudget);
+        EnergyDistributor.distribute(new ArrayList<>(endpointsByPosition.values()), budget);
     }
 
     private static boolean isNetworkNode(Level level, BlockPos pos) {
@@ -255,6 +215,50 @@ public final class CableNetworkManager {
         private static int compare(EndpointLocation first, EndpointLocation second) {
             int position = comparePos(first.pos, second.pos);
             return position != 0 ? position : Integer.compare(first.face.ordinal(), second.face.ordinal());
+        }
+    }
+
+    private static final class EnergyEndpoint implements EnergyDistributor.Endpoint {
+        private final BlockPos pos;
+        private IEnergyStorage sourceStorage;
+        private IEnergyStorage sinkStorage;
+
+        private EnergyEndpoint(BlockPos pos) {
+            this.pos = pos;
+        }
+
+        private void addStorage(IEnergyStorage storage) {
+            if (sourceStorage == null && storage.canExtract()) {
+                sourceStorage = storage;
+            }
+            if (sinkStorage == null && storage.canReceive()) {
+                sinkStorage = storage;
+            }
+        }
+
+        @Override
+        public Object identity() {
+            return pos;
+        }
+
+        @Override
+        public int receive(int amount, boolean simulate) {
+            return sinkStorage == null ? 0 : sinkStorage.receiveEnergy(amount, simulate);
+        }
+
+        @Override
+        public int extract(int amount, boolean simulate) {
+            return sourceStorage == null ? 0 : sourceStorage.extractEnergy(amount, simulate);
+        }
+
+        @Override
+        public boolean canExtract() {
+            return sourceStorage != null;
+        }
+
+        @Override
+        public boolean canReceive() {
+            return sinkStorage != null;
         }
     }
 }
