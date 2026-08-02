@@ -25,7 +25,7 @@ Valid fuels come from [solid thruster fuel](#solid-thruster-fuels) datapacks and
 - Fuel is armed when inserted (burn duration is calculated from the fuel definition or blaze-burner data).
 - The burn timer **only decreases while the thruster is powered on** (redstone signal present). Power off pauses consumption; thrust and exhaust particles also require power.
 - When the burn finishes, the fuel item is consumed (except infinite fuels) and a new item can be inserted.
-- Redstone is **on/off only**: any strength ≥ 1 is full throttle; no signal is off. Partial redstone levels do not scale thrust.
+- Redstone is **on/off only**: any strength ≥ 1 is full throttle; no signal is off. Partial redstone levels do not scale thrust. ComputerCraft normalized throttle remains precise and overrides this binary redstone behavior while under peripheral control.
 
 ### Crafting
 
@@ -221,7 +221,7 @@ See [KubeJS API — Solid Fuel Thruster](KubeJS-API.md#solid-fuel-thruster-solid
 
 With **CC: Tweaked**, peripheral type **`solid_fuel_thruster`**.
 
-- Throttle: `setPower` / `setPowerNormalized` / `getPower`
+- Throttle: `setPower` / `setPowerNormalized` / `getPower`; normalized values provide precise `0.0 … 1.0` control and override redstone
 - Thrust: `getCurrentThrustPN`, `getCurrentThrustKN`, `getDisplayedThrustPN`, `getDisplayedThrustKN`, `getAirflowMs`, `getObstruction`
 - Fuel: `getFuelAmount` (`0` or `1`), `getFuelCapacity` (`1`), `getBurnTimeRemaining`, `isBurning`
 - Items: `list`, `pushItems`, `pullItems` on the back-side fuel slot

@@ -1,6 +1,7 @@
 package dev.propulsionteam.propulsionsimulated.compat.computercraft;
 
 import dev.propulsionteam.propulsionsimulated.content.thruster.AbstractThrusterBlockEntity;
+import dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterThrottleMath;
 import net.minecraft.util.Mth;
 
 /**
@@ -18,7 +19,7 @@ final class ThrusterComputerHelpers {
     }
 
     static void setThrottleNormalized(AbstractThrusterBlockEntity be, double normalized) {
-        int redstonePower = Mth.floor(Mth.clamp(normalized, 0.0d, 1.0d) * 15.0d + 1.0e-6d);
-        setThrottleFromRedstone(be, redstonePower);
+        be.setControlMode(AbstractThrusterBlockEntity.ControlMode.PERIPHERAL);
+        be.setDigitalInput(ThrusterThrottleMath.clampNormalized(normalized));
     }
 }

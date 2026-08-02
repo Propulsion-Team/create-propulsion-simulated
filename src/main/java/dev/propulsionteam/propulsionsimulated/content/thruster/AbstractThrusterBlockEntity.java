@@ -155,7 +155,7 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
 
     public void setDigitalInput(float power) {
         float clamped = org.joml.Math.clamp(0.0f, 1.0f, power);
-        if (java.lang.Math.abs(digitalInput - clamped) > 1e-4) {
+        if (Float.compare(digitalInput, clamped) != 0) {
             digitalInput = clamped;
             if (controlMode == ControlMode.PERIPHERAL) {
                 dirtyThrust();

@@ -280,10 +280,10 @@ public class SolidFuelThrusterBlockEntity extends AbstractThrusterBlockEntity im
 
     @Override
     public float getPower() {
-        if (hasActiveBurn()) return 1.0f;
         if (controlMode == ControlMode.PERIPHERAL) {
-            return digitalInput > 0.0f ? 1.0f : 0.0f;
+            return digitalInput;
         }
+        if (hasActiveBurn()) return 1.0f;
         return redstoneInput > 0 ? 1.0f : 0.0f;
     }
 
