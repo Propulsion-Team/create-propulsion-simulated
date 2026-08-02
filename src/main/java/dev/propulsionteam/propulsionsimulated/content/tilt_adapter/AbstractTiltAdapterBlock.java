@@ -5,6 +5,7 @@ import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionShapes;
+import dev.propulsionteam.propulsionsimulated.utility.DirectionalPlacement;
 import com.simibubi.create.content.kinetics.base.AbstractEncasedShaftBlock;
 import com.simibubi.create.content.kinetics.base.DirectionalAxisKineticBlock;
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
@@ -60,7 +61,7 @@ public abstract class AbstractTiltAdapterBlock<T extends TiltAdapterBlockEntity>
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        Direction baseDirection = context.getNearestLookingDirection();
+        Direction baseDirection = DirectionalPlacement.nearestLookingDirection(context);
         Player player = context.getPlayer();
         boolean manualPlacement = player != null && player.isShiftKeyDown();
         Direction placeDirection;
