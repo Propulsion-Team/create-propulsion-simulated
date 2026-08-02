@@ -6,6 +6,7 @@
     "createpropulsion:ion_thruster",
     "createpropulsion:vector_thruster",
     "createpropulsion:creative_vector_thruster",
+    "createpropulsion:solid_fuel_thruster",
     "createpropulsion:redstone_converter",
     "createpropulsion:redstone_transmission",
     "createpropulsion:solid_burner",
