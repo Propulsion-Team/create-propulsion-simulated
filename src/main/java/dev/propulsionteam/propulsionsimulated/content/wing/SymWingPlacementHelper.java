@@ -41,7 +41,7 @@ public class SymWingPlacementHelper implements IPlacementHelper {
         Vec3 result = ray.getLocation();
 
         List<Direction> directions = IPlacementHelper.orderedByDistanceExceptAxis(pos, result,
-            state.getValue(BlockStateProperties.FACING).getAxis(),
+            state.getValue(BlockStateProperties.AXIS),
             dir -> world.getBlockState(pos.relative(dir)).canBeReplaced());
 
         if (directions.isEmpty()) {
@@ -49,6 +49,6 @@ public class SymWingPlacementHelper implements IPlacementHelper {
         }
 
         return PlacementOffset.success(pos.relative(directions.get(0)),
-            s -> s.setValue(BlockStateProperties.FACING, state.getValue(BlockStateProperties.FACING)));
+            s -> s.setValue(BlockStateProperties.AXIS, state.getValue(BlockStateProperties.AXIS)));
     }
 }
