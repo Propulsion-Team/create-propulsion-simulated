@@ -76,6 +76,7 @@
     "createpropulsion.tooltip.airflow": "Airflow:",
     "createpropulsion.gui.goggles.burner.thermostat.off": "Off",
     "block.createpropulsion.wing": "Wing",
+    "block.createpropulsion.symmetric_wing": "Symmetric Wing",
     "createpropulsion.redstone_transmission.control_mode.direct": "Direct",
     "createpropulsion.ponder.shared.burner.status.hot": "Burner status: Hot",
     "createpropulsion.ponder.shared.burner.efficiency": "Maintain good fuel and setup to keep burner efficiency high.",
