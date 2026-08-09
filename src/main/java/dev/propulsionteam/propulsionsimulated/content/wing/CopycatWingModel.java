@@ -62,9 +62,19 @@ public class CopycatWingModel extends CopycatModel {
         }
 
         //Figure out facing
-        Direction facing = state.getValue(CopycatWingBlock.FACING);
-        if (facing.getAxisDirection() == Direction.AxisDirection.POSITIVE) facing = facing.getOpposite();
-        Direction.Axis axis = facing.getAxis();
+        Direction facing;
+        Direction.Axis axis;
+        if (state.hasProperty(CopycatWingBlock.FACING)) {
+            facing = state.getValue(CopycatWingBlock.FACING);
+            if (facing.getAxisDirection() == Direction.AxisDirection.POSITIVE) facing = facing.getOpposite();
+            axis = facing.getAxis();
+        } else if (state.hasProperty(SymCopycatWingBlock.AXIS)) {
+            axis = state.getValue(SymCopycatWingBlock.AXIS);
+            facing = Direction.get(Direction.AxisDirection.NEGATIVE, axis);
+        } else {
+            axis = Direction.Axis.Y;
+            facing = Direction.DOWN;
+        }
 
         //Get model and quads
         BakedModel model = getModelOf(material);

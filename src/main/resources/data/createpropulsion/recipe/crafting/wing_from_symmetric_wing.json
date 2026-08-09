@@ -1,0 +1,12 @@
+{
+    "type": "minecraft:crafting_shapeless",
+    "ingredients": [
+        {
+            "item": "createpropulsion:symmetric_wing"
+        }
+    ],
+    "result": {
+        "id": "createpropulsion:wing",
+        "count": 1
+    }
+}

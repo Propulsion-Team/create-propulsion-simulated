@@ -28,6 +28,21 @@ public class CopycatWingModelSwapper {
             ModelSwapper.getAllBlockStateModelLocations(PropulsionBlocks.COPYCAT_WING_12.get()),
             CopycatWingModel.create(12)
         );
+        ModelSwapper.swapModels(
+            event.getModels(),
+            ModelSwapper.getAllBlockStateModelLocations(PropulsionBlocks.SYMMETRIC_COPYCAT_WING.get()),
+            CopycatWingModel.create(4)
+        );
+        ModelSwapper.swapModels(
+            event.getModels(),
+            ModelSwapper.getAllBlockStateModelLocations(PropulsionBlocks.SYMMETRIC_COPYCAT_WING_8.get()),
+            CopycatWingModel.create(8)
+        );
+        ModelSwapper.swapModels(
+            event.getModels(),
+            ModelSwapper.getAllBlockStateModelLocations(PropulsionBlocks.SYMMETRIC_COPYCAT_WING_12.get()),
+            CopycatWingModel.create(12)
+        );
     }
 }
 

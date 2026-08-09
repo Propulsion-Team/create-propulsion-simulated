@@ -100,7 +100,9 @@ public class PropulsionShapes {
         WING_8 = getWingShape(8),
         WING_12 = getWingShape(12),
 
-        SYMMETRIC_WING = getSymmetricWingShape(4);
+        SYMMETRIC_WING = getSymmetricWingShape(4),
+        SYMMETRIC_WING_8 = getSymmetricWingShape(8),
+        SYMMETRIC_WING_12 = getSymmetricWingShape(12);
 
     public static VoxelShaper getWingShape(int width) {
         if (width % 2 != 0) throw new IllegalArgumentException("Humble odd width exception");
