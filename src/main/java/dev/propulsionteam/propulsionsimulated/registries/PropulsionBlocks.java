@@ -27,6 +27,9 @@ import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.V
 import dev.propulsionteam.propulsionsimulated.content.wing.CopycatWingBlock;
 import dev.propulsionteam.propulsionsimulated.content.wing.CopycatWingItem;
 import dev.propulsionteam.propulsionsimulated.content.wing.WingBlock;
+import dev.propulsionteam.propulsionsimulated.content.wing.SymWingBlock;
+import dev.propulsionteam.propulsionsimulated.content.wing.SymCopycatWingBlock;
+import dev.propulsionteam.propulsionsimulated.content.wing.SymCopycatWingItem;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -87,6 +90,15 @@ public class PropulsionBlocks {
     public static final DeferredBlock<WingBlock> WING_BLOCK = BLOCKS.register("wing",
         () -> new WingBlock(Block.Properties.of().mapColor(MapColor.COLOR_LIGHT_GRAY).sound(SoundType.COPPER)
             .strength(1.5f, 2.0f).noOcclusion()));
+    public static final DeferredBlock<SymWingBlock> SYMMETRIC_WING_BLOCK = BLOCKS.register("symmetric_wing",
+        () -> new SymWingBlock(Block.Properties.of().mapColor(MapColor.COLOR_LIGHT_GRAY).sound(SoundType.COPPER)
+            .strength(1.5f, 2.0f).noOcclusion()));
+    public static final DeferredBlock<SymCopycatWingBlock> SYMMETRIC_COPYCAT_WING = BLOCKS.register("symmetric_copycat_wing",
+        () -> new SymCopycatWingBlock(Block.Properties.of().strength(1.5f, 2.0f), 4));
+    public static final DeferredBlock<SymCopycatWingBlock> SYMMETRIC_COPYCAT_WING_8 = BLOCKS.register("symmetric_copycat_wing_8",
+        () -> new SymCopycatWingBlock(Block.Properties.of().strength(1.5f, 2.0f), 8));
+    public static final DeferredBlock<SymCopycatWingBlock> SYMMETRIC_COPYCAT_WING_12 = BLOCKS.register("symmetric_copycat_wing_12",
+        () -> new SymCopycatWingBlock(Block.Properties.of().strength(1.5f, 2.0f), 12));
     public static final DeferredBlock<WingBlock> TEMPERED_WING_BLOCK = BLOCKS.register("tempered_wing",
         () -> new WingBlock(Block.Properties.of().mapColor(MapColor.COLOR_LIGHT_GRAY).sound(SoundType.COPPER)
             .strength(1.5f, 2.0f).noOcclusion()));
@@ -146,6 +158,10 @@ public class PropulsionBlocks {
         registerDefaultBlockItem("tilt_adapter", TILT_ADAPTER_BLOCK);
         registerDefaultBlockItem("advanced_tilt_adapter", ADVANCED_TILT_ADAPTER_BLOCK);
         registerDefaultBlockItem("wing", WING_BLOCK);
+        registerDefaultBlockItem("symmetric_wing", SYMMETRIC_WING_BLOCK);
+        BLOCK_ITEMS.register("symmetric_copycat_wing", () -> new SymCopycatWingItem(SYMMETRIC_COPYCAT_WING.get(), new BlockItem.Properties()));
+        BLOCK_ITEMS.register("symmetric_copycat_wing_8", () -> new SymCopycatWingItem(SYMMETRIC_COPYCAT_WING_8.get(), new BlockItem.Properties()));
+        BLOCK_ITEMS.register("symmetric_copycat_wing_12", () -> new SymCopycatWingItem(SYMMETRIC_COPYCAT_WING_12.get(), new BlockItem.Properties()));
         registerDefaultBlockItem("tempered_wing", TEMPERED_WING_BLOCK);
         BLOCK_ITEMS.register("copycat_wing", () -> new CopycatWingItem(COPYCAT_WING.get(), new BlockItem.Properties()));
         BLOCK_ITEMS.register("copycat_wing_8", () -> new CopycatWingItem(COPYCAT_WING_8.get(), new BlockItem.Properties()));

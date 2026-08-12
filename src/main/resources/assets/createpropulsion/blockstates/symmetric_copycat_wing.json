@@ -1,0 +1,16 @@
+{
+    "variants": {
+        "axis=y": {
+            "model": "createpropulsion:block/copycat_wing"
+        },
+        "axis=x": {
+            "model": "createpropulsion:block/copycat_wing",
+            "x": 90,
+            "y": 90
+        },
+        "axis=z": {
+            "model": "createpropulsion:block/copycat_wing",
+            "x": 90
+        }
+    }
+}

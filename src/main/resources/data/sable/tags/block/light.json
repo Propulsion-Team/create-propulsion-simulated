@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "createpropulsion:copycat_wing_12"
+    "createpropulsion:copycat_wing_12",
+    "createpropulsion:symmetric_copycat_wing_12"
   ]
 }

@@ -21,6 +21,7 @@ import dev.propulsionteam.propulsionsimulated.content.redstone_converter.Redston
 import dev.propulsionteam.propulsionsimulated.content.redstone_transmission.RedstoneTransmissionBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.thruster.solid_fuel_thruster.SolidFuelThrusterBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.wing.PropulsionCopycatWingBlockEntity;
+import dev.propulsionteam.propulsionsimulated.content.wing.SymmetricPropulsionCopycatWingBlockEntity;
 import dev.propulsionteam.propulsionsimulated.CreatePropulsion;
 
 import net.minecraft.core.registries.Registries;
@@ -97,6 +98,14 @@ public class PropulsionBlockEntities {
                 PropulsionBlocks.COPYCAT_WING.get(),
                 PropulsionBlocks.COPYCAT_WING_8.get(),
                 PropulsionBlocks.COPYCAT_WING_12.get()
+            ).build(null));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SymmetricPropulsionCopycatWingBlockEntity>> SYMMETRIC_COPYCAT_WING_BLOCK_ENTITY =
+        BLOCK_ENTITY_TYPES.register("symmetric_copycat_wing_block_entity",
+            () -> BlockEntityType.Builder.of(
+                (pos, state) -> new SymmetricPropulsionCopycatWingBlockEntity(pos, state),
+                PropulsionBlocks.SYMMETRIC_COPYCAT_WING.get(),
+                PropulsionBlocks.SYMMETRIC_COPYCAT_WING_8.get(),
+                PropulsionBlocks.SYMMETRIC_COPYCAT_WING_12.get()
             ).build(null));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CoralGeneratorBlockEntity>> CORAL_GENERATOR_BLOCK_ENTITY =
         BLOCK_ENTITY_TYPES.register("coral_generator_block_entity",
