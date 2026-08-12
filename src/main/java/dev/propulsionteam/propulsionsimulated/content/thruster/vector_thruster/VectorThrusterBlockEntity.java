@@ -36,10 +36,10 @@ public class VectorThrusterBlockEntity extends IonThrusterBlockEntity {
     public VectorRedstoneLinkBehaviour downLink;
     public VectorRedstoneLinkBehaviour upLink;
 
-    private int westSignal;
-    private int eastSignal;
-    private int downSignal;
-    private int upSignal;
+    private float westSignal;
+    private float eastSignal;
+    private float downSignal;
+    private float upSignal;
 
     private float targetVectorX;
     private float targetVectorY;
@@ -100,7 +100,7 @@ public class VectorThrusterBlockEntity extends IonThrusterBlockEntity {
 
     private void setSignal(int power, Direction localSide) {
         int clamped = Math.clamp(power, 0, 15);
-        int prev = switch (localSide) {
+        float prev = switch (localSide) {
             case WEST -> westSignal;
             case EAST -> eastSignal;
             case DOWN -> downSignal;
@@ -156,13 +156,14 @@ public class VectorThrusterBlockEntity extends IonThrusterBlockEntity {
     }
 
     /**
-     * Sets the four directional signals to produce the given -1..1 vector.
+     * Sets the four directional signals to produce the given -1..1 vector without
+     * quantizing ComputerCraft coordinates to redstone levels.
      */
     public void setVectorCoordinates(float x, float y) {
-        westSignal = x > 0 ? Math.round(x * 15) : 0;
-        eastSignal = x < 0 ? Math.round(-x * 15) : 0;
-        downSignal = y > 0 ? Math.round(y * 15) : 0;
-        upSignal = y < 0 ? Math.round(-y * 15) : 0;
+        westSignal = VectorThrusterControlMath.positiveSignal(x);
+        eastSignal = VectorThrusterControlMath.negativeSignal(x);
+        downSignal = VectorThrusterControlMath.positiveSignal(y);
+        upSignal = VectorThrusterControlMath.negativeSignal(y);
         onVectorSignalChanged();
     }
 
@@ -291,8 +292,8 @@ public class VectorThrusterBlockEntity extends IonThrusterBlockEntity {
     private void updateMappedTargets() {
         // West signal tilts nozzle right (+X); East tilts it left (-X).
         // Down signal tilts nozzle up (+Y); Up tilts it down (-Y).
-        targetVectorX = Mth.clamp((westSignal - eastSignal) / 15.0f, -1.0f, 1.0f);
-        targetVectorY = Mth.clamp((downSignal - upSignal) / 15.0f, -1.0f, 1.0f);
+        targetVectorX = VectorThrusterControlMath.coordinateFromSignals(westSignal, eastSignal);
+        targetVectorY = VectorThrusterControlMath.coordinateFromSignals(downSignal, upSignal);
     }
 
     private static float tweenTowards(float current, float target) {
@@ -324,10 +325,10 @@ public class VectorThrusterBlockEntity extends IonThrusterBlockEntity {
     @Override
     protected void write(CompoundTag compound, net.minecraft.core.HolderLookup.Provider registries, boolean clientPacket) {
         super.write(compound, registries, clientPacket);
-        compound.putInt("WestSignal", westSignal);
-        compound.putInt("EastSignal", eastSignal);
-        compound.putInt("DownSignal", downSignal);
-        compound.putInt("UpSignal", upSignal);
+        compound.putFloat("WestSignal", westSignal);
+        compound.putFloat("EastSignal", eastSignal);
+        compound.putFloat("DownSignal", downSignal);
+        compound.putFloat("UpSignal", upSignal);
         compound.putFloat("TargetVectorX", targetVectorX);
         compound.putFloat("TargetVectorY", targetVectorY);
         compound.putFloat("CurrentVectorX", currentVectorX);
@@ -338,10 +339,10 @@ public class VectorThrusterBlockEntity extends IonThrusterBlockEntity {
     @Override
     protected void read(CompoundTag compound, net.minecraft.core.HolderLookup.Provider registries, boolean clientPacket) {
         super.read(compound, registries, clientPacket);
-        westSignal = compound.getInt("WestSignal");
-        eastSignal = compound.getInt("EastSignal");
-        downSignal = compound.getInt("DownSignal");
-        upSignal = compound.getInt("UpSignal");
+        westSignal = compound.getFloat("WestSignal");
+        eastSignal = compound.getFloat("EastSignal");
+        downSignal = compound.getFloat("DownSignal");
+        upSignal = compound.getFloat("UpSignal");
         updateMappedTargets();
         targetVectorX = compound.contains("TargetVectorX") ? compound.getFloat("TargetVectorX") : targetVectorX;
         targetVectorY = compound.contains("TargetVectorY") ? compound.getFloat("TargetVectorY") : targetVectorY;

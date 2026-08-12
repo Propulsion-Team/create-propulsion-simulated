@@ -7,6 +7,7 @@ import dan200.computercraft.api.peripheral.IComputerAccess;
 import dan200.computercraft.shared.peripheral.generic.methods.FluidMethods;
 import dev.propulsionteam.propulsionsimulated.content.thruster.AbstractThrusterBlockEntity.ControlMode;
 import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.liquid_vector_thruster.LiquidVectorThrusterBlockEntity;
+import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.VectorThrusterControlMath;
 import net.minecraft.util.Mth;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import org.jetbrains.annotations.NotNull;
@@ -48,17 +49,17 @@ public class LiquidVectorThrusterPeripheral extends ThrusterPeripheralBase<Liqui
 
     @LuaFunction(mainThread = true)
     public final void setVectorX(double x) {
-        blockEntity.setVectorCoordinates((float) Mth.clamp(x, -1.0, 1.0), blockEntity.getTargetVectorY());
+        blockEntity.setVectorCoordinates(VectorThrusterControlMath.clampCoordinate(x), blockEntity.getTargetVectorY());
     }
 
     @LuaFunction(mainThread = true)
     public final void setVectorY(double y) {
-        blockEntity.setVectorCoordinates(blockEntity.getTargetVectorX(), (float) Mth.clamp(y, -1.0, 1.0));
+        blockEntity.setVectorCoordinates(blockEntity.getTargetVectorX(), VectorThrusterControlMath.clampCoordinate(y));
     }
 
     @LuaFunction(mainThread = true)
     public final void setVector(double x, double y) {
-        blockEntity.setVectorCoordinates((float) Mth.clamp(x, -1.0, 1.0), (float) Mth.clamp(y, -1.0, 1.0));
+        blockEntity.setVectorCoordinates(VectorThrusterControlMath.clampCoordinate(x), VectorThrusterControlMath.clampCoordinate(y));
     }
 
     @LuaFunction(mainThread = true)
