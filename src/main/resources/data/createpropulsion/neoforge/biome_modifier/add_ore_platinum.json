@@ -1,6 +1,6 @@
 {
   "type": "neoforge:add_features",
-  "biomes": "#minecraft:is_overworld",
+  "biomes": "#c:is_overworld",
   "features": "createpropulsion:ore_platinum",
   "step": "underground_ores"
 }
