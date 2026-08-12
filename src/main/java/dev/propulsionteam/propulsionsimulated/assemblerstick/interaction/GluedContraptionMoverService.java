@@ -7,6 +7,7 @@ import com.simibubi.create.content.schematics.SchematicPrinter;
 import com.simibubi.create.foundation.utility.CreatePaths;
 import dev.simulated_team.simulated.content.entities.honey_glue.HoneyGlueEntity;
 import dev.simulated_team.simulated.service.SimConfigService;
+import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
 import dev.propulsionteam.propulsionsimulated.assemblerstick.item.ModItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
@@ -52,7 +53,6 @@ public final class GluedContraptionMoverService {
     private static final String BB_MAX_Z = "MaxZ";
 
     private static final int SUPER_GLUE_RANGE = 16;
-    public static final int MOVER_MAX_BLOCKS = 16_384;
     private static final String MODE_MOVE = "move";
     private static final String MODE_CLONE = "clone";
 
@@ -75,9 +75,12 @@ public final class GluedContraptionMoverService {
             return false;
         }
 
-        final GatherResult gatherResult = gatherConnected(level, origin);
+        final int maxBlocks = deleteSourceAfterPlacement
+                ? PropulsionConfig.CONTRAPTION_MOVER_MAX_BLOCKS.get()
+                : PropulsionConfig.CONTRAPTION_CLONER_MAX_BLOCKS.get();
+        final GatherResult gatherResult = gatherConnected(level, origin, maxBlocks);
         if (gatherResult.tooLarge) {
-            player.displayClientMessage(Component.translatable("message.assemblystick.mover_too_large", MOVER_MAX_BLOCKS), true);
+            player.displayClientMessage(Component.translatable("message.assemblystick.mover_too_large", maxBlocks), true);
             return false;
         }
         if (gatherResult.blocks.isEmpty()) {
@@ -132,9 +135,10 @@ public final class GluedContraptionMoverService {
             return false;
         }
 
-        final GatherResult gatherResult = gatherConnected(level, origin);
+        final int maxBlocks = PropulsionConfig.CONTRAPTION_REMOVER_MAX_BLOCKS.get();
+        final GatherResult gatherResult = gatherConnected(level, origin, maxBlocks);
         if (gatherResult.tooLarge) {
-            player.displayClientMessage(Component.translatable("message.assemblystick.mover_too_large", MOVER_MAX_BLOCKS), true);
+            player.displayClientMessage(Component.translatable("message.assemblystick.mover_too_large", maxBlocks), true);
             return false;
         }
         if (gatherResult.blocks.isEmpty()) {
@@ -215,7 +219,7 @@ public final class GluedContraptionMoverService {
         }
     }
 
-    private static GatherResult gatherConnected(final ServerLevel level, final BlockPos origin) {
+    private static GatherResult gatherConnected(final ServerLevel level, final BlockPos origin, final int maxBlocks) {
         final ArrayDeque<BlockPos> frontier = new ArrayDeque<>();
         final Set<BlockPos> visited = new HashSet<>();
         final Set<BlockPos> blocks = new HashSet<>();
@@ -235,7 +239,7 @@ public final class GluedContraptionMoverService {
                 continue;
             }
 
-            if (visited.size() > MOVER_MAX_BLOCKS) {
+            if (visited.size() > maxBlocks) {
                 tooLarge = true;
                 break;
             }

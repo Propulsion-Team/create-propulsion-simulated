@@ -14,6 +14,7 @@ import dev.simulated_team.simulated.util.SimAssemblyHelper;
 import dev.simulated_team.simulated.util.SimMathUtils;
 import dev.simulated_team.simulated.util.assembly.SimAssemblyException;
 import dev.propulsionteam.propulsionsimulated.CreatePropulsion;
+import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
 import dev.propulsionteam.propulsionsimulated.assemblerstick.item.ModItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -41,7 +42,6 @@ import java.util.Set;
 @EventBusSubscriber(modid = CreatePropulsion.ID)
 public final class AssemblerStickInteractionHandler {
     private static final int COOLDOWN_TICKS = 10;
-    private static final int AUTO_GLUE_MAX_BLOCKS = 8192;
 
     private AssemblerStickInteractionHandler() {
     }
@@ -180,6 +180,7 @@ public final class AssemblerStickInteractionHandler {
         int maxX = origin.getX();
         int maxY = origin.getY();
         int maxZ = origin.getZ();
+        final int maxBlocks = PropulsionConfig.AUTO_GLUE_MAX_BLOCKS.get();
 
         while (!frontier.isEmpty()) {
             final BlockPos pos = frontier.poll();
@@ -187,8 +188,8 @@ public final class AssemblerStickInteractionHandler {
                 continue;
             }
 
-            if (visited.size() > AUTO_GLUE_MAX_BLOCKS) {
-                player.displayClientMessage(Component.translatable("message.assemblystick.auto_glue_too_large", AUTO_GLUE_MAX_BLOCKS), true);
+            if (visited.size() > maxBlocks) {
+                player.displayClientMessage(Component.translatable("message.assemblystick.auto_glue_too_large", maxBlocks), true);
                 return false;
             }
 

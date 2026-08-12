@@ -63,6 +63,12 @@ public class PropulsionConfig {
     public static final Map<String, ModConfigSpec.ConfigValue<String>> THRUSTER_DYE_COLORS = new LinkedHashMap<>();
     public static final ModConfigSpec.IntValue CABLE_ENERGY_TRANSFER;
 
+    // Creative tools
+    public static final ModConfigSpec.IntValue AUTO_GLUE_MAX_BLOCKS;
+    public static final ModConfigSpec.IntValue CONTRAPTION_MOVER_MAX_BLOCKS;
+    public static final ModConfigSpec.IntValue CONTRAPTION_CLONER_MAX_BLOCKS;
+    public static final ModConfigSpec.IntValue CONTRAPTION_REMOVER_MAX_BLOCKS;
+
     public enum PlumeRenderMode {
         PARTICLE,
         SHADER
@@ -242,6 +248,25 @@ public class PropulsionConfig {
         COMMON_BUILDER.push("Cable");
         CABLE_ENERGY_TRANSFER = COMMON_BUILDER.comment("Maximum FE moved per tick by a single cable block.")
                 .defineInRange("Energy transfer", 1_000, 1, 100000000);
+        COMMON_BUILDER.pop();
+
+        COMMON_BUILDER.push("creativeTools");
+        AUTO_GLUE_MAX_BLOCKS = COMMON_BUILDER.comment(
+                        "Maximum connected blocks Auto Glue may scan before aborting.",
+                        "Higher values can increase server load when processing very large structures.")
+                .defineInRange("autoGlueMaxBlocks", 8_192, 1, Integer.MAX_VALUE);
+        CONTRAPTION_MOVER_MAX_BLOCKS = COMMON_BUILDER.comment(
+                        "Maximum connected blocks the Contraption Mover may capture.",
+                        "Higher values increase schematic size and server processing cost.")
+                .defineInRange("contraptionMoverMaxBlocks", 16_384, 1, Integer.MAX_VALUE);
+        CONTRAPTION_CLONER_MAX_BLOCKS = COMMON_BUILDER.comment(
+                        "Maximum connected blocks the Contraption Cloner may capture.",
+                        "Higher values increase schematic size and server processing cost.")
+                .defineInRange("contraptionClonerMaxBlocks", 16_384, 1, Integer.MAX_VALUE);
+        CONTRAPTION_REMOVER_MAX_BLOCKS = COMMON_BUILDER.comment(
+                        "Maximum connected blocks the Contraption Remover may delete.",
+                        "Higher values can increase server load when removing very large structures.")
+                .defineInRange("contraptionRemoverMaxBlocks", 16_384, 1, Integer.MAX_VALUE);
         COMMON_BUILDER.pop();
 
         COMMON_BUILDER.push("Fuel Configuration");
