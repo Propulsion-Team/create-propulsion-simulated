@@ -63,10 +63,10 @@ public class PropulsionCreativeTab {
         registerSectionItem(MAIN_SECTION, "redstone_converter", () -> PropulsionBlocks.REDSTONE_CONVERTER_BLOCK.get().asItem());
         registerSectionItem(MAIN_SECTION, "turpentine_bucket", () -> PropulsionItems.TURPENTINE_BUCKET.get());
         registerSectionItem(MAIN_SECTION, "pine_resin", () -> PropulsionItems.PINE_RESIN.get());
-        registerSectionItem(MAIN_SECTION, "wing", () -> PropulsionBlocks.WING_BLOCK.get().asItem());
-        registerSectionItem(MAIN_SECTION, "symmetric_wing", () -> PropulsionBlocks.SYMMETRIC_WING_BLOCK.get().asItem());
+        //registerSectionItem(MAIN_SECTION, "wing", () -> PropulsionBlocks.WING_BLOCK.get().asItem());
+        //registerSectionItem(MAIN_SECTION, "symmetric_wing", () -> PropulsionBlocks.SYMMETRIC_WING_BLOCK.get().asItem());
         registerSectionItem(MAIN_SECTION, "symmetric_copycat_wing", () -> PropulsionBlocks.SYMMETRIC_COPYCAT_WING.get().asItem());
-        registerSectionItem(MAIN_SECTION, "tempered_wing", () -> PropulsionBlocks.TEMPERED_WING_BLOCK.get().asItem());
+        //registerSectionItem(MAIN_SECTION, "tempered_wing", () -> PropulsionBlocks.TEMPERED_WING_BLOCK.get().asItem());
         registerSectionItem(MAIN_SECTION, "copycat_wing", () -> PropulsionBlocks.COPYCAT_WING.get().asItem());
         registerSectionItem(MAIN_SECTION, "solid_burner", () -> PropulsionBlocks.SOLID_BURNER.get().asItem());
         registerSectionItem(MAIN_SECTION, "liquid_burner", () -> PropulsionBlocks.LIQUID_BURNER.get().asItem());
