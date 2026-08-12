@@ -496,6 +496,14 @@ public class PlatinumFluidVesselBlockEntity extends FluidTankBlockEntity impleme
         forceFluidLevelUpdate = false;
     }
 
+    @Override
+    public void writeSafe(CompoundTag compound, HolderLookup.Provider registries) {
+        super.writeSafe(compound, registries);
+        if (isController()) {
+            NBTHelper.writeEnum(compound, "WindowType", windowType);
+        }
+    }
+
     public static int getMaxSize() {
         return MAX_SIZE;
     }
