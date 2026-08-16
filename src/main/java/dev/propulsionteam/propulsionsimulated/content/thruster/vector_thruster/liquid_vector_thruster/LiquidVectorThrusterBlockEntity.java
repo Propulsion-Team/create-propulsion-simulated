@@ -178,6 +178,31 @@ public class LiquidVectorThrusterBlockEntity extends VectorThrusterBlockEntity {
     }
 
     @Override
+    protected boolean requiresPerTickEnergyUpdate() {
+        return false;
+    }
+
+    @Override
+    protected boolean usesFluidFuelAccounting() {
+        return true;
+    }
+
+    @Override
+    protected boolean shouldSyncThrustImmediately() {
+        return false;
+    }
+
+    @Override
+    protected boolean shouldSyncThrottleImmediately() {
+        return false;
+    }
+
+    @Override
+    protected boolean shouldSyncFuelTelemetryImmediately() {
+        return false;
+    }
+
+    @Override
     public Vector3d getThrustDirectionLocal() {
         Vector3d localExhaust = computeExhaustDirectionLocal();
         if (localExhaust.lengthSquared() < 1e-8) {

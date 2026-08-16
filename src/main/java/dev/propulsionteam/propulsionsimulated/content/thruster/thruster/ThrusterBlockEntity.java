@@ -7,6 +7,7 @@ import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
 import dev.propulsionteam.propulsionsimulated.content.thruster.AbstractThrusterBlock;
 import dev.propulsionteam.propulsionsimulated.content.thruster.AbstractThrusterBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.thruster.FluidThrusterProperties;
+import dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterFuelConsumptionMath;
 import dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterFuelManager;
 import dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterParticleType;
 import dev.propulsionteam.propulsionsimulated.particles.smoke.ThrusterSmokeParticleData;
@@ -56,6 +57,7 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
     protected double lastOxidizerConsumedMbPerTick = 0.0d;
     protected double fuelDrainAccumulator = 0.0d;
     protected double oxidizerDrainAccumulator = 0.0d;
+    protected double pendingFuelDemandTicks = 0.0d;
     // Ticks to skip multiblock-validity checks after a sublevel move to tolerate transient invalidity.
     private static final int DISASSEMBLY_GRACE_TICKS = 5;
     private int disassemblyCooldown = 0;
@@ -479,9 +481,31 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
         }
     }
 
+    @Override
+    protected void sampleResourceDemandForTick() {
+        if (!usesFluidFuelAccounting() || !isController() || tank == null || !isWorking()) {
+            return;
+        }
+        FluidThrusterProperties properties = getFuelProperties(fluidStack().getFluid());
+        if (properties == null) {
+            return;
+        }
+        pendingFuelDemandTicks = ThrusterFuelConsumptionMath.accumulateDemand(
+            pendingFuelDemandTicks,
+            getEffectiveThrustPercentage(),
+            properties.consumptionMultiplier()
+        );
+    }
+
+    protected boolean usesFluidFuelAccounting() {
+        return true;
+    }
+
     protected void updateSingleThrust(BlockState currentBlockState) {
         final double prevConsumedMbPerTick = lastConsumedMbPerTick;
         final int prevFuelAmount = tank != null ? tank.getPrimaryHandler().getFluidAmount() : 0;
+        final double sampledFuelDemand = pendingFuelDemandTicks;
+        pendingFuelDemandTicks = 0.0d;
         float thrust = 0;
         float currentPower = getEffectiveThrottle();
         lastConsumedMbPerTick = 0.0d;
@@ -491,7 +515,8 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
 
             if (thrustPercentage > 0 && properties != null) {
                 final int tickRate = getThrustUpdateIntervalTicks();
-                double requestedConsumption = calculateFuelConsumption(thrustPercentage, properties.consumptionMultiplier(), tickRate);
+                double requestedConsumption = ThrusterFuelConsumptionMath.requestedFuel(
+                    getFuelConsumptionPerTickAtFullThrottle(), sampledFuelDemand);
                 int consumption = consumeFuelWithAccumulator(requestedConsumption);
                 FluidStack drainedStack = tank.getPrimaryHandler().drain(consumption, IFluidHandler.FluidAction.EXECUTE);
                 int fuelConsumed = drainedStack.getAmount();
@@ -513,7 +538,9 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
         setThrustAndSync(thrust);
         if (didSingleTooltipTelemetryChange(prevConsumedMbPerTick, prevFuelAmount)) {
             setChanged();
-            notifyUpdate();
+            if (shouldSyncFuelTelemetryImmediately()) {
+                notifyUpdate();
+            }
         }
         isThrustDirty = false;
     }
@@ -532,6 +559,8 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
         final double prevOxidizerConsumedMbPerTick = lastOxidizerConsumedMbPerTick;
         final int prevFuelAmount = tank != null ? tank.getPrimaryHandler().getFluidAmount() : 0;
         final int prevOxidizerAmount = oxidizerTank != null ? oxidizerTank.getPrimaryHandler().getFluidAmount() : 0;
+        final double sampledFuelDemand = pendingFuelDemandTicks;
+        pendingFuelDemandTicks = 0.0d;
         int n = width * width * width;
         float totalThrust = 0;
         float currentPower = getEffectiveThrottle();
@@ -543,7 +572,8 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
             float thrustPercentage = getEffectiveThrustPercentage();
             if (thrustPercentage > 0 && properties != null) {
                 final int tickRate = getThrustUpdateIntervalTicks();
-                double baseConsumption = calculateFuelConsumption(thrustPercentage, properties.consumptionMultiplier(), tickRate);
+                double baseConsumption = ThrusterFuelConsumptionMath.requestedFuel(
+                    getFuelConsumptionPerTickAtFullThrottle(), sampledFuelDemand);
                 
                 boolean canUseOxidizer = validOxidizer();
                 // Multiblock fuel efficiency always applies; oxidizer adds an extra multiplier.
@@ -587,7 +617,9 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
         setThrustAndSync(totalThrust);
         if (didMultiTooltipTelemetryChange(prevConsumedMbPerTick, prevOxidizerConsumedMbPerTick, prevFuelAmount, prevOxidizerAmount)) {
             setChanged();
-            notifyUpdate();
+            if (shouldSyncFuelTelemetryImmediately()) {
+                notifyUpdate();
+            }
         }
         BlockPos origin = worldPosition;
         for (int x = 0; x < width; x++) {
@@ -847,7 +879,10 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
         this.redstoneInput = power;
         if (controlMode == ControlMode.NORMAL) {
             dirtyThrust();
-            notifyUpdate();
+            setChanged();
+            if (shouldSyncThrottleImmediately()) {
+                notifyUpdate();
+            }
         }
         if (isMultiblock() && !isController()) {
             ThrusterBlockEntity ctrl = getControllerBE();
@@ -856,6 +891,14 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
                 ctrl.notifyUpdate();
             }
         }
+    }
+
+    protected boolean shouldSyncThrottleImmediately() {
+        return true;
+    }
+
+    protected boolean shouldSyncFuelTelemetryImmediately() {
+        return true;
     }
 
     protected boolean validOxidizer() {
@@ -1287,10 +1330,6 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
         return resolvedProperties.particleType().createParticleOptions(resolvedProperties);
     }
 
-    private double calculateFuelConsumption(float powerPercentage, float fluidPropertiesConsumptionMultiplier, int tickRate) {
-        return getFuelConsumptionPerTickAtFullThrottle() * powerPercentage * fluidPropertiesConsumptionMultiplier * tickRate;
-    }
-
     protected double getFuelConsumptionPerTickAtFullThrottle() {
         return PropulsionConfig.FUEL_MB_PER_TICK_AT_FULL_THROTTLE.get();
     }
@@ -1313,6 +1352,7 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
         compound.putDouble("LastOxidizerConsumedMbPerTick", lastOxidizerConsumedMbPerTick);
         compound.putDouble("FuelDrainAccumulator", fuelDrainAccumulator);
         compound.putDouble("OxidizerDrainAccumulator", oxidizerDrainAccumulator);
+        compound.putDouble("PendingFuelDemandTicks", pendingFuelDemandTicks);
         
         if (tank != null) {
             compound.put("FuelTankSync", tank.getPrimaryHandler().getFluid().saveOptional(registries));
@@ -1339,6 +1379,7 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
         lastOxidizerConsumedMbPerTick = compound.getDouble("LastOxidizerConsumedMbPerTick");
         fuelDrainAccumulator = compound.getDouble("FuelDrainAccumulator");
         oxidizerDrainAccumulator = compound.getDouble("OxidizerDrainAccumulator");
+        pendingFuelDemandTicks = compound.getDouble("PendingFuelDemandTicks");
 
         // Update capacity before loading fluid to avoid truncation
         if (isController() && isMultiblock()) {

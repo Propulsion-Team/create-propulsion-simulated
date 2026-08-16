@@ -94,8 +94,19 @@ public class IonThrusterBlockEntity extends ThrusterBlockEntity {
     @Override
     public void tick() {
         // Ion thrusters should evaluate power/consumption every server tick so FE usage is stable and responsive.
-        this.isThrustDirty = true;
+        if (requiresPerTickEnergyUpdate()) {
+            this.isThrustDirty = true;
+        }
         super.tick();
+    }
+
+    protected boolean requiresPerTickEnergyUpdate() {
+        return true;
+    }
+
+    @Override
+    protected boolean usesFluidFuelAccounting() {
+        return false;
     }
 
     @Override

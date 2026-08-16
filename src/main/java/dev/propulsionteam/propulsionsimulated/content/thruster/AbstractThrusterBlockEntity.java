@@ -224,6 +224,7 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         }
 
         boolean startupChanged = updateStartupState();
+        sampleResourceDemandForTick();
         if (!PropulsionConfig.useShaderPlumes()) {
             emitResolvedParticles(level, worldPosition, currentBlockState);
         }
@@ -247,6 +248,9 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
             updateThrustUpdateInterval();
             updateThrust(currentBlockState);
         }
+    }
+
+    protected void sampleResourceDemandForTick() {
     }
 
     private boolean updateStartupState() {
@@ -321,9 +325,16 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
             return;
         }
         setChanged();
+        if (!shouldSyncThrustImmediately()) {
+            return;
+        }
         notifyUpdate();
         BlockState state = getBlockState();
         level.sendBlockUpdated(worldPosition, state, state, Block.UPDATE_CLIENTS);
+    }
+
+    protected boolean shouldSyncThrustImmediately() {
+        return true;
     }
 
     public int getEmptyBlocks() {
