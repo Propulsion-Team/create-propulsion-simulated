@@ -63,7 +63,10 @@ public class ForgeEvents {
     public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
             PropulsionPackets.sendToPlayer(
-                SyncThrusterFuelsPacket.create(ThrusterFuelManager.getFuelPropertiesMap(), ThrusterFuelManager.getRemovedFuelIds()),
+                SyncThrusterFuelsPacket.create(
+                    ThrusterFuelManager.getFuelPropertiesMap(),
+                    ThrusterFuelManager.getRemovedFuelIds(),
+                    ThrusterFuelManager.getEfficiencyOverrides()),
                 serverPlayer
             );
             PropulsionPackets.sendToPlayer(

@@ -44,7 +44,7 @@ public class ThrusterFuelManager extends SimpleJsonResourceReloadListener {
     private static Map<Fluid, FluidThrusterProperties> scriptedFuelPropertiesMap = new HashMap<>();
     private static Map<ResourceLocation, FluidThrusterProperties> scriptedFuelPropertiesById = new HashMap<>();
     private static Set<ResourceLocation> removedFuelIds = new HashSet<>();
-    /** Last merged datapack JSON for {@link #rebuildThrusterFuelsAfterCommonConfigReload()}. */
+    private static Map<ResourceLocation, Float> fuelEfficiencyOverrides = new HashMap<>();
     private static Map<ResourceLocation, JsonElement> cachedThrusterFuelDatapack = null;
 
     public static Map<Fluid, FluidThrusterProperties> getFuelPropertiesMap() {
@@ -61,6 +61,10 @@ public class ThrusterFuelManager extends SimpleJsonResourceReloadListener {
 
     public static Set<ResourceLocation> getRemovedFuelIds() {
         return Set.copyOf(removedFuelIds);
+    }
+
+    public static Map<ResourceLocation, Float> getEfficiencyOverrides() {
+        return Map.copyOf(fuelEfficiencyOverrides);
     }
 
     public ThrusterFuelManager() {
@@ -97,14 +101,12 @@ public class ThrusterFuelManager extends SimpleJsonResourceReloadListener {
         // Normalize flowing variants (e.g. flowing_lava) to their source fluid ids.
         fluid = FluidHelper.convertToStill(fluid);
 
-        Map<ResourceLocation, Float> fluidEfficiencyOverrides = getConfiguredEfficiencyOverrides();
-
         ResourceLocation fluidId = BuiltInRegistries.FLUID.getKey(fluid);
         if (fluidId == null) {
             return 1.0f;
         }
 
-        return fluidEfficiencyOverrides.getOrDefault(fluidId, 1.0f);
+        return fuelEfficiencyOverrides.getOrDefault(fluidId, 1.0f);
     }
 
     @Override
@@ -112,6 +114,7 @@ public class ThrusterFuelManager extends SimpleJsonResourceReloadListener {
         //Parse datapacks
         profiler.push(CreatePropulsion.ID + ":Loading_thruster_fuels");
         cachedThrusterFuelDatapack = new HashMap<>(pObject);
+        fuelEfficiencyOverrides = getConfiguredEfficiencyOverrides();
         ParseResult parseResult = parseFuelProperties(cachedThrusterFuelDatapack);
         fuelPropertiesMap = parseResult.fuelMap();
         // Add fuels from config that might not be in datapacks
@@ -121,11 +124,14 @@ public class ThrusterFuelManager extends SimpleJsonResourceReloadListener {
         //Update clients (happens only on /reload as on server start server instance is still null)
         MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
         if (server != null && server.isRunning()) {
-            PropulsionPackets.sendToAll(SyncThrusterFuelsPacket.create(getFuelPropertiesMap(), getRemovedFuelIds()));
+            PropulsionPackets.sendToAll(SyncThrusterFuelsPacket.create(
+                getFuelPropertiesMap(), getRemovedFuelIds(), getEfficiencyOverrides()));
         }
     }
 
-    public static void updateClient(Map<ResourceLocation, FluidThrusterProperties> fuelMap, Set<ResourceLocation> removedFuelIdsFromServer) {
+    public static void updateClient(Map<ResourceLocation, FluidThrusterProperties> fuelMap,
+                                    Set<ResourceLocation> removedFuelIdsFromServer,
+                                    Map<ResourceLocation, Float> efficiencyOverridesFromServer) {
         Map<Fluid, FluidThrusterProperties> newClientMap = new HashMap<>();
         fuelMap.forEach((rl, props) -> {
             Fluid fluid = BuiltInRegistries.FLUID.get(rl);
@@ -135,6 +141,7 @@ public class ThrusterFuelManager extends SimpleJsonResourceReloadListener {
         });
         fuelPropertiesMap = newClientMap;
         removedFuelIds = new HashSet<>(removedFuelIdsFromServer);
+        fuelEfficiencyOverrides = new HashMap<>(efficiencyOverridesFromServer);
     }
 
     public static void clearScriptedFuels() {
@@ -201,6 +208,7 @@ public class ThrusterFuelManager extends SimpleJsonResourceReloadListener {
         if (cachedThrusterFuelDatapack == null) {
             return;
         }
+        fuelEfficiencyOverrides = getConfiguredEfficiencyOverrides();
         ParseResult parseResult = parseFuelProperties(cachedThrusterFuelDatapack);
         fuelPropertiesMap = parseResult.fuelMap();
         ConfigMergeStats mergeStats = mergeConfigProperties(fuelPropertiesMap);
@@ -395,7 +403,8 @@ public class ThrusterFuelManager extends SimpleJsonResourceReloadListener {
     private static void syncFuelDataToClients() {
         MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
         if (server != null && server.isRunning()) {
-            PropulsionPackets.sendToAll(SyncThrusterFuelsPacket.create(getFuelPropertiesMap(), getRemovedFuelIds()));
+            PropulsionPackets.sendToAll(SyncThrusterFuelsPacket.create(
+                getFuelPropertiesMap(), getRemovedFuelIds(), getEfficiencyOverrides()));
         }
     }
 

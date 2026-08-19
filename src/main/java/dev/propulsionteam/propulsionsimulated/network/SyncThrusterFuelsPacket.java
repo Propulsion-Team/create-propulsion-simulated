@@ -25,8 +25,11 @@ public class SyncThrusterFuelsPacket implements CustomPacketPayload {
 
     private final Map<ResourceLocation, FluidThrusterProperties> fuelMap;
     private final Set<ResourceLocation> removedFuelIds;
+    private final Map<ResourceLocation, Float> efficiencyOverrides;
 
-    public static SyncThrusterFuelsPacket create(Map<Fluid, FluidThrusterProperties> mapToSync, Set<ResourceLocation> removedFuelIds) {
+    public static SyncThrusterFuelsPacket create(Map<Fluid, FluidThrusterProperties> mapToSync,
+                                                 Set<ResourceLocation> removedFuelIds,
+                                                 Map<ResourceLocation, Float> efficiencyOverrides) {
         Map<ResourceLocation, FluidThrusterProperties> networkSafeMap = new HashMap<>();
         mapToSync.forEach((fluid, props) -> {
             ResourceLocation key = BuiltInRegistries.FLUID.getKey(fluid);
@@ -34,27 +37,33 @@ public class SyncThrusterFuelsPacket implements CustomPacketPayload {
                 networkSafeMap.put(key, props);
             }
         });
-        return new SyncThrusterFuelsPacket(networkSafeMap, removedFuelIds);
+        return new SyncThrusterFuelsPacket(networkSafeMap, removedFuelIds, efficiencyOverrides);
     }
 
-    private SyncThrusterFuelsPacket(Map<ResourceLocation, FluidThrusterProperties> fuelMap, Set<ResourceLocation> removedFuelIds) {
+    private SyncThrusterFuelsPacket(Map<ResourceLocation, FluidThrusterProperties> fuelMap,
+                                    Set<ResourceLocation> removedFuelIds,
+                                    Map<ResourceLocation, Float> efficiencyOverrides) {
         this.fuelMap = fuelMap;
         this.removedFuelIds = removedFuelIds;
+        this.efficiencyOverrides = efficiencyOverrides;
     }
 
     public static SyncThrusterFuelsPacket decode(FriendlyByteBuf buf) {
         Map<ResourceLocation, FluidThrusterProperties> map = buf.readMap(FriendlyByteBuf::readResourceLocation, FluidThrusterProperties::decode);
         Set<ResourceLocation> removedFuelIds = buf.readCollection(java.util.HashSet::new, FriendlyByteBuf::readResourceLocation);
-        return new SyncThrusterFuelsPacket(map, removedFuelIds);
+        Map<ResourceLocation, Float> efficiencyOverrides = buf.readMap(
+            FriendlyByteBuf::readResourceLocation, FriendlyByteBuf::readFloat);
+        return new SyncThrusterFuelsPacket(map, removedFuelIds, efficiencyOverrides);
     }
 
     public void encode(FriendlyByteBuf buf) {
         buf.writeMap(this.fuelMap, FriendlyByteBuf::writeResourceLocation, (b, props) -> props.encode(b));
         buf.writeCollection(this.removedFuelIds, FriendlyByteBuf::writeResourceLocation);
+        buf.writeMap(this.efficiencyOverrides, FriendlyByteBuf::writeResourceLocation, FriendlyByteBuf::writeFloat);
     }
 
     public void handle() {
-        ThrusterFuelManager.updateClient(this.fuelMap, this.removedFuelIds);
+        ThrusterFuelManager.updateClient(this.fuelMap, this.removedFuelIds, this.efficiencyOverrides);
     }
 
     @Override
