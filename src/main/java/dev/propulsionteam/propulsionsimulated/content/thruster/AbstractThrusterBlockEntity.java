@@ -657,6 +657,7 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
 
         final dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterForceProvider.ForceSample sample = 
             dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterForceProvider.createSample(this, timeStep);
+        if (sample == null) return;
             
         double scaledThrust = this.getCurrentThrust();
         if (scaledThrust <= 0.0d || !Double.isFinite(scaledThrust)) {
