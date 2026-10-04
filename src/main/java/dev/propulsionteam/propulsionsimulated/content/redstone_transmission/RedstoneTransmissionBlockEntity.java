@@ -7,7 +7,6 @@ import dev.propulsionteam.propulsionsimulated.registries.PropulsionIcons;
 import dev.propulsionteam.propulsionsimulated.utility.FlickerAwareTicker;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.content.kinetics.base.IRotate;
-import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import com.simibubi.create.content.kinetics.transmission.SplitShaftBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.simibubi.create.foundation.blockEntity.behaviour.ValueBoxTransform;
@@ -97,6 +96,7 @@ public class RedstoneTransmissionBlockEntity extends SplitShaftBlockEntity {
         if (getFlickerScore() > ticker.getThreshold()) return false;
 
         detachKinetics();
+        removeSource();
         shift_level = newLevel;
         attachKinetics();
         setChanged();
@@ -182,19 +182,11 @@ public class RedstoneTransmissionBlockEntity extends SplitShaftBlockEntity {
     @Override
     public float getRotationSpeedModifier(Direction face) {
         if (!hasSource() || face == getSourceFacing()) return 1f;
-        if (shift_level == 0) return 0f;
-        return (float) shift_level / MAX_VALUE;
+        return getOutputSpeedModifier(shift_level);
     }
 
-    @Override
-    public float propagateRotationTo(KineticBlockEntity target, BlockState stateFrom, BlockState stateTo, BlockPos diff, boolean connectedViaAxes, boolean connectedViaCogs) {
-        if (connectedViaAxes && shift_level > 0) {
-            Direction targetFace = Direction.getNearest(diff.getX(), diff.getY(), diff.getZ());
-            if (hasSource() && targetFace != getSourceFacing()) {
-                return (float) shift_level / MAX_VALUE;
-            }
-        }
-        return 0f;
+    static float getOutputSpeedModifier(int shiftLevel) {
+        return (float) Mth.clamp(shiftLevel, 0, MAX_VALUE) / MAX_VALUE;
     }
 
     public float getGaugeTarget(float partialTick) {
@@ -331,5 +323,3 @@ public class RedstoneTransmissionBlockEntity extends SplitShaftBlockEntity {
         }
     }
 }
-
-
