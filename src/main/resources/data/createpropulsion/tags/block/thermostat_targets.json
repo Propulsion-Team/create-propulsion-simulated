@@ -1,0 +1,7 @@
+{
+  "replace": false,
+  "values": [
+    { "id": "create_connected:fluid_vessel", "required": false },
+    { "id": "createmetallurgy:industrial_crucible", "required": false }
+  ]
+}

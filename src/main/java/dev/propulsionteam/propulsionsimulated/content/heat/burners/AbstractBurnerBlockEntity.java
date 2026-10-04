@@ -9,6 +9,7 @@ import com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HeatLevel;
 import com.simibubi.create.foundation.utility.CreateLang;
 
 import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
+import dev.propulsionteam.propulsionsimulated.CreatePropulsion;
 import dev.propulsionteam.propulsionsimulated.content.heat.HeatMapper;
 import dev.propulsionteam.propulsionsimulated.content.heat.HeatSourceBehavior;
 import dev.propulsionteam.propulsionsimulated.content.heat.IHeatConsumer;
@@ -22,11 +23,17 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
 public abstract class AbstractBurnerBlockEntity extends SmartBlockEntity implements IHaveGoggleInformation {
+    public static final TagKey<Block> THERMOSTAT_TARGETS = BlockTags.create(
+        ResourceLocation.fromNamespaceAndPath(CreatePropulsion.ID, "thermostat_targets"));
     protected HeatSourceBehavior heatSource;
     protected HeatLevelString heatLevelName = HeatLevelString.COLD;
     protected boolean isPowered = false;
@@ -79,6 +86,8 @@ public abstract class AbstractBurnerBlockEntity extends SmartBlockEntity impleme
         if (level.getBlockState(worldPosition.above()).getBlock() instanceof FluidTankBlock) return true;
 
         BlockEntity beAbove = level.getBlockEntity(worldPosition.above());
+        if (!(beAbove instanceof IHeatConsumer)
+            && level.getBlockState(worldPosition.above()).is(THERMOSTAT_TARGETS)) return true;
         if (beAbove == null) return false;
 
         if (beAbove instanceof BasinBlockEntity && PropulsionConfig.BURNERS_POWER_HEATED_MIXERS.get()) return true;
@@ -194,4 +203,3 @@ public abstract class AbstractBurnerBlockEntity extends SmartBlockEntity impleme
         isPowered = tag.getBoolean("isPowered");
     }
 }
-
