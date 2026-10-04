@@ -259,7 +259,7 @@ public class PropulsionConfig {
         COMMON_BUILDER.pop();
 
         COMMON_BUILDER.push("Cable");
-        CABLE_ENERGY_TRANSFER = COMMON_BUILDER.comment("Maximum FE moved per tick by a single cable block.")
+        CABLE_ENERGY_TRANSFER = COMMON_BUILDER.comment("Maximum total FE moved per tick by each connected cable network, shared by all sources and consumers. Adding cables does not increase this limit.")
                 .defineInRange("Energy transfer", 1_000, 1, 100000000);
         COMMON_BUILDER.pop();
 

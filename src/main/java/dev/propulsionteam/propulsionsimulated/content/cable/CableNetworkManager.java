@@ -174,9 +174,7 @@ public final class CableNetworkManager {
             }
         }
 
-        long configuredBudget = (long) Math.max(0, PropulsionConfig.CABLE_ENERGY_TRANSFER.get())
-            * network.nodes.size();
-        int budget = (int) Math.min(Integer.MAX_VALUE, configuredBudget);
+        int budget = Math.max(0, PropulsionConfig.CABLE_ENERGY_TRANSFER.get());
         EnergyDistributor.distribute(new ArrayList<>(endpointsByPosition.values()), budget);
     }
 
