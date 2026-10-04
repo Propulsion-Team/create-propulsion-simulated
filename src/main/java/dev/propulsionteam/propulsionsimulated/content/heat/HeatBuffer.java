@@ -5,7 +5,7 @@ import net.neoforged.neoforge.common.util.INBTSerializable;
 
 public class HeatBuffer implements IHeatSource, INBTSerializable<CompoundTag> {
     protected float heat;
-    protected float capacity;
+    protected final float capacity;
     protected float expectedHeatProduction;
 
     public HeatBuffer(float initialHeat, float capacity, float expectedHeatProduction) {
@@ -53,8 +53,7 @@ public class HeatBuffer implements IHeatSource, INBTSerializable<CompoundTag> {
 
     @Override
     public void deserializeNBT(net.minecraft.core.HolderLookup.Provider registries, CompoundTag nbt) {
-        this.heat = nbt.getFloat("Heat");
-        this.capacity = nbt.getFloat("Capacity");
+        float savedHeat = nbt.getFloat("Heat");
+        this.heat = Float.isFinite(savedHeat) ? Math.max(0, Math.min(capacity, savedHeat)) : 0;
     }
 }
-

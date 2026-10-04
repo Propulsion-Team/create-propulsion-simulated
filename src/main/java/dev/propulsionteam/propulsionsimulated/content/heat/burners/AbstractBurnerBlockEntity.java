@@ -24,14 +24,16 @@ import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import dev.ryanhcode.sable.api.block.BlockSubLevelAssemblyListener;
 
-public abstract class AbstractBurnerBlockEntity extends SmartBlockEntity implements IHaveGoggleInformation {
+public abstract class AbstractBurnerBlockEntity extends SmartBlockEntity implements IHaveGoggleInformation, BlockSubLevelAssemblyListener {
     public static final TagKey<Block> THERMOSTAT_TARGETS = BlockTags.create(
         ResourceLocation.fromNamespaceAndPath(CreatePropulsion.ID, "thermostat_targets"));
     protected HeatSourceBehavior heatSource;
@@ -55,6 +57,18 @@ public abstract class AbstractBurnerBlockEntity extends SmartBlockEntity impleme
     protected abstract Direction getHeatCapSide();
 
     protected abstract float getHeatPerTick();
+
+    @Override
+    public void initialize() {
+        super.initialize();
+        updatePoweredState();
+    }
+
+    @Override
+    public void afterMove(ServerLevel oldLevel, ServerLevel newLevel, BlockState state, BlockPos oldPos, BlockPos newPos) {
+        isPowered = newLevel.hasNeighborSignal(newPos);
+        notifyUpdate();
+    }
 
     public void updatePoweredState() {
         if (level == null || level.isClientSide()) return;
