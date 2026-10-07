@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "createpropulsion:item/auto_glue"
+    "layer0": "simulated:item/honey_glue"
   }
 }
