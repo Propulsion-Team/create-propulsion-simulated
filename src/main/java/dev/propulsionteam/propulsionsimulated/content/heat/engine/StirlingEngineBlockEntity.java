@@ -32,6 +32,7 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
     private boolean isPowered = false;
     private boolean computerActive = true;
     private boolean wasEngineActive = true;
+    private float configuredStressCapacity;
 
     public AbstractComputerBehaviour computerBehaviour;
 
@@ -94,6 +95,12 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
             if (activeTicks > 0) {
                 reActivateSource = true;
             }
+        }
+
+        float configuredCapacity = PropulsionConfig.STIRLING_GENERATED_SU.get().floatValue();
+        if (configuredStressCapacity != configuredCapacity) {
+            configuredStressCapacity = configuredCapacity;
+            updateGeneratedRotation();
         }
 
         boolean currentlyActive = isEngineActive();
@@ -168,9 +175,10 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
 
     @Override
     public float calculateAddedStressCapacity() {
-        if (!isEngineActive() || activeTicks <= 0) return 0f;
+        if (level != null && level.isClientSide) return lastCapacityProvided;
+        if (!isEngineActive() || activeTicks <= 0) return lastCapacityProvided = 0f;
         float rpm = targetSpeedBehaviour.getUnsignedRPM();
-        if (rpm == 0) return 0f; 
+        if (rpm == 0) return lastCapacityProvided = 0f;
 
         float stressFactor = MAX_GENERATED_RPM / rpm;
         float capacity = stressFactor * PropulsionConfig.STIRLING_GENERATED_SU.get().floatValue();
