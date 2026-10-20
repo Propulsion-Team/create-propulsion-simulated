@@ -77,7 +77,7 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
         tank.getPrimaryHandler().setValidator(stack -> ThrusterFuelManager.getProperties(stack.getFluid()) != null);
         
         if (supportsMultiblock()) {
-            oxidizerTank = SmartFluidTankBehaviour.single(this, getBaseTankCapacityMb());
+            oxidizerTank = new SmartFluidTankBehaviour(SmartFluidTankBehaviour.OUTPUT, this, 1, getBaseTankCapacityMb(), false);
             behaviours.add(oxidizerTank);
             oxidizerTank.getPrimaryHandler().setValidator(stack -> stack.getFluid() == dev.propulsionteam.propulsionsimulated.registries.PropulsionFluids.OXIDIZER.get() || stack.getFluid() == dev.propulsionteam.propulsionsimulated.registries.PropulsionFluids.FLOWING_OXIDIZER.get());
         }
@@ -197,6 +197,7 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
         }
         setRedstoneInput(level.getBestNeighborSignal(worldPosition));
         calculateObstruction(level, worldPosition, state.getValue(AbstractThrusterBlock.FACING));
+        invalidateCapabilities();
         setChanged();
         notifyUpdate();
     }
@@ -271,6 +272,7 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
         List<ThrusterBlockEntity> members = new ArrayList<>(size * size * size);
         ThrusterBlockEntity controller = null;
         FluidStack totalFuel = FluidStack.EMPTY;
+        FluidStack totalOxidizer = FluidStack.EMPTY;
         for (int x = 0; x < size; x++) {
             for (int y = 0; y < size; y++) {
                 for (int z = 0; z < size; z++) {
@@ -282,6 +284,12 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
                     if (t.tank != null) {
                         totalFuel = mergeFluid(totalFuel, t.tank.getPrimaryHandler().getFluid());
                         t.tank.getPrimaryHandler().setFluid(FluidStack.EMPTY);
+                        t.tank.getPrimaryHandler().setCapacity(getBaseTankCapacityMb());
+                    }
+                    if (t.oxidizerTank != null) {
+                        totalOxidizer = mergeFluid(totalOxidizer, t.oxidizerTank.getPrimaryHandler().getFluid());
+                        t.oxidizerTank.getPrimaryHandler().setFluid(FluidStack.EMPTY);
+                        t.oxidizerTank.getPrimaryHandler().setCapacity(getBaseTankCapacityMb());
                     }
                 }
             }
@@ -292,6 +300,10 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
         if (controller.tank != null) {
             controller.tank.getPrimaryHandler().setCapacity(newCap);
             controller.tank.getPrimaryHandler().setFluid(trimToCapacity(totalFuel, newCap));
+        }
+        if (controller.oxidizerTank != null) {
+            controller.oxidizerTank.getPrimaryHandler().setCapacity(newCap);
+            controller.oxidizerTank.getPrimaryHandler().setFluid(trimToCapacity(totalOxidizer, newCap));
         }
 
         for (ThrusterBlockEntity t : members) {
@@ -310,6 +322,9 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
             t.setChanged();
             t.notifyUpdate();
         }
+        for (ThrusterBlockEntity t : members) {
+            t.invalidateCapabilities();
+        }
         controller.calculateObstruction(level, origin, facing);
     }
 
@@ -324,18 +339,34 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
             tank.getPrimaryHandler().setFluid(FluidStack.EMPTY);
             tank.getPrimaryHandler().setCapacity(getBaseTankCapacityMb());
         }
+        FluidStack oxidizerPool = FluidStack.EMPTY;
+        if (oxidizerTank != null) {
+            oxidizerPool = oxidizerTank.getPrimaryHandler().getFluid().copy();
+            oxidizerTank.getPrimaryHandler().setFluid(FluidStack.EMPTY);
+        }
 
+        List<ThrusterBlockEntity> members = new ArrayList<>(size * size * size);
         for (int x = 0; x < size; x++) {
             for (int y = 0; y < size; y++) {
                 for (int z = 0; z < size; z++) {
                     BlockPos pos = origin.offset(x, y, z);
                     BlockEntity be = SimulatedThrustAdapter.getBlockEntitySafe(level,pos);
                     if (!(be instanceof ThrusterBlockEntity t)) continue;
+                    members.add(t);
                     if (t.tank != null && !fuelPool.isEmpty()) {
                         int take = Math.min(getBaseTankCapacityMb(), fuelPool.getAmount());
                         FluidStack slice = new FluidStack(fuelPool.getFluid(), take);
                         t.tank.getPrimaryHandler().fill(slice, IFluidHandler.FluidAction.EXECUTE);
                         fuelPool.shrink(take);
+                    }
+                    if (t.oxidizerTank != null) {
+                        t.oxidizerTank.getPrimaryHandler().setCapacity(getBaseTankCapacityMb());
+                        if (!oxidizerPool.isEmpty()) {
+                            int take = Math.min(getBaseTankCapacityMb(), oxidizerPool.getAmount());
+                            FluidStack slice = oxidizerPool.copyWithAmount(take);
+                            t.oxidizerTank.getPrimaryHandler().fill(slice, IFluidHandler.FluidAction.EXECUTE);
+                            oxidizerPool.shrink(take);
+                        }
                     }
                     t.controllerPos = null;
                     t.width = 1;
@@ -351,6 +382,9 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
                     t.notifyUpdate();
                 }
             }
+        }
+        for (ThrusterBlockEntity t : members) {
+            t.invalidateCapabilities();
         }
     }
 
@@ -463,6 +497,7 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
         // when reassembly actually runs.
         disassemblyCooldown = DISASSEMBLY_GRACE_TICKS;
         reconcileLoadedTopology = true;
+        newLevel.invalidateCapabilities(newPos);
     }
 
     @Override
@@ -1379,20 +1414,6 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
         oxidizerDrainAccumulator = compound.getDouble("OxidizerDrainAccumulator");
         pendingFuelDemandTicks = compound.getDouble("PendingFuelDemandTicks");
 
-        // Update capacity before loading fluid to avoid truncation
-        if (isController() && isMultiblock()) {
-            int cap = getBaseTankCapacityMb() * width * width * width;
-            if (tank != null) tank.getPrimaryHandler().setCapacity(cap);
-            if (oxidizerTank != null) oxidizerTank.getPrimaryHandler().setCapacity(cap);
-        }
-
-        if (tank != null && compound.contains("FuelTankSync")) {
-            tank.getPrimaryHandler().setFluid(FluidStack.parseOptional(registries, compound.getCompound("FuelTankSync")));
-        }
-        if (oxidizerTank != null && compound.contains("OxidizerTankSync")) {
-            oxidizerTank.getPrimaryHandler().setFluid(FluidStack.parseOptional(registries, compound.getCompound("OxidizerTankSync")));
-        }
-
         if (compound.contains("ControllerOffX")) {
             controllerPos = worldPosition.offset(
                 compound.getInt("ControllerOffX"),
@@ -1401,12 +1422,25 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
         } else {
             controllerPos = null;
         }
+
+        int cap = getBaseTankCapacityMb() * (isController() ? width * width * width : 1);
+        if (tank != null) tank.getPrimaryHandler().setCapacity(cap);
+        if (oxidizerTank != null) oxidizerTank.getPrimaryHandler().setCapacity(cap);
+
+        if (tank != null && compound.contains("FuelTankSync")) {
+            tank.getPrimaryHandler().setFluid(FluidStack.parseOptional(registries, compound.getCompound("FuelTankSync")));
+        }
+        if (oxidizerTank != null && compound.contains("OxidizerTankSync")) {
+            oxidizerTank.getPrimaryHandler().setFluid(FluidStack.parseOptional(registries, compound.getCompound("OxidizerTankSync")));
+        }
+
         updateConnectivity = compound.getBoolean("UpdateConnectivity") || !compound.contains("Width");
         if (!clientPacket) {
             // Create schematics place the copied blockstates before all block entities.
             // Defer topology validation until the complete placement has settled.
             disassemblyCooldown = DISASSEMBLY_GRACE_TICKS;
             reconcileLoadedTopology = true;
+            if (level != null) invalidateCapabilities();
         }
     }
 
