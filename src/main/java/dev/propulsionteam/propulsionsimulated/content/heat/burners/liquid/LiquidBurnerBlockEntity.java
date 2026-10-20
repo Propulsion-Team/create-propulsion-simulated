@@ -167,6 +167,7 @@ public class LiquidBurnerBlockEntity extends AbstractBurnerBlockEntity {
         
         float fluidEfficiency = (float) fuelProperties.thrustMultiplier();
         if (fluidEfficiency <= 0) fluidEfficiency = 1;
+        fluidEfficiency *= ThrusterFuelManager.getEfficiency(fluidInTank.getFluid());
 
         int duration = (int) ((BASE_BURN_DURATION / multiplier) * fluidEfficiency);
         if (duration < 1) duration = 1;
