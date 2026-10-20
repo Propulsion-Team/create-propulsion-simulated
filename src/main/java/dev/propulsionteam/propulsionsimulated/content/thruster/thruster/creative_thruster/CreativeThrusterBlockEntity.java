@@ -37,8 +37,6 @@ import javax.annotation.Nullable;
 
 public class CreativeThrusterBlockEntity extends AbstractThrusterBlockEntity {
     public static final int MAX_WIDTH = 3;
-    @Nullable
-    protected BlockPos controllerPos;
     protected boolean updateConnectivity = true;
     private static final int DISASSEMBLY_GRACE_TICKS = 5;
     private int disassemblyCooldown = 0;

@@ -50,8 +50,6 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
     public SmartFluidTankBehaviour tank;
     public SmartFluidTankBehaviour oxidizerTank;
 
-    @Nullable
-    protected BlockPos controllerPos;
     protected boolean updateConnectivity = true;
     protected double lastConsumedMbPerTick = 0.0d;
     protected double lastOxidizerConsumedMbPerTick = 0.0d;

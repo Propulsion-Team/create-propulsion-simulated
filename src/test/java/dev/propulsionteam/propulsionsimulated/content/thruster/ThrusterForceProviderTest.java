@@ -1,14 +1,27 @@
 package dev.propulsionteam.propulsionsimulated.content.thruster;
 
+import dev.propulsionteam.propulsionsimulated.content.thruster.thruster.ThrusterBlockEntity;
+import dev.propulsionteam.propulsionsimulated.content.thruster.thruster.creative_thruster.CreativeThrusterBlockEntity;
 import net.minecraft.core.BlockPos;
 import org.joml.Vector3d;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 class ThrusterForceProviderTest {
+    @Test
+    void multiblockThrustersShareTheControllerFieldUsedForForceSampling() throws NoSuchFieldException {
+        assertEquals(BlockPos.class, AbstractThrusterBlockEntity.class.getDeclaredField("controllerPos").getType());
+        for (Class<?> type : new Class<?>[]{ThrusterBlockEntity.class, CreativeThrusterBlockEntity.class}) {
+            for (var field : type.getDeclaredFields()) {
+                assertFalse(field.getName().equals("controllerPos"));
+            }
+        }
+    }
+
     @Test
     void standaloneAndMultiblockControllersUseTheirOwnCenter() {
         BlockPos origin = new BlockPos(10, 20, 30);
