@@ -189,34 +189,7 @@ public abstract class AbstractTiltAdapterBlock<T extends TiltAdapterBlockEntity>
      * Applies the same rotations as {@code advanced_tilt_adapter.json} / {@code tilt_adapter.json} blockstates.
      */
     public static Vec3 applyBlockstateModelRotation(Vec3 vec, BlockState state) {
-        Axis axis = getDirection(state).getAxis();
-        Direction facing = getDirection(state);
-        boolean alongFirst = isAxisAlongFirst(state);
-
-        if (axis == Axis.Z) {
-            if (facing == Direction.SOUTH) {
-                vec = VecHelper.rotateCentered(vec, 180, Axis.Y);
-            }
-        } else if (axis == Axis.X) {
-            if (facing == Direction.WEST) {
-                vec = VecHelper.rotateCentered(vec, 270, Axis.Y);
-            } else if (facing == Direction.EAST) {
-                vec = VecHelper.rotateCentered(vec, 90, Axis.Y);
-            }
-        } else if (axis == Axis.Y) {
-            if (facing == Direction.UP) {
-                vec = VecHelper.rotateCentered(vec, 270, Axis.X);
-                if (alongFirst) {
-                    vec = VecHelper.rotateCentered(vec, 90, Axis.Y);
-                }
-            } else if (facing == Direction.DOWN) {
-                vec = VecHelper.rotateCentered(vec, 90, Axis.X);
-                if (alongFirst) {
-                    vec = VecHelper.rotateCentered(vec, 90, Axis.Y);
-                }
-            }
-        }
-        return vec;
+        return TiltAdapterModelRotation.apply(vec, getDirection(state), isAxisAlongFirst(state));
     }
 
     /** Extra Y rotation from blockstate (degrees), for value-box label alignment. */

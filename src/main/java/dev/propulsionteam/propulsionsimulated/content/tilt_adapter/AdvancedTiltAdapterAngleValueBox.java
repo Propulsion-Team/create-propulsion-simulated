@@ -45,7 +45,7 @@ public class AdvancedTiltAdapterAngleValueBox extends ValueBoxTransform {
         float yRot = AngleHelper.horizontalAngle(face) + 180;
         // Model Y spin only affects labels on sky/bottom faces (horizontal shaft placements).
         if (face == Direction.UP || face == Direction.DOWN) {
-            yRot += AbstractTiltAdapterBlock.getBlockstateModelYRotation(state);
+            yRot -= AbstractTiltAdapterBlock.getBlockstateModelYRotation(state);
         }
         float xRot = face == Direction.UP ? 90 : face == Direction.DOWN ? 270 : 0;
         ms.mulPose(com.mojang.math.Axis.YP.rotationDegrees(yRot));
