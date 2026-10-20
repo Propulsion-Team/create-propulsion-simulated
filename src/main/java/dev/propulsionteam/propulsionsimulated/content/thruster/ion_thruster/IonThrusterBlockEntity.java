@@ -450,11 +450,10 @@ public class IonThrusterBlockEntity extends ThrusterBlockEntity {
     }
 
     protected void addIonThrusterOutputDetails(final List<Component> tooltip) {
-        float obstructionEfficiency = 100;
+        float obstructionEfficiency = calculateObstructionEffect() * 100;
         ChatFormatting tooltipColor = ChatFormatting.GREEN;
         int scanLength = PropulsionConfig.OBSTRUCTION_SCAN_LENGTH.get();
-        if (getEmptyBlocks() < scanLength) {
-            obstructionEfficiency = calculateObstructionEffect() * 100;
+        if (obstructionEfficiency < 100) {
             tooltipColor = GoggleUtils.efficiencyColor(obstructionEfficiency);
             CreateLang.builder()
                     .add(Component.translatable("createpropulsion.gui.goggles.thruster.obstructed"))

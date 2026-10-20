@@ -9,6 +9,7 @@ import dev.propulsionteam.propulsionsimulated.content.thruster.AbstractThrusterB
 import dev.propulsionteam.propulsionsimulated.content.thruster.FluidThrusterProperties;
 import dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterFuelConsumptionMath;
 import dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterFuelManager;
+import dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterObstructionMath;
 import dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterParticleType;
 import dev.propulsionteam.propulsionsimulated.particles.smoke.ThrusterSmokeParticleData;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionBlockEntities;
@@ -56,6 +57,7 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
     protected double fuelDrainAccumulator = 0.0d;
     protected double oxidizerDrainAccumulator = 0.0d;
     protected double pendingFuelDemandTicks = 0.0d;
+    private float multiblockObstructionEfficiency = 1.0f;
     // Ticks to skip multiblock-validity checks after a sublevel move to tolerate transient invalidity.
     private static final int DISASSEMBLY_GRACE_TICKS = 5;
     private int disassemblyCooldown = 0;
@@ -702,7 +704,16 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
             return;
         }
         if (isController() && isMultiblock()) {
-            super.calculateObstruction(lvl, worldPosition, getBlockState().getValue(AbstractThrusterBlock.FACING));
+            int scanLength = PropulsionConfig.OBSTRUCTION_SCAN_LENGTH.get();
+            float efficiency = ThrusterObstructionMath.efficiency(width, scanLength, (column, row) ->
+                sampleObstructionRaycast(lvl, scanLength,
+                    ThrusterObstructionMath.nozzlePosition(worldPosition, width, forwardDirection.getOpposite(), column, row))
+                    .emptyBlocksEstimate());
+            if (multiblockObstructionEfficiency != efficiency) {
+                isThrustDirty = true;
+            }
+            multiblockObstructionEfficiency = efficiency;
+            emptyBlocks = ThrusterObstructionMath.emptyBlocks(efficiency, scanLength);
             return;
         }
         super.calculateObstruction(lvl, pos, forwardDirection);
@@ -714,7 +725,12 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
             ThrusterBlockEntity ctrl = getControllerBE();
             return ctrl != null ? ctrl.calculateObstructionEffect() : 0f;
         }
-        return super.calculateObstructionEffect();
+        return isMultiblock() ? multiblockObstructionEfficiency : super.calculateObstructionEffect();
+    }
+
+    @Override
+    public float getEffectiveThrustPercentage() {
+        return isMultiblock() ? getEffectiveThrottle() * calculateObstructionEffect() : super.getEffectiveThrustPercentage();
     }
 
     @Override
@@ -724,6 +740,11 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
             return ctrl != null ? ctrl.getEmptyBlocks() : 0;
         }
         return super.getEmptyBlocks();
+    }
+
+    @Override
+    public int getUnobstructedBlocks() {
+        return getEmptyBlocks();
     }
 
     private Vec3 getMultiblockCenterNozzlePositionLocal() {
@@ -1381,6 +1402,7 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
     protected void write(CompoundTag compound, net.minecraft.core.HolderLookup.Provider registries, boolean clientPacket) {
         super.write(compound, registries, clientPacket);
         compound.putInt("Width", width);
+        compound.putFloat("MultiblockObstructionEfficiency", multiblockObstructionEfficiency);
         compound.putDouble("LastConsumedMbPerTick", lastConsumedMbPerTick);
         compound.putDouble("LastOxidizerConsumedMbPerTick", lastOxidizerConsumedMbPerTick);
         compound.putDouble("FuelDrainAccumulator", fuelDrainAccumulator);
@@ -1408,6 +1430,9 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
     protected void read(CompoundTag compound, net.minecraft.core.HolderLookup.Provider registries, boolean clientPacket) {
         super.read(compound, registries, clientPacket);
         width = Math.max(1, compound.getInt("Width"));
+        multiblockObstructionEfficiency = compound.contains("MultiblockObstructionEfficiency")
+            ? Math.clamp(compound.getFloat("MultiblockObstructionEfficiency"), 0.0f, 1.0f)
+            : super.calculateObstructionEffect();
         lastConsumedMbPerTick = compound.getDouble("LastConsumedMbPerTick");
         lastOxidizerConsumedMbPerTick = compound.getDouble("LastOxidizerConsumedMbPerTick");
         fuelDrainAccumulator = compound.getDouble("FuelDrainAccumulator");
