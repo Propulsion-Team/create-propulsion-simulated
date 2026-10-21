@@ -1,4 +1,5 @@
 {
+    "item.createpropulsion.toolgun": "Тулган",
     "block.createpropulsion.single_rcs_thruster": "Одиночный двигатель RCS",
     "block.createpropulsion.rcs_thruster": "Полный двигатель RCS",
     "createpropulsion.single_rcs_thruster.tooltip.summary": "Создаёт постоянную тягу при сигнале редстоуна или редстоуновой связи. Не требует топлива или энергии.",

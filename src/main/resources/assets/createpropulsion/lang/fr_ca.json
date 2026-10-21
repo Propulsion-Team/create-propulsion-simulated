@@ -1,4 +1,5 @@
 {
+    "item.createpropulsion.toolgun": "Toolgun",
     "block.createpropulsion.single_rcs_thruster": "Propulseur RCS simple",
     "block.createpropulsion.rcs_thruster": "Propulseur RCS quadruple",
     "createpropulsion.single_rcs_thruster.tooltip.summary": "Produit une poussée constante avec un signal de redstone ou sa liaison redstone. Ne nécessite ni carburant ni énergie.",

@@ -33,6 +33,22 @@ public class PropulsionRenderTypes extends RenderType {
             .createCompositeState(false)
     );
 
+    public static final RenderType TOOLGUN_LASER = create(
+        "toolgun_laser",
+        DefaultVertexFormat.POSITION_COLOR,
+        VertexFormat.Mode.QUADS,
+        256,
+        false,
+        false,
+        CompositeState.builder()
+            .setShaderState(POSITION_COLOR_SHADER)
+            .setTransparencyState(NO_TRANSPARENCY)
+            .setCullState(NO_CULL)
+            .setDepthTestState(LEQUAL_DEPTH_TEST)
+            .setWriteMaskState(COLOR_DEPTH_WRITE)
+            .createCompositeState(false)
+    );
+
     public static final RenderType DEBUG_LINE = create(
         "debug_line",
         DefaultVertexFormat.POSITION_COLOR, 

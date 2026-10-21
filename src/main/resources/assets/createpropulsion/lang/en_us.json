@@ -1,4 +1,5 @@
 {
+    "item.createpropulsion.toolgun": "Toolgun",
     "createpropulsion.single_rcs_thruster.tooltip.summary": "Produces fixed thrust while powered by redstone or its Redstone Link. Requires no fuel or energy.",
     "createpropulsion.rcs_thruster.tooltip.summary": "Four nozzles provide fixed thrust independently. Power a nozzle from its side or Redstone Link. Requires no fuel or energy.",
     "createpropulsion.subtitle.rcs_loop": "RCS thruster firing",

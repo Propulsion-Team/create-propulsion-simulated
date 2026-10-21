@@ -1,4 +1,5 @@
 {
+    "item.createpropulsion.toolgun": "Тулган",
     "block.createpropulsion.single_rcs_thruster": "Одиночний рушій RCS",
     "block.createpropulsion.rcs_thruster": "Повний рушій RCS",
     "createpropulsion.single_rcs_thruster.tooltip.summary": "Створює сталу тягу за сигналом редстоуну або редстоунового зв’язку. Не потребує палива чи енергії.",

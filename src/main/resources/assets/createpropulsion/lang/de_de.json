@@ -1,4 +1,5 @@
 {
+    "item.createpropulsion.toolgun": "Toolgun",
     "block.createpropulsion.single_rcs_thruster": "Einzelnes RCS-Triebwerk",
     "block.createpropulsion.rcs_thruster": "Vierfaches RCS-Triebwerk",
     "createpropulsion.single_rcs_thruster.tooltip.summary": "Erzeugt bei einem Redstone-Signal oder über seine Redstone-Verbindung konstanten Schub. Benötigt weder Treibstoff noch Energie.",

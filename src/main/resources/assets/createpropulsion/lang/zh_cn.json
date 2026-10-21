@@ -1,4 +1,5 @@
 {
+  "item.createpropulsion.toolgun": "图尔甘",
     "block.createpropulsion.single_rcs_thruster": "单向 RCS 推进器",
     "block.createpropulsion.rcs_thruster": "四向 RCS 推进器",
     "createpropulsion.single_rcs_thruster.tooltip.summary": "收到红石信号或红石链路信号时持续产生恒定推力。无需燃料或能量。",

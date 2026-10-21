@@ -1,4 +1,5 @@
 {
+    "item.createpropulsion.toolgun": "툴건",
     "block.createpropulsion.single_rcs_thruster": "단일 RCS 추진기",
     "block.createpropulsion.rcs_thruster": "4방향 RCS 추진기",
     "createpropulsion.single_rcs_thruster.tooltip.summary": "레드스톤 신호나 레드스톤 링크로 작동하는 동안 일정한 추력을 냅니다. 연료나 에너지가 필요하지 않습니다.",

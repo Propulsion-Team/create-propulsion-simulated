@@ -29,6 +29,8 @@ public class PropulsionItems {
         ITEMS.register("platinum_sheet", () -> new Item(new Item.Properties()));
     public static final DeferredHolder<Item, Item> RAW_PLATINUM =
         ITEMS.register("raw_platinum", () -> new Item(new Item.Properties()));
+    public static final DeferredHolder<Item, Item> TOOLGUN =
+        ITEMS.register("toolgun", () -> new Item(new Item.Properties().stacksTo(1)));
     // public static final DeferredHolder<Item, CableSpoolItem> CABLE_SPOOL =
     //     ITEMS.register("cable_spool", () -> new CableSpoolItem(new Item.Properties().stacksTo(1)));
 
