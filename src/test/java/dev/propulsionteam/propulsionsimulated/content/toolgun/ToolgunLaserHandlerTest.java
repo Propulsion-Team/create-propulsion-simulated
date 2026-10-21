@@ -44,29 +44,6 @@ class ToolgunLaserHandlerTest {
     }
 
     @Test
-    void boltTravelsAtConstantSpeedWithSubtickInterpolation() {
-        assertEquals(0, ToolgunLaserHandler.travelDistance(0), 1e-8);
-        assertEquals(1.5, ToolgunLaserHandler.travelDistance(0.25), 1e-8);
-        assertEquals(6, ToolgunLaserHandler.travelDistance(1), 1e-8);
-        assertEquals(120, ToolgunLaserHandler.travelDistance(20), 1e-8);
-    }
-
-    @Test
-    void boltCannotTravelBackwardsOrBeyondRange() {
-        assertEquals(0, ToolgunLaserHandler.travelDistance(-1), 1e-8);
-        assertEquals(128, ToolgunLaserHandler.travelDistance(128 / 6.0), 1e-8);
-        assertEquals(128, ToolgunLaserHandler.travelDistance(100), 1e-8);
-    }
-
-    @Test
-    void boltIsAShortSegmentRatherThanAFullBeam() {
-        assertEquals(0, ToolgunLaserHandler.tailDistance(0.25), 1e-8);
-        assertEquals(0, ToolgunLaserHandler.tailDistance(1), 1e-8);
-        assertEquals(0.5, ToolgunLaserHandler.tailDistance(2), 1e-8);
-        assertEquals(78.5, ToolgunLaserHandler.tailDistance(80), 1e-8);
-    }
-
-    @Test
     void ordinaryWorldHitsDoNotChangeAim() {
         Vec3 direction = ToolgunLaserHandler.shotDirection(new Vec3(10, 64, 10),
             new Vec3(10, 64, 0), position -> position);

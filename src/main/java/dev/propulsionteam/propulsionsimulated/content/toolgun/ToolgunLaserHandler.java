@@ -2,10 +2,11 @@ package dev.propulsionteam.propulsionsimulated.content.toolgun;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.simibubi.create.CreateClient;
+import com.simibubi.create.content.equipment.zapper.ZapperRenderHandler.LaserBeam;
 import dev.ryanhcode.sable.Sable;
 import dev.propulsionteam.propulsionsimulated.CreatePropulsion;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionItems;
-import dev.propulsionteam.propulsionsimulated.registries.PropulsionRenderTypes;
 import net.createmod.catnip.outliner.Outliner;
 import net.createmod.catnip.theme.Color;
 import net.minecraft.client.Minecraft;
@@ -29,12 +30,10 @@ import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import org.joml.Matrix4f;
-import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.function.UnaryOperator;
 
@@ -42,22 +41,13 @@ import java.util.function.UnaryOperator;
 @EventBusSubscriber(modid = CreatePropulsion.ID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
 public class ToolgunLaserHandler {
     private static final double RANGE = 128;
-    private static final double SPEED = 6;
-    private static final double BOLT_LENGTH = 1.5;
-    private static final int COLOR = 0xFF0000;
+    private static final int COLOR = 0xFFFFFF;
     private static final int OUTLINE_FADE_TICKS = 10;
-    private static final float HALF_WIDTH = 1 / 32f;
-    private static final int[][] FACES = {
-        {0, 1, 2, 3}, {4, 5, 6, 7}, {0, 1, 5, 4},
-        {1, 2, 6, 5}, {2, 3, 7, 6}, {3, 0, 4, 7}
-    };
     private static Matrix4f inverseWorldClip;
     private static ShotRequest request;
-    private static final List<Laser> lasers = new ArrayList<>();
     private static final Map<OutlineKey, Impact> impacts = new HashMap<>();
 
     private record ShotRequest(ClientLevel level, InteractionHand hand, long tick) {}
-    private record Laser(ClientLevel level, Vec3 start, Vec3 direction, Vec3 position, double bornAt) {}
     private record OutlineKey(BlockPos pos) {}
     private record Impact(ClientLevel level, double time) {}
 
@@ -106,7 +96,7 @@ public class ToolgunLaserHandler {
             RenderSystem.getProjectionMatrix(), inverseWorldClip);
         Vec3 start = mc.gameRenderer.getMainCamera().getPosition().add(muzzle.x(), muzzle.y(), muzzle.z());
         request = null;
-        shoot(start);
+        shoot(start, hand);
     }
 
     static Vector3f muzzlePosition(Matrix4f modelPose, Matrix4f modelView, Matrix4f projection, Matrix4f inverseWorldClip) {
@@ -114,7 +104,7 @@ public class ToolgunLaserHandler {
             .transformProject(new Vector3f(15 / 16f, 2.5f / 16, 7 / 16f));
     }
 
-    private static void shoot(Vec3 start) {
+    private static void shoot(Vec3 start, InteractionHand hand) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level.clip(new ClipContext(mc.player.getEyePosition(), start, ClipContext.Block.OUTLINE,
                 ClipContext.Fluid.ANY, mc.player)).getType() == HitResult.Type.BLOCK) {
@@ -127,8 +117,21 @@ public class ToolgunLaserHandler {
         Vec3 target = clip(origin, origin.add(look.x() * RANGE, look.y() * RANGE, look.z() * RANGE)).getLocation();
         Vec3 direction = shotDirection(start, target, position -> Sable.HELPER.projectOutOfSubLevel(mc.level, position));
         if (direction.lengthSqr() > 1e-8) {
-            double time = mc.level.getGameTime() + camera.getPartialTickTime();
-            lasers.add(new Laser(mc.level, start, direction, start, time));
+            BlockHitResult hit = clip(start, start.add(direction.scale(RANGE)));
+            Vec3 end = Sable.HELPER.projectOutOfSubLevel(mc.level, hit.getLocation());
+            var effects = CreateClient.ZAPPER_RENDER_HANDLER;
+            if (effects.cachedBeams == null) {
+                effects.cachedBeams = new LinkedList<>();
+            }
+            LaserBeam beam = new LaserBeam(start, end);
+            if (hit.getType() == HitResult.Type.BLOCK) {
+                effects.addBeam(beam);
+                double time = mc.level.getGameTime() + camera.getPartialTickTime();
+                impacts.put(new OutlineKey(hit.getBlockPos().immutable()), new Impact(mc.level, time));
+            } else {
+                effects.cachedBeams.add(beam);
+            }
+            effects.shoot(hand, start);
         }
     }
 
@@ -142,40 +145,8 @@ public class ToolgunLaserHandler {
         return projectToWorld.apply(target).subtract(start).normalize();
     }
 
-    static double travelDistance(double age) {
-        return Math.clamp(age * SPEED, 0, RANGE);
-    }
-
-    static double tailDistance(double headDistance) {
-        return Math.max(0, headDistance - BOLT_LENGTH);
-    }
-
     static float outlineAlpha(double age) {
         return (float) Math.clamp(1 - age / OUTLINE_FADE_TICKS, 0, 1);
-    }
-
-    private static void advanceLasers(double time) {
-        Minecraft mc = Minecraft.getInstance();
-        var iterator = lasers.listIterator();
-        while (iterator.hasNext()) {
-            Laser laser = iterator.next();
-            if (laser.level() != mc.level) {
-                iterator.remove();
-                continue;
-            }
-
-            double distance = travelDistance(time - laser.bornAt());
-            Vec3 position = laser.start().add(laser.direction().scale(distance));
-            BlockHitResult hit = clip(laser.position(), position);
-            if (hit.getType() == HitResult.Type.BLOCK) {
-                impacts.put(new OutlineKey(hit.getBlockPos().immutable()), new Impact(mc.level, time));
-                iterator.remove();
-            } else if (distance >= RANGE) {
-                iterator.remove();
-            } else {
-                iterator.set(new Laser(laser.level(), laser.start(), laser.direction(), position, laser.bornAt()));
-            }
-        }
     }
 
     private static void updateOutlines(double time) {
@@ -201,7 +172,6 @@ public class ToolgunLaserHandler {
     public static void onLogout(ClientPlayerNetworkEvent.LoggingOut event) {
         impacts.keySet().forEach(key -> Outliner.getInstance().remove(key));
         impacts.clear();
-        lasers.clear();
         request = null;
         inverseWorldClip = null;
     }
@@ -215,44 +185,7 @@ public class ToolgunLaserHandler {
                 request = null;
             }
             double time = mc.level.getGameTime() + event.getPartialTick().getGameTimeDeltaPartialTick(true);
-            advanceLasers(time);
             updateOutlines(time);
-        }
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_LEVEL || lasers.isEmpty()) {
-            return;
-        }
-
-        for (Laser laser : lasers) {
-            renderLaser(event, laser);
-        }
-        mc.renderBuffers().bufferSource().endBatch(PropulsionRenderTypes.TOOLGUN_LASER);
-    }
-
-    private static void renderLaser(RenderLevelStageEvent event, Laser laser) {
-        double distance = laser.position().distanceTo(laser.start());
-        if (distance <= 1e-8) {
-            return;
-        }
-
-        double tail = tailDistance(distance);
-        Vec3 start = laser.start().add(laser.direction().scale(tail)).subtract(event.getCamera().getPosition());
-        float length = (float) (distance - tail);
-        Vector3f axis = laser.direction().toVector3f();
-        Matrix4f matrix = new Matrix4f(event.getModelViewMatrix())
-            .translate((float) start.x, (float) start.y, (float) start.z)
-            .rotate(new Quaternionf().rotationTo(0, 0, 1, axis.x(), axis.y(), axis.z()));
-        float h = HALF_WIDTH;
-        float[][] corners = {
-            {-h, -h, 0}, {h, -h, 0}, {h, h, 0}, {-h, h, 0},
-            {-h, -h, length}, {h, -h, length}, {h, h, length}, {-h, h, length}
-        };
-        var buffers = Minecraft.getInstance().renderBuffers().bufferSource();
-        var vertices = buffers.getBuffer(PropulsionRenderTypes.TOOLGUN_LASER);
-        for (int[] face : FACES) {
-            for (int index : face) {
-                float[] corner = corners[index];
-                vertices.addVertex(matrix, corner[0], corner[1], corner[2]).setColor(0xFF000000 | COLOR);
-            }
         }
     }
 }
