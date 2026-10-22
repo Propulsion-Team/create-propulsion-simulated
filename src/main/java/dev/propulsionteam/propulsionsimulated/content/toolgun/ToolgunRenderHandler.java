@@ -1,5 +1,6 @@
 package dev.propulsionteam.propulsionsimulated.content.toolgun;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.content.equipment.zapper.ZapperRenderHandler;
 import dev.propulsionteam.propulsionsimulated.CreatePropulsion;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionItems;
@@ -25,6 +26,12 @@ public class ToolgunRenderHandler extends ZapperRenderHandler {
     @Override
     protected boolean appliesTo(ItemStack stack) {
         return stack.is(PropulsionItems.TOOLGUN.get());
+    }
+
+    @Override
+    protected void transformTool(PoseStack poseStack, float flip, float equipProgress, float recoil, float partialTick) {
+        poseStack.translate(0, 1 / 16f, 1 / 16f);
+        super.transformTool(poseStack, flip, equipProgress, recoil, partialTick);
     }
 
     public static void fire(InteractionHand hand, Vec3 start, Vec3 end, boolean hitBlock) {
