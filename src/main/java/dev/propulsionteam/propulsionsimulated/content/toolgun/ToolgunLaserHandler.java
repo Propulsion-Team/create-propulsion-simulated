@@ -1,9 +1,6 @@
 package dev.propulsionteam.propulsionsimulated.content.toolgun;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.simibubi.create.CreateClient;
-import com.simibubi.create.content.equipment.zapper.ZapperRenderHandler.LaserBeam;
+import com.simibubi.create.content.equipment.zapper.ShootableGadgetItemMethods;
 import dev.ryanhcode.sable.Sable;
 import dev.propulsionteam.propulsionsimulated.CreatePropulsion;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionItems;
@@ -13,10 +10,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.HumanoidArm;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.item.ItemDisplayContext;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
@@ -25,15 +18,12 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.ClientHooks;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
-import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.function.UnaryOperator;
 
@@ -43,11 +33,9 @@ public class ToolgunLaserHandler {
     private static final double RANGE = 128;
     private static final int COLOR = 0xFFFFFF;
     private static final int OUTLINE_FADE_TICKS = 10;
-    private static Matrix4f inverseWorldClip;
-    private static ShotRequest request;
+    static final Vec3 BARREL_OFFSET = new Vec3(0.35f, -0.1f, 1);
     private static final Map<OutlineKey, Impact> impacts = new HashMap<>();
 
-    private record ShotRequest(ClientLevel level, InteractionHand hand, long tick) {}
     private record OutlineKey(BlockPos pos) {}
     private record Impact(ClientLevel level, double time) {}
 
@@ -70,42 +58,14 @@ public class ToolgunLaserHandler {
         event.setCanceled(true);
         event.setSwingHand(false);
         if (event.getHand() == hand) {
-            request = new ShotRequest(mc.level, hand, mc.level.getGameTime());
+            shoot(hand);
         }
     }
 
-    public static void captureMuzzle(LivingEntity entity, ItemStack stack, ItemDisplayContext context,
-                                    boolean leftHand, PoseStack poseStack) {
+    private static void shoot(InteractionHand hand) {
         Minecraft mc = Minecraft.getInstance();
-        if (request == null || entity != mc.player || !stack.is(PropulsionItems.TOOLGUN.get())
-                || inverseWorldClip == null || request.level() != mc.level) {
-            return;
-        }
-        HumanoidArm arm = leftHand ? HumanoidArm.LEFT : HumanoidArm.RIGHT;
-        InteractionHand hand = arm == mc.player.getMainArm() ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
-        if (hand != request.hand() || context.firstPerson() != mc.options.getCameraType().isFirstPerson()) {
-            return;
-        }
-
-        PoseStack modelPose = new PoseStack();
-        modelPose.mulPose(poseStack.last().pose());
-        var model = mc.getItemRenderer().getModel(stack, mc.level, entity, entity.getId() + context.ordinal());
-        ClientHooks.handleCameraTransforms(modelPose, model, context, leftHand);
-        modelPose.translate(-0.5, -0.5, -0.5);
-        Vector3f muzzle = muzzlePosition(modelPose.last().pose(), RenderSystem.getModelViewMatrix(),
-            RenderSystem.getProjectionMatrix(), inverseWorldClip);
-        Vec3 start = mc.gameRenderer.getMainCamera().getPosition().add(muzzle.x(), muzzle.y(), muzzle.z());
-        request = null;
-        shoot(start, hand);
-    }
-
-    static Vector3f muzzlePosition(Matrix4f modelPose, Matrix4f modelView, Matrix4f projection, Matrix4f inverseWorldClip) {
-        return new Matrix4f(inverseWorldClip).mul(projection).mul(modelView).mul(modelPose)
-            .transformProject(new Vector3f(15 / 16f, 2.5f / 16, 7 / 16f));
-    }
-
-    private static void shoot(Vec3 start, InteractionHand hand) {
-        Minecraft mc = Minecraft.getInstance();
+        Vec3 start = ShootableGadgetItemMethods.getGunBarrelVec(mc.player,
+            hand == InteractionHand.MAIN_HAND, BARREL_OFFSET);
         if (mc.level.clip(new ClipContext(mc.player.getEyePosition(), start, ClipContext.Block.OUTLINE,
                 ClipContext.Fluid.ANY, mc.player)).getType() == HitResult.Type.BLOCK) {
             return;
@@ -119,19 +79,11 @@ public class ToolgunLaserHandler {
         if (direction.lengthSqr() > 1e-8) {
             BlockHitResult hit = clip(start, start.add(direction.scale(RANGE)));
             Vec3 end = Sable.HELPER.projectOutOfSubLevel(mc.level, hit.getLocation());
-            var effects = CreateClient.ZAPPER_RENDER_HANDLER;
-            if (effects.cachedBeams == null) {
-                effects.cachedBeams = new LinkedList<>();
-            }
-            LaserBeam beam = new LaserBeam(start, end);
+            ToolgunRenderHandler.fire(hand, start, end, hit.getType() == HitResult.Type.BLOCK);
             if (hit.getType() == HitResult.Type.BLOCK) {
-                effects.addBeam(beam);
                 double time = mc.level.getGameTime() + camera.getPartialTickTime();
                 impacts.put(new OutlineKey(hit.getBlockPos().immutable()), new Impact(mc.level, time));
-            } else {
-                effects.cachedBeams.add(beam);
             }
-            effects.shoot(hand, start);
         }
     }
 
@@ -172,18 +124,12 @@ public class ToolgunLaserHandler {
     public static void onLogout(ClientPlayerNetworkEvent.LoggingOut event) {
         impacts.keySet().forEach(key -> Outliner.getInstance().remove(key));
         impacts.clear();
-        request = null;
-        inverseWorldClip = null;
     }
 
     @SubscribeEvent
     public static void onRenderLevel(RenderLevelStageEvent event) {
         Minecraft mc = Minecraft.getInstance();
         if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_SKY) {
-            inverseWorldClip = new Matrix4f(event.getProjectionMatrix()).mul(event.getModelViewMatrix()).invert();
-            if (request != null && (request.level() != mc.level || mc.level.getGameTime() - request.tick() > 1)) {
-                request = null;
-            }
             double time = mc.level.getGameTime() + event.getPartialTick().getGameTimeDeltaPartialTick(true);
             updateOutlines(time);
         }

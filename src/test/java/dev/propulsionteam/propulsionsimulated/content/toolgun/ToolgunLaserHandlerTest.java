@@ -1,46 +1,43 @@
 package dev.propulsionteam.propulsionsimulated.content.toolgun;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4d;
 import org.joml.Matrix4f;
 import org.joml.Vector3d;
-import org.joml.Vector3f;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class ToolgunLaserHandlerTest {
     @Test
-    void muzzleUsesSuppliedModelCoordinates() {
-        Vector3f muzzle = ToolgunLaserHandler.muzzlePosition(new Matrix4f(), new Matrix4f(),
-            new Matrix4f(), new Matrix4f());
-        assertVector(new Vector3f(15 / 16f, 2.5f / 16, 7 / 16f), muzzle);
+    void shootingOriginUsesWorldshaperBarrelOffset() {
+        assertDirection(ToolgunLaserHandler.BARREL_OFFSET, 0.35f, -0.1f, 1);
     }
 
     @Test
-    void muzzleFollowsHeldItemTransform() {
-        Matrix4f model = new Matrix4f().translate(0.4f, -0.2f, -0.7f)
-            .rotateY((float) Math.PI / 2).scale(0.88f).translate(-0.5f, -0.5f, -0.5f);
-        Matrix4f view = new Matrix4f().rotateX(0.3f).rotateY(1.2f);
-        Matrix4f projection = new Matrix4f().perspective((float) Math.toRadians(70), 16 / 9f, 0.05f, 256);
-        Matrix4f inverseWorldClip = new Matrix4f(projection).mul(view).invert();
-        Vector3f expected = model.transformPosition(new Vector3f(15 / 16f, 2.5f / 16, 7 / 16f));
-        Vector3f actual = ToolgunLaserHandler.muzzlePosition(model, view, projection, inverseWorldClip);
-        assertVector(expected, actual);
+    void firstPersonPlacementMatchesWorldshaperWithToolgunAxisAlignment() throws IOException {
+        for (boolean leftHand : new boolean[] {false, true}) {
+            float flip = leftHand ? -1 : 1;
+            Matrix4f expected = new Matrix4f().translation(flip / 16f, 4 / 16f, 1 / 16f)
+                .rotateXYZ(radians(10), 0, radians(flip * 10)).rotateY(radians(90));
+            assertMatrix(expected, displayTransform("firstperson_" + (leftHand ? "lefthand" : "righthand"), leftHand));
+        }
     }
 
     @Test
-    void muzzleMatchesHandProjectionWhenWorldFovDiffers() {
-        Matrix4f model = new Matrix4f().translate(0.4f, -0.3f, -1.5f).scale(0.88f);
-        Matrix4f view = new Matrix4f().rotateY(0.7f);
-        Matrix4f handProjection = new Matrix4f().perspective((float) Math.toRadians(70), 16 / 9f, 0.05f, 256);
-        Matrix4f worldProjection = new Matrix4f().perspective((float) Math.toRadians(100), 16 / 9f, 0.05f, 256);
-        Matrix4f inverseWorldClip = new Matrix4f(worldProjection).mul(view).invert();
-        Vector3f muzzle = ToolgunLaserHandler.muzzlePosition(model, view, handProjection, inverseWorldClip);
-        Vector3f worldScreen = new Matrix4f(worldProjection).mul(view).transformProject(muzzle);
-        Vector3f handScreen = new Matrix4f(handProjection).mul(view).mul(model)
-            .transformProject(new Vector3f(15 / 16f, 2.5f / 16, 7 / 16f));
-        assertVector(handScreen, worldScreen);
+    void thirdPersonPlacementMatchesWorldshaperWithToolgunAxisAlignment() throws IOException {
+        Matrix4f expected = new Matrix4f().translation(0, 4 / 16f, -2.5f / 16)
+            .rotateXYZ(radians(1), radians(90), 0).scale(0.8f);
+        assertMatrix(expected, displayTransform("thirdperson_righthand", false));
+        assertMatrix(expected, displayTransform("thirdperson_lefthand", true));
     }
 
     @Test
@@ -89,9 +86,37 @@ class ToolgunLaserHandlerTest {
         assertEquals(z, actual.z, 1e-8);
     }
 
-    private static void assertVector(Vector3f expected, Vector3f actual) {
-        assertEquals(expected.x(), actual.x(), 1e-5);
-        assertEquals(expected.y(), actual.y(), 1e-5);
-        assertEquals(expected.z(), actual.z(), 1e-5);
+    private static Matrix4f displayTransform(String context, boolean leftHand) throws IOException {
+        var stream = ToolgunLaserHandlerTest.class.getClassLoader()
+            .getResourceAsStream("assets/createpropulsion/models/item/toolgun.json");
+        assertNotNull(stream);
+        try (var reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
+            JsonObject transform = JsonParser.parseReader(reader).getAsJsonObject()
+                .getAsJsonObject("display").getAsJsonObject(context);
+            JsonArray translation = transform.getAsJsonArray("translation");
+            JsonArray rotation = transform.getAsJsonArray("rotation");
+            float flip = leftHand ? -1 : 1;
+            Matrix4f matrix = new Matrix4f().translation(flip * translation.get(0).getAsFloat() / 16,
+                translation.get(1).getAsFloat() / 16, translation.get(2).getAsFloat() / 16)
+                .rotateXYZ(radians(rotation.get(0).getAsFloat()), radians(flip * rotation.get(1).getAsFloat()),
+                    radians(flip * rotation.get(2).getAsFloat()));
+            if (transform.has("scale")) {
+                JsonArray scale = transform.getAsJsonArray("scale");
+                matrix.scale(scale.get(0).getAsFloat(), scale.get(1).getAsFloat(), scale.get(2).getAsFloat());
+            }
+            return matrix;
+        }
+    }
+
+    private static float radians(float degrees) {
+        return (float) Math.toRadians(degrees);
+    }
+
+    private static void assertMatrix(Matrix4f expected, Matrix4f actual) {
+        for (int column = 0; column < 4; column++) {
+            for (int row = 0; row < 4; row++) {
+                assertEquals(expected.get(column, row), actual.get(column, row), 1e-5);
+            }
+        }
     }
 }
