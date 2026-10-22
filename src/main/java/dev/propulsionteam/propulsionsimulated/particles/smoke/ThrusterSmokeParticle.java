@@ -1,19 +1,20 @@
 package dev.propulsionteam.propulsionsimulated.particles.smoke;
 
+import dev.propulsionteam.propulsionsimulated.particles.ThrusterParticle;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.SpriteSet;
-import net.minecraft.client.particle.TextureSheetParticle;
 import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
-public class ThrusterSmokeParticle extends TextureSheetParticle {
+public class ThrusterSmokeParticle extends ThrusterParticle {
     private final SpriteSet sprites;
     private final float baseScale;
 
     protected ThrusterSmokeParticle(ClientLevel level, double x, double y, double z, double xd, double yd, double zd, ThrusterSmokeParticleData data, SpriteSet sprites) {
-        super(level, x, y, z, xd, yd, zd);
+        super(level, x, y, z, sprites);
         this.sprites = sprites;
         this.baseScale = data.scale();
 
@@ -38,6 +39,7 @@ public class ThrusterSmokeParticle extends TextureSheetParticle {
 
     @Override
     public void tick() {
+        updateScale();
         xo = x;
         yo = y;
         zo = z;
@@ -54,7 +56,7 @@ public class ThrusterSmokeParticle extends TextureSheetParticle {
 
         alpha = 0.46f * fadeIn * fadeOut;
 
-        quadSize = baseScale * (0.42f + life * 0.95f);
+        quadSize = baseScale * (0.42f + life * 0.95f) * particleSize();
 
         double swirl = Math.sin(age * 0.13d + lifetime * 0.17d) * 0.0018d;
         xd += swirl;
@@ -69,6 +71,16 @@ public class ThrusterSmokeParticle extends TextureSheetParticle {
         zd *= friction;
 
         setSpriteFromAge(sprites);
+    }
+
+    @Override
+    protected void collide(Vec3 normal) {
+        double dot = xd * normal.x + yd * normal.y + zd * normal.z;
+        if (dot < 0.0d) {
+            xd -= dot * normal.x;
+            yd -= dot * normal.y;
+            zd -= dot * normal.z;
+        }
     }
 
     @Override

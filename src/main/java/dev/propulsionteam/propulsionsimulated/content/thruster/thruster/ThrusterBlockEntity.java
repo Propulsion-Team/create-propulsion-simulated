@@ -1051,6 +1051,8 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
         Vec3 up = Math.abs(direction.y) < 0.92d ? new Vec3(0, 1, 0) : new Vec3(1, 0, 0);
         Vec3 right = direction.cross(up).normalize();
         Vec3 localUp = right.cross(direction).normalize();
+        var particleSubLevel = Sable.HELPER.getContaining(level, pos);
+        double subLevelScale = getParticleSubLevelScale();
 
         for (int i = 0; i < particlesToSpawn; i++) {
             double beamFrac = particlesToSpawn <= 1 ? 0.0d : (double) i / (double) particlesToSpawn;
@@ -1067,8 +1069,8 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
                     + level.random.nextDouble() * 0.35d;
 
             Vec3 spawn = nozzle
-                    .add(direction.scale(along))
-                    .add(radial);
+                    .add(direction.scale(along * subLevelScale))
+                    .add(radial.scale(subLevelScale));
 
             double punch = switch (w) {
                 case 1 -> 2.35d;
@@ -1109,11 +1111,17 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
                     b
             );
 
+            Vec3 broadcastPosition = spawn;
+            if (particleSubLevel != null) {
+                spawn = particleSubLevel.logicalPose().transformPositionInverse(spawn);
+                velocity = particleSubLevel.logicalPose().transformNormalInverse(velocity).scale(subLevelScale);
+            }
+
             if (particleLevel instanceof ServerLevel serverLevel) {
                 double maxDistSq = PARTICLE_BROADCAST_RANGE_BLOCKS * PARTICLE_BROADCAST_RANGE_BLOCKS;
 
                 for (ServerPlayer player : serverLevel.players()) {
-                    if (player.distanceToSqr(spawn.x, spawn.y, spawn.z) > maxDistSq) continue;
+                    if (player.distanceToSqr(broadcastPosition.x, broadcastPosition.y, broadcastPosition.z) > maxDistSq) continue;
 
                     serverLevel.sendParticles(
                             player,

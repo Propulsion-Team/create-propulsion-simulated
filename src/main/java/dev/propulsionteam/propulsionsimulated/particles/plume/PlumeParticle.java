@@ -4,14 +4,13 @@ import java.util.List;
 
 import javax.annotation.Nonnull;
 
-import dev.ryanhcode.sable.api.particle.ParticleSubLevelKickable;
+import dev.propulsionteam.propulsionsimulated.particles.ThrusterParticle;
 import dev.ryanhcode.sable.mixinterface.particle.ParticleExtension;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.ParticleRenderType;
-import net.minecraft.client.particle.SimpleAnimatedParticle;
 import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -19,7 +18,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
-public class PlumeParticle extends SimpleAnimatedParticle implements ParticleSubLevelKickable {
+public class PlumeParticle extends ThrusterParticle {
     //Plume
     protected float getPlumeSpread() { return 0.05f; }
     protected float getPlumeBaseQuadSize() { return 2.0f; }
@@ -30,14 +29,6 @@ public class PlumeParticle extends SimpleAnimatedParticle implements ParticleSub
     protected float getSmokeSpreadMagnitude() { return 0.15f; }
     protected float getSmokeFriction() { return 0.96f; }
     protected float getSmokeBaseLift() { return 0.02f; }
-
-    //Physics
-    private static final float COLLISION_SPEED_RETENTION = 0.9f;
-    private static final double COLLISION_DETECTION_EPSILON = 0.001;
-    private static final float COLLISION_PERPENDICULAR_DAMPEN = 0.1f;
-    private static final Vec3 AXIS_X = new Vec3(1, 0, 0);
-    private static final Vec3 AXIS_Y = new Vec3(0, 1, 0);
-    private static final Vec3 AXIS_Z = new Vec3(0, 0, 1);
 
     private enum ParticleState {
         PLUME, SMOKE
@@ -58,14 +49,10 @@ public class PlumeParticle extends SimpleAnimatedParticle implements ParticleSub
     private final float smokeLift;
     private final Vec3 spreadDirection;
     private final float spreadMagnitude;
-    private boolean hasCollided = false;
     private final List<ResourceLocation> overrideTextures;
     private TextureAtlasSprite[] cachedOverrideSprites;
     private final float startupProgress;
-    /** World-space nozzle motion, kept separate so plume drag cannot make the craft overtake its exhaust. */
-    private final Vec3 inheritedVelocity;
     private final float trailCoverage;
-    private boolean sableManagedMotion;
     private Vec3 sableResolvedSpreadDirection;
 
     float baseSize;
@@ -74,7 +61,7 @@ public class PlumeParticle extends SimpleAnimatedParticle implements ParticleSub
     protected PlumeParticle(ClientLevel level, double x, double y, double z,
                             double dxSource, double dySource, double dzSource,
                             SpriteSet spriteSet, PlumeParticleData data) {
-        super(level, x, y, z, spriteSet, 0);
+        super(level, x, y, z, spriteSet);
         this.spriteSet = spriteSet;
         this.overrideTextures = data.overrideTextures();
         this.startupProgress = data.startupProgress() == null ? 1.0f : Mth.clamp(data.startupProgress(), 0.0f, 1.0f);
@@ -134,132 +121,23 @@ public class PlumeParticle extends SimpleAnimatedParticle implements ParticleSub
 
     @Override
     public void tick() {
+        updateScale();
         this.xo = this.x;
         this.yo /* gurt */ = this.y;
         this.zo = this.z;
-        final double COLLISION_IGNORE_DOT_THRESHOLD = -1.0E-5D;
 
         if (this.age++ >= this.lifetime) {
             this.remove();
             return;
         }
 
-        //Velocity before possible collision
-        double intendedMoveX = this.xd * this.currentSpeedMultiplier + this.inheritedVelocity.x;
-        double intendedMoveY = this.yd * this.currentSpeedMultiplier + this.inheritedVelocity.y;
-        double intendedMoveZ = this.zd * this.currentSpeedMultiplier + this.inheritedVelocity.z;
-
-        double prevX = this.x;
-        double prevY = this.y;
-        double prevZ = this.z;
-
         var trackingSubLevel = ((ParticleExtension) this).sable$getTrackingSubLevel();
         if (trackingSubLevel != null) {
-            this.sableManagedMotion = true;
             this.sableResolvedSpreadDirection =
-                    trackingSubLevel.logicalPose().transformNormal(this.spreadDirection);
+                    trackingSubLevel.logicalPose().transformNormal(this.spreadDirection).normalize();
         }
-
-        this.move(intendedMoveX, intendedMoveY, intendedMoveZ);
-        double actualMoveX = this.x - prevX;
-        double actualMoveY = this.y - prevY;
-        double actualMoveZ = this.z - prevZ;
-
-        //Determine collision and its normal
-        boolean collisionDetected = false;
-        Vec3 collisionNormal = null;
-        if (this.sableManagedMotion) {
-        } else if (this.onGround) {
-            collisionDetected = true;
-            collisionNormal = new Vec3(0, 1, 0);
-        } else {
-            final float COLLISION_DETECTION_FACTOR = 0.95f;
-            boolean blockedX = Math.abs(intendedMoveX) > COLLISION_DETECTION_EPSILON && Math.abs(actualMoveX) < Math.abs(intendedMoveX) * COLLISION_DETECTION_FACTOR;
-            boolean blockedZ = Math.abs(intendedMoveZ) > COLLISION_DETECTION_EPSILON && Math.abs(actualMoveZ) < Math.abs(intendedMoveZ) * COLLISION_DETECTION_FACTOR;
-            boolean blockedYCeiling = Math.abs(intendedMoveY) > COLLISION_DETECTION_EPSILON && intendedMoveY > 0 && Math.abs(actualMoveY) < Math.abs(intendedMoveY) * COLLISION_DETECTION_FACTOR;
-            if (blockedYCeiling) {
-                collisionDetected = true;
-                collisionNormal = new Vec3(0, -1, 0);
-            } else if (blockedX) {
-                collisionDetected = true;
-                collisionNormal = new Vec3(intendedMoveX < 0 ? 1 : -1, 0, 0);
-            } else if (blockedZ) {
-                collisionDetected = true;
-                collisionNormal = new Vec3(0, 0, intendedMoveZ < 0 ? 1 : -1);
-            }
-        }
-
-        //We actually collided with something, lets resolve velocity!
-        if (collisionDetected && collisionNormal != null) {
-            Vec3 incomingVel = new Vec3(this.xd, this.yd, this.zd);
-            if (incomingVel.normalize().dot(collisionNormal) > COLLISION_IGNORE_DOT_THRESHOLD) {
-                //Nothing ever happens, we collide backwards here, which should not be resolved
-            } else {
-                this.hasCollided = true;
-                double incomingSpeedSq = incomingVel.lengthSqr();
-                if (incomingSpeedSq > 1e-7) {
-                    Vec3 incomingVelNormalized = incomingVel.normalize();
-                    double dot = incomingVelNormalized.dot(collisionNormal);
-                    //0 - perpendicular, PI/2 - parallel
-                    double angleOfIncidence = Math.acos(org.joml.Math.clamp(Math.abs(dot), 0.0, 1.0));
-                    float spreadBlendFactor = (float)Math.cos(angleOfIncidence);
-                    float slideBlendFactor = (float)Math.sin(angleOfIncidence);
-
-                    //Velocity decomposition
-                    Vec3 V_normal_comp = collisionNormal.scale(incomingVel.dot(collisionNormal));
-                    Vec3 V_tangential_comp = incomingVel.subtract(V_normal_comp);
-
-                    //Reflect + dampen
-                    Vec3 desiredNormalVel;
-                    if (incomingVel.dot(collisionNormal) < 0) { //Moving into the surface
-                        desiredNormalVel = V_normal_comp.scale(-COLLISION_PERPENDICULAR_DAMPEN);
-                    } else {
-                        desiredNormalVel = V_normal_comp;
-                    }
-
-                    //Calculate spread velocity
-                    Vec3 spreadPlaneDirection;
-                    double randomAngle = this.random.nextDouble() * Math.PI * 2.0D;
-
-                    //Determine two axes perpendicular to normal
-                    Vec3 axis1, axis2;
-                    if (Math.abs(collisionNormal.y) > 0.9) { //Ground/Ceiling
-                        axis1 = AXIS_X;
-                        axis2 = collisionNormal.cross(axis1).normalize();
-                    } else { //Wall
-                        axis1 = AXIS_Y;
-                        axis2 = collisionNormal.cross(axis1).normalize();
-                    }
-                    if (axis2.lengthSqr() < 0.1) { //Fallback
-                        axis1 = Math.abs(collisionNormal.x) > 0.9 ? AXIS_Z : AXIS_X;
-                        axis2 = collisionNormal.cross(axis1).normalize();
-                    }
-
-                    spreadPlaneDirection = axis1.scale(Math.cos(randomAngle)).add(axis2.scale(Math.sin(randomAngle))).normalize();
-
-                    Vec3 spreadComponent = spreadPlaneDirection.scale(incomingVel.length() * spreadBlendFactor);
-                    Vec3 slideComponent = V_tangential_comp.scale(slideBlendFactor); //For sliding use original tangential component
-
-                    Vec3 desiredTangentialVel = slideComponent.add(spreadComponent);
-
-                    //Combine and apply new velocity
-                    Vec3 newVel = desiredNormalVel.add(desiredTangentialVel);
-                    double newVelMagnitude = newVel.length();
-                    if (newVelMagnitude > 1e-5) {
-                        this.xd = (newVel.x / newVelMagnitude) * incomingVel.length() * COLLISION_SPEED_RETENTION;
-                        this.yd = (newVel.y / newVelMagnitude) * incomingVel.length() * COLLISION_SPEED_RETENTION;
-                        this.zd = (newVel.z / newVelMagnitude) * incomingVel.length() * COLLISION_SPEED_RETENTION;
-                    } else { //Fallback
-                        this.xd = spreadPlaneDirection.x * incomingVel.length() * COLLISION_SPEED_RETENTION * 0.5;
-                        this.yd = spreadPlaneDirection.y * incomingVel.length() * COLLISION_SPEED_RETENTION * 0.5;
-                        this.zd = spreadPlaneDirection.z * incomingVel.length() * COLLISION_SPEED_RETENTION * 0.5;
-                    }
-
-                } else { //Incoming speed too low, slow down
-                    this.xd *= 0.1; this.yd *= 0.1; this.zd *= 0.1;
-                }
-            }
-        }
+        this.move(this.xd * this.currentSpeedMultiplier, this.yd * this.currentSpeedMultiplier,
+                this.zd * this.currentSpeedMultiplier);
         //Smoke update
         if (currentState == ParticleState.PLUME && this.age >= this.smokeTransitionAge) {
             currentState = ParticleState.SMOKE;
@@ -272,9 +150,9 @@ public class PlumeParticle extends SimpleAnimatedParticle implements ParticleSub
         //Visual update
         float percent = (float)this.age / (float)this.lifetime;
         if (currentState == ParticleState.PLUME) {
-            this.quadSize = this.baseSize + (float)Math.pow(percent, 0.8f) * 2.0f;
+            this.quadSize = (this.baseSize + (float)Math.pow(percent, 0.8f) * 2.0f) * particleSize();
         } else {
-            this.quadSize = this.baseSize - (float)percent * 2.0f + 2.5f;
+            this.quadSize = (this.baseSize - percent * 2.0f + 2.5f) * particleSize();
         }
         //Additional smoke spread (that starts a bit before particle becomes smoke)
         int presmokeAge = this.smokeTransitionAge - 5;
@@ -336,16 +214,6 @@ public class PlumeParticle extends SimpleAnimatedParticle implements ParticleSub
     @Nonnull
     public ParticleRenderType getRenderType(){
         return ParticleRenderType.PARTICLE_SHEET_LIT;
-    }
-
-    @Override
-    public boolean sable$shouldKickFromTracking() {
-        return true;
-    }
-
-    @Override
-    public boolean sable$shouldCollideWithTrackingSubLevel() {
-        return false;
     }
 
     //Factory

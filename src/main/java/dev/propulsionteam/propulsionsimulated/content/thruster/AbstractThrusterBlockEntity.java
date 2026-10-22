@@ -9,6 +9,7 @@ import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
 import dev.propulsionteam.propulsionsimulated.compat.PropulsionCompatibility;
 import dev.propulsionteam.propulsionsimulated.compat.computercraft.ComputerBehaviour;
 import dev.propulsionteam.propulsionsimulated.particles.plume.PlumeParticleData;
+import dev.propulsionteam.propulsionsimulated.particles.ParticleScale;
 import dev.propulsionteam.propulsionsimulated.particles.ion.IonParticleData;
 import dev.propulsionteam.propulsionsimulated.particles.plasma.PlasmaParticleData;
 import dev.propulsionteam.propulsionsimulated.utility.GoggleUtils;
@@ -105,7 +106,14 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         double multiblockVelocityScale = 1.0d + 0.30d * (multiblockWidth - 1);
         return getParticleVelocity() * Math.max(getEffectiveThrottle(), MathUtility.epsilon)
                 * org.joml.Math.clamp(0.0d, PARTICLE_MULTIPLIER_CAP, getParticleVelocityMultiplier())
-                * multiblockVelocityScale * 0.144d;
+                * multiblockVelocityScale * 0.144d * getParticleSubLevelScale();
+    }
+
+    public double getParticleSubLevelScale() {
+        if (level == null) return 1.0d;
+        var subLevel = Sable.HELPER.getContaining(level, worldPosition);
+        return subLevel == null ? 1.0d
+                : ParticleScale.valid(subLevel.logicalPose().scale().x());
     }
 
     //CC Peripheral
@@ -726,7 +734,8 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
                 : PlumeTrailMath.angleDegrees(oldExhaustDirection, worldExhaustDirection);
         double reconstructedGap = oldNozzlePosition == null ? 0.0d
                 : worldNozzlePosition.distanceTo(oldNozzlePosition.add(oldNozzleVelocity));
-        updateAdaptiveTrailCoverage(angleChange, reconstructedGap);
+        double subLevelScale = getParticleSubLevelScale();
+        updateAdaptiveTrailCoverage(angleChange, reconstructedGap / subLevelScale);
 
         previousParticleNozzleWorld = worldNozzlePosition;
         previousParticleExhaustWorld = worldExhaustDirection;
@@ -781,7 +790,7 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
             // Advance historical sub-tick samples to the current tick. Unlike the removed
             // straight pre-spread, every sample uses its own interpolated orientation.
             double sampleAge = 1.0d - sampleT;
-            double visualExhaustStep = speedPerTick * 0.144d;
+            double visualExhaustStep = speedPerTick * 0.144d * subLevelScale;
             samplePosition = samplePosition.add(sampleVelocity.scale(sampleAge))
                     .add(sampleDirection.scale(visualExhaustStep * sampleAge));
 

@@ -7,6 +7,8 @@ import dev.propulsionteam.propulsionsimulated.content.thruster.PlumeTrailMath;
 import dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterPlumeSpec;
 import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.sublevel.SubLevel;
+import dev.ryanhcode.sable.sublevel.ClientSubLevel;
+import dev.propulsionteam.propulsionsimulated.particles.ParticleScale;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.util.Mth;
@@ -65,9 +67,13 @@ public final class AdaptivePlumeTrailRenderer {
 
     private static void sample(AbstractThrusterBlockEntity be, TrailState state, double now) {
         Vec3 localNozzle = be.getParticleDebugNozzlePositionLocal();
-        Vec3 worldPosition = Sable.HELPER.projectOutOfSubLevel(be.getLevel(), localNozzle);
+        SubLevel subLevel = Sable.HELPER.getContaining(be.getLevel(), be.getBlockPos());
+        var pose = subLevel instanceof ClientSubLevel client ? client.renderPose()
+                : subLevel == null ? null : subLevel.logicalPose();
+        double scale = pose == null ? 1.0d : ParticleScale.valid(pose.scale().x());
+        Vec3 worldPosition = pose == null ? localNozzle : pose.transformPosition(localNozzle);
         Vec3 localDirection = be.getParticleDebugExhaustDirectionLocal().normalize();
-        Vec3 worldAhead = Sable.HELPER.projectOutOfSubLevel(be.getLevel(), localNozzle.add(localDirection));
+        Vec3 worldAhead = pose == null ? localNozzle.add(localDirection) : pose.transformPosition(localNozzle.add(localDirection));
         Vec3 worldDirection = worldAhead.subtract(worldPosition).normalize();
         Vec3 velocity = state.lastPosition == null ? Vec3.ZERO : worldPosition.subtract(state.lastPosition);
         try {
@@ -78,7 +84,7 @@ public final class AdaptivePlumeTrailRenderer {
 
         if (state.lastPosition == null || state.lastDirection == null) {
             state.add(new TrailNode(now, worldPosition, velocity, worldDirection,
-                    be.getParticleTrailInitialStep(), friction(state.style)));
+                    be.getParticleTrailInitialStep(), friction(state.style), scale));
             state.lastPosition = worldPosition;
             state.lastDirection = worldDirection;
             state.lastVelocity = velocity;
@@ -87,10 +93,10 @@ public final class AdaptivePlumeTrailRenderer {
         }
 
         double angle = PlumeTrailMath.angleDegrees(state.lastDirection, worldDirection);
-        double distance = state.lastPosition.distanceTo(worldPosition);
+        double distance = state.lastPosition.distanceTo(worldPosition) / scale;
         if (angle < SAMPLE_ANGLE_DEGREES && distance < SAMPLE_DISTANCE_BLOCKS) return;
 
-        double reconstructedGap = worldPosition.distanceTo(state.lastPosition.add(state.lastVelocity));
+        double reconstructedGap = worldPosition.distanceTo(state.lastPosition.add(state.lastVelocity)) / scale;
         float activation = PlumeTrailMath.activationTarget(angle, reconstructedGap, state.active);
         if (activation > 0.0f) {
             state.active = true;
@@ -111,7 +117,7 @@ public final class AdaptivePlumeTrailRenderer {
             Vec3 d = PlumeTrailMath.slerpDirection(state.lastDirection, worldDirection, t);
             Vec3 v = state.lastVelocity.lerp(velocity, t);
             double birth = Mth.lerp(t, startTime, now);
-            state.add(new TrailNode(birth, p, v, d, be.getParticleTrailInitialStep(), friction(state.style)));
+            state.add(new TrailNode(birth, p, v, d, be.getParticleTrailInitialStep(), friction(state.style), scale));
         }
         state.lastPosition = worldPosition;
         state.lastDirection = worldDirection;
@@ -123,6 +129,9 @@ public final class AdaptivePlumeTrailRenderer {
                              PoseStack poseStack, MultiBufferSource buffer, int maxNodes, boolean renderInner) {
         int from = Math.max(0, state.nodes.size() - maxNodes);
         List<TrailPoint> points = new ArrayList<>(state.nodes.size() - from);
+        SubLevel subLevel = Sable.HELPER.getContaining(be.getLevel(), be.getBlockPos());
+        double renderScale = subLevel instanceof ClientSubLevel client
+                ? ParticleScale.valid(client.renderPose().scale().x()) : be.getParticleSubLevelScale();
         for (int i = from; i < state.nodes.size(); i++) {
             TrailNode node = state.nodes.get(i);
             double age = Math.max(0.0d, now - node.birthTime);
@@ -130,7 +139,7 @@ public final class AdaptivePlumeTrailRenderer {
             Vec3 world = node.emissionPosition.add(node.inheritedVelocity.scale(age))
                     .add(node.direction.scale(exhaustDistance));
             float life = 1.0f - Mth.clamp((float) (age / PlumeTrailMath.TRAIL_LIFETIME_TICKS), 0.0f, 1.0f);
-            points.add(new TrailPoint(toRenderLocal(be, world), life));
+            points.add(new TrailPoint(toRenderLocal(be, world), life, (float) (node.scale / renderScale)));
         }
         if (points.size() < 2) return;
 
@@ -162,8 +171,8 @@ public final class AdaptivePlumeTrailRenderer {
 
             float endTaperA = endpointTaper(i, points.size());
             float endTaperB = endpointTaper(i + 1, points.size());
-            Vec3 sideA = side.scale(width * a.life * endTaperA);
-            Vec3 sideB = side.scale(width * c.life * endTaperB);
+            Vec3 sideA = side.scale(width * a.scale * a.life * endTaperA);
+            Vec3 sideB = side.scale(width * c.scale * c.life * endTaperB);
             int alphaA = Mth.clamp((int) (255.0f * alpha * a.life * endTaperA), 0, 255);
             int alphaB = Mth.clamp((int) (255.0f * alpha * c.life * endTaperB), 0, 255);
             vertex(consumer, matrix, a.position.add(sideA), 0.0f, i, r, g, b, alphaA);
@@ -190,7 +199,8 @@ public final class AdaptivePlumeTrailRenderer {
         SubLevel subLevel = Sable.HELPER.getContaining(be.getLevel(), be.getBlockPos());
         if (subLevel != null) {
             Vector3d local = new Vector3d(world.x, world.y, world.z);
-            subLevel.logicalPose().transformPositionInverse(local);
+            if (subLevel instanceof ClientSubLevel client) client.renderPose().transformPositionInverse(local);
+            else subLevel.logicalPose().transformPositionInverse(local);
             return new Vec3(local.x - be.getBlockPos().getX(), local.y - be.getBlockPos().getY(),
                     local.z - be.getBlockPos().getZ());
         }
@@ -217,8 +227,8 @@ public final class AdaptivePlumeTrailRenderer {
     }
 
     private record TrailNode(double birthTime, Vec3 emissionPosition, Vec3 inheritedVelocity,
-                             Vec3 direction, double initialExhaustStep, double friction) {}
-    private record TrailPoint(Vec3 position, float life) {}
+                             Vec3 direction, double initialExhaustStep, double friction, double scale) {}
+    private record TrailPoint(Vec3 position, float life, float scale) {}
     private record Appearance(float radius, float r, float g, float b, float alpha) {}
 
     private static final class TrailState {

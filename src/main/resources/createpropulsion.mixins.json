@@ -13,6 +13,7 @@
         "SchematicPlacePacketMixin"
     ],
     "client": [
+        "client.ParticleTrackingAccessor",
         "client.CreativeModeInventoryScreenMixin",
         "client.SimulatedCreativeTabMixin",
         "client.ToolgunItemInHandRendererMixin"
