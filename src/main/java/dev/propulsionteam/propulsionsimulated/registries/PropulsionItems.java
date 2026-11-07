@@ -2,6 +2,7 @@ package dev.propulsionteam.propulsionsimulated.registries;
 
 import dev.propulsionteam.propulsionsimulated.CreatePropulsion;
 import dev.propulsionteam.propulsionsimulated.content.toolgun.ToolgunItem;
+import dev.propulsionteam.propulsionsimulated.content.super_bucket.SuperBucketItem;
 //import dev.propulsionteam.propulsionsimulated.content.cable.CableSpoolItem;
 import dev.propulsionteam.propulsionsimulated.utility.BurnableItem;
 
@@ -32,6 +33,8 @@ public class PropulsionItems {
         ITEMS.register("raw_platinum", () -> new Item(new Item.Properties()));
     public static final DeferredHolder<Item, Item> TOOLGUN =
         ITEMS.register("toolgun", () -> new ToolgunItem(new Item.Properties().stacksTo(1)));
+    public static final DeferredHolder<Item, SuperBucketItem> SUPER_BUCKET =
+        ITEMS.register("super_bucket", () -> new SuperBucketItem(new Item.Properties().stacksTo(1)));
     // public static final DeferredHolder<Item, CableSpoolItem> CABLE_SPOOL =
     //     ITEMS.register("cable_spool", () -> new CableSpoolItem(new Item.Properties().stacksTo(1)));
 

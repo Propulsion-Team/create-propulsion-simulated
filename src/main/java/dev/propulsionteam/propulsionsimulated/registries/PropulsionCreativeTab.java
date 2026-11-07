@@ -98,6 +98,7 @@ public class PropulsionCreativeTab {
         registerSectionItem(TOOLS_SECTION, "glued_contraption_cloner", () -> ModItems.GLUED_CONTRAPTION_CLONER.get());
         registerSectionItem(TOOLS_SECTION, "contraption_remover", () -> ModItems.CONTRAPTION_REMOVER.get());
         registerSectionItem(TOOLS_SECTION, "toolgun", () -> PropulsionItems.TOOLGUN.get());
+        registerSectionItem(TOOLS_SECTION, "super_bucket", () -> PropulsionItems.SUPER_BUCKET.get());
 
         sectionsInitialized = true;
     }
