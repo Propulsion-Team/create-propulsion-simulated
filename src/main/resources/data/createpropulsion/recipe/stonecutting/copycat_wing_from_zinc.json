@@ -1,7 +1,7 @@
 {
     "type": "minecraft:stonecutting",
     "ingredient": {
-        "item": "createpropulsion:wing"
+        "item": "create:zinc_ingot"
     },
     "result": {
         "id": "createpropulsion:copycat_wing",

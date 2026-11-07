@@ -2,15 +2,24 @@
     "type": "minecraft:crafting_shaped",
     "pattern": [
         "CCC",
-        "PBP",
-        "   "
+        "HBR",
+        "IPI"
     ],
     "key": {
+        "H": {
+            "item": "create:chute"
+        },
+        "R": {
+            "item": "create:propeller"
+        },
+        "I": {
+            "item": "create:iron_sheet"
+        },
         "C": {
             "item": "create:copper_sheet"
         },
         "B": {
-            "item": "minecraft:blast_furnace"
+            "item": "create:blaze_burner"
         },
         "P": {
             "item": "create:fluid_pipe"

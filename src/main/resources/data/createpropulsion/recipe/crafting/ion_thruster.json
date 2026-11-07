@@ -2,27 +2,24 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "pattern": [
-    "RBI",
-    "SPS",
-    "SCS"
+    "BCB",
+    "SMS",
+    "SHS"
   ],
   "key": {
-    "R": {
-      "item": "simulated:redstone_accumulator"
-    },
     "B": {
       "item": "create:brass_sheet"
     },
-    "I": {
-      "item": "simulated:redstone_inductor"
+    "C": {
+      "item": "create:crafter_slot_cover"
     },
     "S": {
       "item": "create:sturdy_sheet"
     },
-    "P": {
-      "item": "create:precision_mechanism"
+    "M": {
+      "item": "simulated:redstone_magnet"
     },
-    "C": {
+    "H": {
       "item": "create:chute"
     }
   },

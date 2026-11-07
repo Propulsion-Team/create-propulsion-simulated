@@ -1,8 +1,8 @@
 {
     "type": "minecraft:crafting_shaped",
     "pattern": [
-        "IFI",
-        "PBP",
+        "PFP",
+        "ITI",
         "ICI"
     ],
     "key": {
@@ -10,16 +10,16 @@
             "item": "create:iron_sheet"
         },
         "F": {
-            "item": "create:fluid_pipe"
+            "item": "create:portable_fluid_interface"
         },
         "P": {
-            "item": "create:mechanical_pump"
+            "item": "create:copper_sheet"
         },
-        "B": {
-            "item": "create:brass_casing"
+        "T": {
+            "item": "create:fluid_tank"
         },
         "C": {
-            "item": "create:copper_sheet"
+            "item": "create:chute"
         }
     },
     "result": {

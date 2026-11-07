@@ -1,0 +1,19 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        "III",
+        "CRC",
+        "LPL"
+    ],
+    "key": {
+        "I": { "item": "create:iron_sheet" },
+        "C": { "item": "create:chute" },
+        "R": { "item": "minecraft:redstone_block" },
+        "L": { "item": "create:redstone_link" },
+        "P": { "item": "create:copper_sheet" }
+    },
+    "result": {
+        "id": "createpropulsion:rcs_thruster",
+        "count": 1
+    }
+}

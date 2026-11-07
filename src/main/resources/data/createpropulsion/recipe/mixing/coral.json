@@ -3,15 +3,9 @@
   "heat_requirement": "superheated",
   "ingredients": [
     {
-      "type": "neoforge:components",
+      "type": "neoforge:single",
       "amount": 500,
-      "components": {
-        "create:potion_fluid_bottle_type": "regular",
-        "minecraft:potion_contents": {
-          "potion": "minecraft:healing"
-        }
-      },
-      "fluids": "create:potion"
+      "fluid": "createpropulsion:turpentine"
     },
     { "item": "minecraft:redstone" },
     { "item": "minecraft:blaze_powder" }

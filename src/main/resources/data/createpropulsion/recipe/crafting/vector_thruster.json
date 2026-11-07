@@ -1,14 +1,16 @@
 {
   "type": "minecraft:crafting_shaped",
   "pattern": [
-    "PIP",
-    "NGN"
+    "P P",
+    "SIS",
+    "LGL"
   ],
   "key": {
     "P": { "item": "createpropulsion:platinum_sheet" },
     "I": { "item": "createpropulsion:ion_thruster" },
-    "N": { "item": "createpropulsion:platinum_nugget" },
-    "G": { "item": "simulated:gimbal_sensor" }
+    "S": { "item": "create:sturdy_sheet" },
+    "L": { "item": "create:redstone_link" },
+    "G": { "item": "simulated:gyroscopic_mechanism" }
   },
   "result": {
     "id": "createpropulsion:vector_thruster",

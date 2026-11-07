@@ -1,16 +1,19 @@
 {
     "type": "minecraft:crafting_shaped",
     "pattern": [
-        "CSC",
+        "ISI",
         "AGA",
         "CCC"
     ],
     "key": {
+        "I": {
+            "item": "create:iron_sheet"
+        },
         "C": {
             "item": "create:copper_sheet"
         },
         "G": {
-            "item": "create:cogwheel"
+            "item": "create:precision_mechanism"
         },
         "S": {
             "item": "create:shaft"

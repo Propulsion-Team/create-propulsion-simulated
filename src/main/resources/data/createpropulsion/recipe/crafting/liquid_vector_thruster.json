@@ -1,14 +1,16 @@
 {
   "type": "minecraft:crafting_shaped",
   "pattern": [
-    "CTC",
-    "NGN"
+    "C C",
+    "STS",
+    "LGL"
   ],
   "key": {
     "C": { "item": "create:copper_sheet" },
     "T": { "item": "createpropulsion:thruster" },
-    "N": { "item": "create:copper_nugget" },
-    "G": { "item": "simulated:gimbal_sensor" }
+    "S": { "item": "create:sturdy_sheet" },
+    "L": { "item": "create:redstone_link" },
+    "G": { "item": "simulated:gyroscopic_mechanism" }
   },
   "result": {
     "id": "createpropulsion:liquid_vector_thruster",

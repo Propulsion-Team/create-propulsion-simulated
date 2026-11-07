@@ -2,10 +2,13 @@
     "type": "minecraft:crafting_shaped",
     "pattern": [
         "CCC",
-        "IBI",
-        "   "
+        "ABA",
+        "III"
     ],
     "key": {
+        "A": {
+            "item": "create:andesite_alloy"
+        },
         "C": {
             "item": "create:copper_sheet"
         },
