@@ -61,10 +61,9 @@ public final class VectorThrusterRenderer {
         if (!state.hasProperty(AbstractThrusterBlock.FACING)) return;
         Direction facing = state.getValue(AbstractThrusterBlock.FACING);
 
-        float xAxis = Mth.clamp(be.getInterpolatedVectorX(partialTick), -1.0f, 1.0f);
-        float yAxis = Mth.clamp(be.getInterpolatedVectorY(partialTick), -1.0f, 1.0f);
-        float yawDegrees = xAxis * VectorThrusterBlockEntity.MAX_VISUAL_TILT_DEGREES;
-        float pitchDegrees = -yAxis * VectorThrusterBlockEntity.MAX_VISUAL_TILT_DEGREES;
+        var direction = be.getInterpolatedVectorDirection(partialTick);
+        float yawDegrees = (float) Math.toDegrees(Math.atan2(direction.x, direction.z));
+        float pitchDegrees = (float) -Math.toDegrees(Math.asin(Math.clamp(direction.y, -1.0d, 1.0d)));
         if (facing == Direction.UP) {
             yawDegrees = -yawDegrees;
             pitchDegrees = -pitchDegrees;

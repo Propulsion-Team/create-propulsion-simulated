@@ -6,6 +6,7 @@ import com.simibubi.create.foundation.blockEntity.behaviour.ValueBoxTransform;
 import com.simibubi.create.foundation.blockEntity.behaviour.fluid.SmartFluidTankBehaviour;
 import com.simibubi.create.foundation.utility.CreateLang;
 import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
+import dev.ryanhcode.sable.Sable;
 import dev.propulsionteam.propulsionsimulated.content.thruster.AbstractThrusterBlock;
 import dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterFuelManager;
 import dev.propulsionteam.propulsionsimulated.content.thruster.thruster.ThrusterBlockEntity;
@@ -32,7 +33,6 @@ import org.joml.Vector3d;
 import java.util.List;
 
 public class LiquidVectorThrusterBlockEntity extends VectorThrusterBlockEntity {
-    public static final float MAX_VISUAL_TILT_DEGREES = 30.0f;
     private static final float TWEEN_SPEED = 0.2f;
 
     public VectorRedstoneLinkBehaviour westLink;
@@ -45,12 +45,14 @@ public class LiquidVectorThrusterBlockEntity extends VectorThrusterBlockEntity {
     private float downSignal;
     private float upSignal;
 
-    private float targetVectorX;
-    private float targetVectorY;
-    private float currentVectorX;
-    private float currentVectorY;
+    private volatile float targetVectorX;
+    private volatile float targetVectorY;
+    private volatile float currentVectorX;
+    private volatile float currentVectorY;
     private float prevVectorX;
     private float prevVectorY;
+    private float receivedVectorX;
+    private float receivedVectorY;
     private float obstructionEfficiency = 1.0f;
     private boolean clientInitialized = false;
 
@@ -132,6 +134,12 @@ public class LiquidVectorThrusterBlockEntity extends VectorThrusterBlockEntity {
         return Mth.lerp(partialTick, prevVectorY, currentVectorY);
     }
 
+    @Override
+    public Vector3d getInterpolatedVectorDirection(float partialTick) {
+        return VectorThrusterControlMath.interpolateDirection(prevVectorX, prevVectorY, currentVectorX, currentVectorY,
+                getMaxVectorAngle(), partialTick);
+    }
+
     public float getInterpolatedFlapProgress(float partialTick) {
         return Mth.lerp(partialTick, prevFlapProgress, currentFlapProgress);
     }
@@ -158,23 +166,46 @@ public class LiquidVectorThrusterBlockEntity extends VectorThrusterBlockEntity {
     public void animateVectorForScene() {
         prevVectorX = currentVectorX;
         prevVectorY = currentVectorY;
-        currentVectorX = tweenTowards(currentVectorX, targetVectorX);
-        currentVectorY = tweenTowards(currentVectorY, targetVectorY);
+        advanceVector(0.05d);
+        receivedVectorX = currentVectorX;
+        receivedVectorY = currentVectorY;
     }
 
     @Override
     public void tick() {
         updateMappedTargets();
-        prevVectorX = currentVectorX;
-        prevVectorY = currentVectorY;
-        currentVectorX = tweenTowards(currentVectorX, targetVectorX);
-        currentVectorY = tweenTowards(currentVectorY, targetVectorY);
 
         targetFlapProgress = (float) getThrottle();
         prevFlapProgress = currentFlapProgress;
         currentFlapProgress = tweenTowards(currentFlapProgress, targetFlapProgress);
 
         super.tick();
+    }
+
+    @Override
+    protected void tickVector() {
+        prevVectorX = currentVectorX;
+        prevVectorY = currentVectorY;
+        if (level != null && level.isClientSide) {
+            currentVectorX = receivedVectorX;
+            currentVectorY = receivedVectorY;
+        } else if (level != null && Sable.HELPER.getContaining(level, worldPosition) == null) {
+            advanceVector(0.05d);
+        }
+    }
+
+    @Override
+    protected void advanceVector(double deltaTime) {
+        var next = VectorThrusterControlMath.advance(currentVectorX, currentVectorY, targetVectorX, targetVectorY,
+                getMaxVectorAngle(), PropulsionConfig.VECTOR_THRUSTER_MAX_ANGULAR_VELOCITY.get(), deltaTime);
+        if (currentVectorX != next.x() || currentVectorY != next.y()) {
+            currentVectorX = next.x();
+            currentVectorY = next.y();
+            if (level != null && !level.isClientSide) {
+                setChanged();
+                isDirty = true;
+            }
+        }
     }
 
     @Override
@@ -222,11 +253,10 @@ public class LiquidVectorThrusterBlockEntity extends VectorThrusterBlockEntity {
         Vector3d forward = new Vector3d(getFacing().getStepX(), getFacing().getStepY(), getFacing().getStepZ()).normalize();
         Vector3d right = computeRight(forward);
         Vector3d up = new Vector3d(right).cross(forward).normalize();
-        double tiltScale = Math.tan(Math.toRadians(MAX_VISUAL_TILT_DEGREES));
-
-        Vector3d exhaust = new Vector3d(forward).negate()
-            .fma(currentVectorX * tiltScale, right)
-            .fma(currentVectorY * tiltScale, up);
+        Vector3d direction = VectorThrusterControlMath.direction(currentVectorX, currentVectorY, getMaxVectorAngle());
+        Vector3d exhaust = new Vector3d(forward).mul(-direction.z)
+            .fma(direction.x, right)
+            .fma(direction.y, up);
 
         if (exhaust.lengthSquared() < 1e-8) {
             exhaust.set(forward).negate();
@@ -249,15 +279,14 @@ public class LiquidVectorThrusterBlockEntity extends VectorThrusterBlockEntity {
             .fma(7.0d / 16.0d, forward);
 
         Vector3d exhaust = new Vector3d(localExhaustDirection.x, localExhaustDirection.y, localExhaustDirection.z);
-        double tiltScale = Math.tan(Math.toRadians(MAX_VISUAL_TILT_DEGREES));
-        double yawRad = Math.toRadians(Mth.clamp((float) (exhaust.dot(right) / tiltScale), -1f, 1f) * MAX_VISUAL_TILT_DEGREES);
-        double pitchRad = Math.toRadians(-Mth.clamp((float) (exhaust.dot(up) / tiltScale), -1f, 1f) * MAX_VISUAL_TILT_DEGREES);
+        double yawRad = Math.atan2(exhaust.dot(right), -exhaust.dot(forward));
+        double pitchRad = -Math.asin(Math.clamp(exhaust.dot(up), -1.0d, 1.0d));
 
         Vector3d neutralNozzle = new Vector3d(center).fma(-nozzleOffset, forward);
         Vector3d relative = neutralNozzle.sub(pivot, new Vector3d());
 
-        rotateAroundAxis(relative, up, yawRad);
         rotateAroundAxis(relative, right, pitchRad);
+        rotateAroundAxis(relative, up, yawRad);
 
         Vector3d rotatedNozzle = pivot.add(relative, new Vector3d());
         return new Vec3(rotatedNozzle.x, rotatedNozzle.y, rotatedNozzle.z);
@@ -493,9 +522,11 @@ public class LiquidVectorThrusterBlockEntity extends VectorThrusterBlockEntity {
         updateMappedTargets();
         targetVectorX = compound.contains("TargetVectorX") ? compound.getFloat("TargetVectorX") : targetVectorX;
         targetVectorY = compound.contains("TargetVectorY") ? compound.getFloat("TargetVectorY") : targetVectorY;
+        receivedVectorX = compound.contains("CurrentVectorX") ? compound.getFloat("CurrentVectorX") : targetVectorX;
+        receivedVectorY = compound.contains("CurrentVectorY") ? compound.getFloat("CurrentVectorY") : targetVectorY;
         if (!clientPacket || !clientInitialized) {
-            currentVectorX = compound.contains("CurrentVectorX") ? compound.getFloat("CurrentVectorX") : targetVectorX;
-            currentVectorY = compound.contains("CurrentVectorY") ? compound.getFloat("CurrentVectorY") : targetVectorY;
+            currentVectorX = receivedVectorX;
+            currentVectorY = receivedVectorY;
             prevVectorX = currentVectorX;
             prevVectorY = currentVectorY;
             if (clientPacket) clientInitialized = true;
