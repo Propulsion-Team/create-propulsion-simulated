@@ -193,6 +193,7 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
 
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
+        behaviours.add(new SoundMufflerBehaviour(this));
         if (PropulsionCompatibility.CC_ACTIVE) {
             ComputerBehaviour behaviour = ComputerBehaviour.tryCreate(this);
             if (behaviour != null) {
@@ -376,6 +377,13 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
 
     public boolean isController() {
         return controllerPos == null;
+    }
+
+    @javax.annotation.Nullable
+    public AbstractThrusterBlockEntity getControllerBE() {
+        if (isController() || !hasLevel()) return this;
+        var controller = SimulatedThrustAdapter.getBlockEntitySafe(level, controllerPos);
+        return controller instanceof AbstractThrusterBlockEntity thruster ? thruster : null;
     }
 
     protected boolean shouldDamageEntities() {

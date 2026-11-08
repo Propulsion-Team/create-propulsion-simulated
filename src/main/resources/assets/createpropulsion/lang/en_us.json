@@ -1,6 +1,12 @@
 {
     "item.createpropulsion.toolgun": "Toolgun",
     "item.createpropulsion.super_bucket": "Super Bucket",
+    "item.createpropulsion.sound_muffler": "Sound Muffler",
+    "item.createpropulsion.sound_muffler.tooltip.summary": "Reduces a thruster's sound volume by _70%%_.",
+    "item.createpropulsion.sound_muffler.tooltip.control1": "Right-click a thruster",
+    "item.createpropulsion.sound_muffler.tooltip.action1": "_Install_ the muffler in the clicked block.",
+    "item.createpropulsion.sound_muffler.tooltip.control2": "Right-click with an empty hand",
+    "item.createpropulsion.sound_muffler.tooltip.action2": "_Remove_ the muffler. Breaking its block also drops it.",
     "item.createpropulsion.super_bucket.selected_fluid": "Selected fluid: %s",
     "item.createpropulsion.super_bucket.tooltip.summary": "_Copies_ fluids for _infinite_ placement and container filling. An empty bucket can also _empty_ fluid containers.",
     "item.createpropulsion.super_bucket.tooltip.control1": "Right-click fluid or a filled container (empty bucket)",

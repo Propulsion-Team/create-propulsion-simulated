@@ -61,6 +61,7 @@ public class PropulsionCreativeTab {
         registerSectionItem(MAIN_SECTION, "creative_vector_thruster", () -> PropulsionBlocks.CREATIVE_VECTOR_THRUSTER_BLOCK.get().asItem());
         registerSectionItem(MAIN_SECTION, "liquid_vector_thruster", () -> PropulsionBlocks.LIQUID_VECTOR_THRUSTER_BLOCK.get().asItem());
         registerSectionItem(MAIN_SECTION, "solid_fuel_thruster", () -> PropulsionBlocks.SOLID_FUEL_THRUSTER_BLOCK.get().asItem());
+        registerSectionItem(MAIN_SECTION, "sound_muffler", () -> PropulsionItems.SOUND_MUFFLER.get());
         registerSectionItem(MAIN_SECTION, "redstone_transmission", () -> PropulsionBlocks.REDSTONE_TRANSMISSION_BLOCK.get().asItem());
         registerSectionItem(MAIN_SECTION, "redstone_converter", () -> PropulsionBlocks.REDSTONE_CONVERTER_BLOCK.get().asItem());
         registerSectionItem(MAIN_SECTION, "turpentine_bucket", () -> PropulsionItems.TURPENTINE_BUCKET.get());
@@ -97,7 +98,7 @@ public class PropulsionCreativeTab {
         registerSectionItem(TOOLS_SECTION, "glued_contraption_mover", () -> ModItems.GLUED_CONTRAPTION_MOVER.get());
         registerSectionItem(TOOLS_SECTION, "glued_contraption_cloner", () -> ModItems.GLUED_CONTRAPTION_CLONER.get());
         registerSectionItem(TOOLS_SECTION, "contraption_remover", () -> ModItems.CONTRAPTION_REMOVER.get());
-        registerSectionItem(TOOLS_SECTION, "toolgun", () -> PropulsionItems.TOOLGUN.get());
+        //registerSectionItem(TOOLS_SECTION, "toolgun", () -> PropulsionItems.TOOLGUN.get());
         registerSectionItem(TOOLS_SECTION, "super_bucket", () -> PropulsionItems.SUPER_BUCKET.get());
 
         sectionsInitialized = true;

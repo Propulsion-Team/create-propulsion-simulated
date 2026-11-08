@@ -1,6 +1,7 @@
 package dev.createpropulsionsimulated.client.sound;
 
 import dev.propulsionteam.propulsionsimulated.content.thruster.AbstractThrusterBlockEntity;
+import dev.propulsionteam.propulsionsimulated.content.thruster.SoundMufflerBehaviour;
 import dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterPlumeResolver;
 import dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterPlumeSpec;
 import dev.ryanhcode.sable.Sable;
@@ -313,7 +314,8 @@ public final class ThrusterLoopSoundController {
                 final double distance = Math.sqrt(minecraft.player.distanceToSqr(worldCenter));
                 final float audibleRange = THRUSTER_SOUND_RANGE_BLOCKS * multiblockScale;
                 final float proximityFactor = (float) Math.max(0.0d, 1.0d - (distance / audibleRange));
-                this.volume = baseVolume * proximityFactor * envelopeVolume();
+                this.volume = baseVolume * proximityFactor * envelopeVolume()
+                        * SoundMufflerBehaviour.getVolumeMultiplier(blockEntity);
             }
             // The clips are authored as a matched set; pitch-shifting only the loop makes the seam audible.
             this.pitch = 1.0f;

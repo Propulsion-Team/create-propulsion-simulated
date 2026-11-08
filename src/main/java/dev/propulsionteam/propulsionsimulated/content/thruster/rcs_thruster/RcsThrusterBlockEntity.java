@@ -10,6 +10,7 @@ import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour
 import com.simibubi.create.foundation.blockEntity.behaviour.ValueBoxTransform;
 import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
 import dev.propulsionteam.propulsionsimulated.content.thruster.SimulatedThrustAdapter;
+import dev.propulsionteam.propulsionsimulated.content.thruster.SoundMufflerBehaviour;
 import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.VectorRedstoneLinkBehaviour;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionBlockEntities;
 import dev.ryanhcode.sable.api.block.BlockEntitySubLevelActor;
@@ -65,6 +66,7 @@ public class RcsThrusterBlockEntity extends SmartBlockEntity implements BlockEnt
 
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
+        behaviours.add(new SoundMufflerBehaviour(this));
         links = new VectorRedstoneLinkBehaviour[isSingle() ? 1 : 4];
         for (int i = 0; i < links.length; i++) {
             int nozzle = i;

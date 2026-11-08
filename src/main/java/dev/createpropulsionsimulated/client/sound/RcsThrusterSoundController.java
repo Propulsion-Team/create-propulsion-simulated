@@ -1,6 +1,7 @@
 package dev.createpropulsionsimulated.client.sound;
 
 import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
+import dev.propulsionteam.propulsionsimulated.content.thruster.SoundMufflerBehaviour;
 import dev.propulsionteam.propulsionsimulated.content.thruster.rcs_thruster.RcsThrusterBlockEntity;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionSoundEvents;
 import dev.ryanhcode.sable.Sable;
@@ -89,7 +90,8 @@ public final class RcsThrusterSoundController {
             var player = Minecraft.getInstance().player;
             double distance = player == null ? Double.POSITIVE_INFINITY : Math.sqrt(player.distanceToSqr(center));
             volume = PropulsionConfig.RCS_SOUND_VOLUME.get().floatValue()
-                    * (float) Math.max(0, 1 - distance / PropulsionConfig.RCS_SOUND_RANGE.get());
+                    * (float) Math.max(0, 1 - distance / PropulsionConfig.RCS_SOUND_RANGE.get())
+                    * SoundMufflerBehaviour.getVolumeMultiplier(be);
         }
     }
 }

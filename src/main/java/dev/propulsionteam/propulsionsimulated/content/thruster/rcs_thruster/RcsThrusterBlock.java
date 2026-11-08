@@ -4,6 +4,13 @@ import com.mojang.serialization.MapCodec;
 import com.simibubi.create.content.equipment.wrench.IWrenchable;
 import com.simibubi.create.foundation.block.IBE;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntityTicker;
+import dev.propulsionteam.propulsionsimulated.content.thruster.SoundMufflerBehaviour;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionBlockEntities;
@@ -82,6 +89,24 @@ public class RcsThrusterBlock extends DirectionalBlock implements IBE<RcsThruste
     @Override
     public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos neighbor, boolean moved) {
         if (!level.isClientSide) withBlockEntityDo(level, pos, RcsThrusterBlockEntity::refreshPower);
+    }
+
+    @Override
+    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
+                                               Player player, InteractionHand hand, BlockHitResult hitResult) {
+        if (SoundMufflerBehaviour.handleInteraction(level.getBlockEntity(pos), player, hand)) {
+            return ItemInteractionResult.sidedSuccess(level.isClientSide());
+        }
+        return super.useItemOn(stack, state, level, pos, player, hand, hitResult);
+    }
+
+    @Override
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player,
+                                                BlockHitResult hitResult) {
+        if (SoundMufflerBehaviour.handleInteraction(level.getBlockEntity(pos), player, InteractionHand.MAIN_HAND)) {
+            return InteractionResult.sidedSuccess(level.isClientSide());
+        }
+        return super.useWithoutItem(state, level, pos, player, hitResult);
     }
 
     @Override

@@ -1,0 +1,16 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        " I ",
+        "IWI",
+        " I "
+    ],
+    "key": {
+        "I": { "item": "create:iron_sheet" },
+        "W": { "tag": "minecraft:wool" }
+    },
+    "result": {
+        "id": "createpropulsion:sound_muffler",
+        "count": 1
+    }
+}

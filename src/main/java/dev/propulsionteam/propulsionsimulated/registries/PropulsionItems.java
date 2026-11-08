@@ -1,6 +1,7 @@
 package dev.propulsionteam.propulsionsimulated.registries;
 
 import dev.propulsionteam.propulsionsimulated.CreatePropulsion;
+import dev.propulsionteam.propulsionsimulated.assemblerstick.item.CreateStyleTooltipItem;
 import dev.propulsionteam.propulsionsimulated.content.toolgun.ToolgunItem;
 import dev.propulsionteam.propulsionsimulated.content.super_bucket.SuperBucketItem;
 //import dev.propulsionteam.propulsionsimulated.content.cable.CableSpoolItem;
@@ -31,6 +32,8 @@ public class PropulsionItems {
         ITEMS.register("platinum_sheet", () -> new Item(new Item.Properties()));
     public static final DeferredHolder<Item, Item> RAW_PLATINUM =
         ITEMS.register("raw_platinum", () -> new Item(new Item.Properties()));
+    public static final DeferredHolder<Item, Item> SOUND_MUFFLER =
+        ITEMS.register("sound_muffler", () -> new CreateStyleTooltipItem(new Item.Properties()));
     public static final DeferredHolder<Item, Item> TOOLGUN =
         ITEMS.register("toolgun", () -> new ToolgunItem(new Item.Properties().stacksTo(1)));
     public static final DeferredHolder<Item, SuperBucketItem> SUPER_BUCKET =

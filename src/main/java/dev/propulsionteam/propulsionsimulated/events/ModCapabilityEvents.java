@@ -1,6 +1,8 @@
 package dev.propulsionteam.propulsionsimulated.events;
 
+import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import dev.propulsionteam.propulsionsimulated.compat.PropulsionCompatibility;
+import dev.propulsionteam.propulsionsimulated.content.thruster.SoundMufflerBehaviour;
 import dev.propulsionteam.propulsionsimulated.content.cable.fe.FeCableBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.heat.burners.liquid.LiquidBurnerBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.heat.burners.liquid.PassthroughFluidHandler;
@@ -13,14 +15,28 @@ import dev.propulsionteam.propulsionsimulated.content.thruster.thruster.Thruster
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionBlockEntities;
 import dev.propulsionteam.propulsionsimulated.content.thruster.solid_fuel_thruster.SolidFuelThrusterBlockEntity;
 import net.minecraft.core.Direction;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.neoforge.capabilities.BlockCapability;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.items.wrapper.CombinedInvWrapper;
+
+import java.util.List;
 
 public class ModCapabilityEvents {
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {
+        for (BlockEntityType<? extends SmartBlockEntity> type : List.of(
+                PropulsionBlockEntities.THRUSTER_BLOCK_ENTITY.get(),
+                PropulsionBlockEntities.CREATIVE_THRUSTER_BLOCK_ENTITY.get(),
+                PropulsionBlockEntities.ION_THRUSTER_BLOCK_ENTITY.get(),
+                PropulsionBlockEntities.CREATIVE_VECTOR_THRUSTER_BLOCK_ENTITY.get(),
+                PropulsionBlockEntities.LIQUID_VECTOR_THRUSTER_BLOCK_ENTITY.get(),
+                PropulsionBlockEntities.RCS_THRUSTER_BLOCK_ENTITY.get())) {
+            event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, type,
+                    (be, side) -> be.getBehaviour(SoundMufflerBehaviour.TYPE).getItemHandler());
+        }
         event.registerBlockEntity(
             Capabilities.FluidHandler.BLOCK,
             PropulsionBlockEntities.THRUSTER_BLOCK_ENTITY.get(),
@@ -176,6 +192,8 @@ public class ModCapabilityEvents {
     }
 
     private static IItemHandler getSolidFuelThrusterItemHandler(SolidFuelThrusterBlockEntity blockEntity, Direction side) {
-        return blockEntity.getItemHandler(side);
+        IItemHandler fuel = blockEntity.getItemHandler(side);
+        var muffler = blockEntity.getBehaviour(SoundMufflerBehaviour.TYPE).getItemHandler();
+        return fuel == null ? muffler : new CombinedInvWrapper(blockEntity.inventory, muffler);
     }
 }

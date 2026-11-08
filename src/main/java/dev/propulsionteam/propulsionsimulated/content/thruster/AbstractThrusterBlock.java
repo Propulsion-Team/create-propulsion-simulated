@@ -86,6 +86,9 @@ public abstract class AbstractThrusterBlock extends DirectionalBlock implements 
                                               final Player player,
                                               final InteractionHand hand,
                                               final BlockHitResult hitResult) {
+        if (SoundMufflerBehaviour.handleInteraction(level.getBlockEntity(pos), player, hand)) {
+            return ItemInteractionResult.sidedSuccess(level.isClientSide());
+        }
         if (!stack.isEmpty()) {
             String itemId = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
             if (PropulsionConfig.isDyeConfigured(itemId)) {
@@ -129,6 +132,9 @@ public abstract class AbstractThrusterBlock extends DirectionalBlock implements 
                                                final BlockPos pos,
                                                final Player player,
                                                final BlockHitResult hitResult) {
+        if (SoundMufflerBehaviour.handleInteraction(level.getBlockEntity(pos), player, InteractionHand.MAIN_HAND)) {
+            return InteractionResult.sidedSuccess(level.isClientSide());
+        }
         if (!level.isClientSide()) {
             if (level.getBlockEntity(pos) instanceof AbstractThrusterBlockEntity be) {
                 String currentDye = be.getDyeId();
