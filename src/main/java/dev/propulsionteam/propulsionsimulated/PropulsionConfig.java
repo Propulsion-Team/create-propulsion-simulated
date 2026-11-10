@@ -417,7 +417,76 @@ public class PropulsionConfig {
                 "createaddition:seed_oil=55,170",
                 "northstar:methane=105,95",
                 "northstar:liquid_hydrogen=230,90",
-                "immersivepetroleum:diesel_sulfur=100,100"
+                "immersivepetroleum:diesel_sulfur=100,100",
+
+                "ad_astra:fuel=115,100",
+                "ad_astra:cryo_fuel=230,60",
+                "ad_astra:hydrogen=230,90",
+
+                "immersiveengineering:creosote=50,180",
+
+                "modern_industrialization:biodiesel=90,110",
+                "modern_industrialization:diesel=100,100",
+                "modern_industrialization:hydrogen=230,90",
+                "modern_industrialization:naphtha=95,105",
+                "modern_industrialization:synthetic_oil=75,140",
+                "modern_industrialization:raw_biodiesel=70,145",
+                "modern_industrialization:creosote=50,180",
+                "modern_industrialization:light_fuel=100,105",
+                "modern_industrialization:heavy_fuel=85,125",
+                "modern_industrialization:boosted_diesel=150,75",
+
+                "northstar:hydrogen=230,90",
+
+                "petrochem:diesel=100,100",
+                "petrochem:gasoline=125,80",
+                "petrochem:kerosene=230,90",
+                "petrochem:fuel_oil=85,125",
+                "petrochem:hydrogen=230,90",
+                "petrochem:lpg=120,85",
+
+                "stellaris:hydrogen=230,90",
+
+                "tfmg:creosote=50,180",
+                "tfmg:furnace_gas=45,190",
+                "tfmg:butane=125,80",
+                "tfmg:hydrogen=230,90",
+                "tfmg:propane=115,90",
+
+                "gtceu:naphtha=95,105",
+                "gtceu:sulfuric_light_fuel=80,135",
+                "gtceu:methanol=60,155",
+                "gtceu:ethanol=70,140",
+                "gtceu:octane=125,85",
+                "gtceu:bio_diesel=90,110",
+                "gtceu:light_fuel=100,105",
+                "gtceu:diesel=100,100",
+                "gtceu:cetane_boosted_diesel=150,75",
+                "gtceu:rocket_fuel=230,85",
+                "gtceu:gasoline=125,80",
+                "gtceu:high_octane_gasoline=175,60",
+                "gtceu:toluene=105,105",
+                "gtceu:natural_gas=100,105",
+                "gtceu:wood_gas=60,160",
+                "gtceu:sulfuric_gas=80,135",
+                "gtceu:sulfuric_naphtha=75,140",
+                "gtceu:coal_gas=70,145",
+                "gtceu:methane=105,95",
+                "gtceu:ethylene=105,100",
+                "gtceu:refinery_gas=105,100",
+                "gtceu:ethane=110,95",
+                "gtceu:propene=110,95",
+                "gtceu:butadiene=110,100",
+                "gtceu:propane=115,90",
+                "gtceu:butene=115,90",
+                "gtceu:phenol=85,125",
+                "gtceu:benzene=110,100",
+                "gtceu:butane=125,80",
+                "gtceu:lpg=120,85",
+                "gtceu:nitrobenzene=150,80",
+
+                "gtceu:uu_matter=1000,25",
+                "modern_industrialization:uu_matter=1000,25"
         ));
     }
 
