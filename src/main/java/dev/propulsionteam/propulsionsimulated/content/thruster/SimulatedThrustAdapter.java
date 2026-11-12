@@ -1,11 +1,13 @@
 package dev.propulsionteam.propulsionsimulated.content.thruster;
 
 import dev.ryanhcode.sable.Sable;
+import dev.ryanhcode.sable.api.physics.force.ForceGroup;
 import dev.ryanhcode.sable.api.physics.force.ForceGroups;
 import dev.ryanhcode.sable.api.physics.force.QueuedForceGroup;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
@@ -16,6 +18,9 @@ import java.lang.reflect.Method;
 import java.util.function.Supplier;
 
 public final class SimulatedThrustAdapter {
+    private static final ResourceLocation SPACE_DIMENSION = ResourceLocation.parse("astronautics:space");
+    private static final ResourceLocation SPACE_THRUST_GROUP = ResourceLocation.parse("astronautics:thrusters");
+
     private SimulatedThrustAdapter() {
     }
 
@@ -35,7 +40,11 @@ public final class SimulatedThrustAdapter {
     }
 
     public static void applyImpulseAtPoint(final ServerSubLevel subLevel, final Vector3d pointLocal, final Vector3d impulseLocal) {
-        final QueuedForceGroup forceGroup = subLevel.getOrCreateQueuedForceGroup(getForceGroup("PROPULSION"));
+        ForceGroup group = getForceGroup("PROPULSION");
+        if (subLevel.getLevel().dimension().location().equals(SPACE_DIMENSION)) {
+            group = ForceGroups.REGISTRY.getOptional(SPACE_THRUST_GROUP).orElse(group);
+        }
+        final QueuedForceGroup forceGroup = subLevel.getOrCreateQueuedForceGroup(group);
         forceGroup.applyAndRecordPointForce(pointLocal, impulseLocal);
     }
 
