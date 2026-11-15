@@ -4,8 +4,8 @@ Dump a Create Ponder schematic .nbt into readable JSON.
 
 Usage:
   python tools/dump_ponder_nbt.py \
-    --input src/main/resources/assets/createpropulsion/ponder/tilt_adapter.nbt \
-    --output tilt_adapter_blocks.json
+    --input src/main/resources/assets/createpropulsion/ponder/solid_burner.nbt \
+    --output solid_burner_blocks.json
 """
 
 from __future__ import annotations
@@ -117,7 +117,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Dump Ponder schematic NBT blocks + offsets to JSON.")
     parser.add_argument(
         "--input",
-        default="src/main/resources/assets/createpropulsion/ponder/tilt_adapter.nbt",
+        default="src/main/resources/assets/createpropulsion/ponder/solid_burner.nbt",
         help="Path to schematic .nbt file",
     )
     parser.add_argument(

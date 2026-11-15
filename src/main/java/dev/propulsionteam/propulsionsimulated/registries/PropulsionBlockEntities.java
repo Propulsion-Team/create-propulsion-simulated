@@ -15,8 +15,6 @@ import dev.propulsionteam.propulsionsimulated.content.thruster.ion_thruster.IonT
 import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.liquid_vector_thruster.LiquidVectorThrusterBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.thruster.thruster.ThrusterBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.VectorThrusterBlockEntity;
-import dev.propulsionteam.propulsionsimulated.content.tilt_adapter.AdvancedTiltAdapterBlockEntity;
-import dev.propulsionteam.propulsionsimulated.content.tilt_adapter.TiltAdapterBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.thruster.thruster.creative_thruster.CreativeThrusterBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.redstone_converter.RedstoneConverterBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.redstone_transmission.RedstoneTransmissionBlockEntity;
@@ -89,13 +87,7 @@ public class PropulsionBlockEntities {
         BLOCK_ENTITY_TYPES.register("stirling_engine_block_entity",
             () -> BlockEntityType.Builder.of((pos, state) -> new StirlingEngineBlockEntity(pos, state), PropulsionBlocks.STIRLING_ENGINE_BLOCK.get()).build(null));
 
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TiltAdapterBlockEntity>> TILT_ADAPTER_BLOCK_ENTITY =
-        BLOCK_ENTITY_TYPES.register("tilt_adapter_block_entity",
-            () -> BlockEntityType.Builder.of((pos, state) -> new TiltAdapterBlockEntity(pos, state), PropulsionBlocks.TILT_ADAPTER_BLOCK.get()).build(null));
 
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<AdvancedTiltAdapterBlockEntity>> ADVANCED_TILT_ADAPTER_BLOCK_ENTITY =
-        BLOCK_ENTITY_TYPES.register("advanced_tilt_adapter_block_entity",
-            () -> BlockEntityType.Builder.of(AdvancedTiltAdapterBlockEntity::new, PropulsionBlocks.ADVANCED_TILT_ADAPTER_BLOCK.get()).build(null));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<PropulsionCopycatWingBlockEntity>> COPYCAT_WING_BLOCK_ENTITY =
         BLOCK_ENTITY_TYPES.register("copycat_wing_block_entity",

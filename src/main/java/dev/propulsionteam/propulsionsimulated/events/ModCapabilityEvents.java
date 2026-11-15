@@ -155,11 +155,6 @@ public class ModCapabilityEvents {
             );
             event.registerBlockEntity(
                 capability,
-                PropulsionBlockEntities.TILT_ADAPTER_BLOCK_ENTITY.get(),
-                (be, side) -> be.computerBehaviour == null ? null : be.computerBehaviour.getPeripheralCapability()
-            );
-            event.registerBlockEntity(
-                capability,
                 PropulsionBlockEntities.CORAL_GENERATOR_BLOCK_ENTITY.get(),
                 (be, side) -> be.computerBehaviour == null ? null : be.computerBehaviour.getPeripheralCapability()
             );

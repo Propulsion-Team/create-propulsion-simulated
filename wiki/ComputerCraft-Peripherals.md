@@ -225,16 +225,6 @@ Separate peripheral implementation (`CreativeVectorThrusterPeripheral`): directi
 
 ---
 
-## Tilt adapter (`tilt_adapter`)
-
-| Method | Notes |
-|--------|--------|
-| `getLeftSignal()` | |
-| `getRightSignal()` | |
-| `setTargetAngle(angle)` | While attached, computer drives tilt target |
-
----
-
 ## Coral generator (`coral_generator`)
 
 | Method |

@@ -12,8 +12,6 @@
     "createpropulsion:solid_burner",
     "createpropulsion:liquid_burner",
     "createpropulsion:stirling_engine",
-    "createpropulsion:tilt_adapter",
-    "createpropulsion:advanced_tilt_adapter",
     "createpropulsion:wing",
     "createpropulsion:tempered_wing",
     "createpropulsion:copycat_wing",

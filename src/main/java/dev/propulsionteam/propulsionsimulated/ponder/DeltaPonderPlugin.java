@@ -27,9 +27,6 @@ public class DeltaPonderPlugin implements PonderPlugin {
         HELPER.forComponents(PropulsionBlocks.REDSTONE_TRANSMISSION_BLOCK.get())
                 .addStoryBoard("redstone_transmission", TransmissionScenes::directControl)
                 .addStoryBoard("redstone_transmission", TransmissionScenes::incrementalControl);
-        //Tilt adapter
-        HELPER.forComponents(PropulsionBlocks.TILT_ADAPTER_BLOCK.get())
-                .addStoryBoard("tilt_adapter", TiltAdapterScenes::redstoneControl);
         //Thruster
         HELPER.forComponents(PropulsionBlocks.THRUSTER_BLOCK.get())
                 .addStoryBoard("ponder_thruster_normal", ThrusterScenes::normal)
@@ -58,7 +55,6 @@ public class DeltaPonderPlugin implements PonderPlugin {
         final PonderTagRegistrationHelper<Block> HELPER = helper.withKeyFunction(BuiltInRegistries.BLOCK::getKey);
         HELPER.addToTag(AllCreatePonderTags.KINETIC_APPLIANCES)
             .add(PropulsionBlocks.STIRLING_ENGINE_BLOCK.get())
-            .add(PropulsionBlocks.TILT_ADAPTER_BLOCK.get())
             .add(PropulsionBlocks.VECTOR_THRUSTER_BLOCK.get())
             .add(PropulsionBlocks.CREATIVE_VECTOR_THRUSTER_BLOCK.get())
             .add(PropulsionBlocks.LIQUID_VECTOR_THRUSTER_BLOCK.get());

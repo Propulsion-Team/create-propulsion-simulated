@@ -34,25 +34,6 @@ class BlockstateResourcesTest {
         }
     }
 
-    @Test
-    void tiltAdaptersCoverAllAxisAndFacingCombinations() throws IOException {
-        for (String adapter : List.of("tilt_adapter", "advanced_tilt_adapter")) {
-            JsonObject variants = load("blockstates/" + adapter + ".json").getAsJsonObject("variants");
-            assertEquals(36, variants.size());
-            for (String axis : List.of("x", "y", "z")) {
-                for (boolean alongFirst : List.of(false, true)) {
-                    for (String facing : List.of("north", "south", "east", "west", "up", "down")) {
-                        String key = "axis=" + axis + ",axis_along_first=" + alongFirst + ",facing=" + facing;
-                        JsonObject variant = variants.getAsJsonObject(key);
-                        assertNotNull(variant, adapter + ": " + key);
-                        String model = variant.get("model").getAsString();
-                        load("models/" + model.substring("createpropulsion:".length()) + ".json");
-                    }
-                }
-            }
-        }
-    }
-
     private static JsonObject load(String path) throws IOException {
         String resource = "assets/createpropulsion/" + path;
         var stream = BlockstateResourcesTest.class.getClassLoader().getResourceAsStream(resource);
