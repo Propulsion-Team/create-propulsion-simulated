@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "create:crushed_raw_platinum"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "createpropulsion:crushed_raw_platinum"
+  }
+}

@@ -195,6 +195,7 @@
     "item.createpropulsion.platinum_nugget": "Платиновый кусочек",
     "item.createpropulsion.platinum_sheet": "Платиновый лист",
     "item.createpropulsion.raw_platinum": "Рудная платина",
+    "item.createpropulsion.crushed_raw_platinum": "Дроблёная рудная платина",
     "item.createpropulsion.cable_spool": "Кабельная катушка",
     "item.createpropulsion.cable_spool.first_set": "Начало кабеля установлено",
     "block.createpropulsion.cable": "Кабель",

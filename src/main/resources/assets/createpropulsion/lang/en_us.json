@@ -231,6 +231,7 @@
     "item.createpropulsion.platinum_nugget": "Platinum Nugget",
     "item.createpropulsion.platinum_sheet": "Platinum Sheet",
     "item.createpropulsion.raw_platinum": "Raw Platinum",
+    "item.createpropulsion.crushed_raw_platinum": "Crushed Raw Platinum",
     "item.createpropulsion.cable_spool": "Cable Spool",
     "item.createpropulsion.cable_spool.first_set": "Cable start set",
     "block.createpropulsion.cable": "Cable",

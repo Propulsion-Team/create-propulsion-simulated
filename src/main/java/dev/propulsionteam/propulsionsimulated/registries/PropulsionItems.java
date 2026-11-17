@@ -32,6 +32,8 @@ public class PropulsionItems {
         ITEMS.register("platinum_sheet", () -> new Item(new Item.Properties()));
     public static final DeferredHolder<Item, Item> RAW_PLATINUM =
         ITEMS.register("raw_platinum", () -> new Item(new Item.Properties()));
+    public static final DeferredHolder<Item, Item> CRUSHED_RAW_PLATINUM =
+        ITEMS.register("crushed_raw_platinum", () -> new Item(new Item.Properties()));
     public static final DeferredHolder<Item, Item> SOUND_MUFFLER =
         ITEMS.register("sound_muffler", () -> new CreateStyleTooltipItem(new Item.Properties()));
     public static final DeferredHolder<Item, Item> TOOLGUN =

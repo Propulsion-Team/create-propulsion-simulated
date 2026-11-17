@@ -1,7 +1,7 @@
 {
   "type": "minecraft:smelting",
   "ingredient": {
-    "item": "create:crushed_raw_platinum"
+    "item": "createpropulsion:crushed_raw_platinum"
   },
   "result": {
     "id": "createpropulsion:platinum_ingot"

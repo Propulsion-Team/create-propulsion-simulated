@@ -206,6 +206,7 @@
     "item.createpropulsion.platinum_nugget": "Платиновий самородок",
     "item.createpropulsion.platinum_sheet": "Платиновий лист",
     "item.createpropulsion.raw_platinum": "Необроблена платина",
+    "item.createpropulsion.crushed_raw_platinum": "Подрібнена необроблена платина",
     "item.createpropulsion.cable_spool": "Котушка кабелю",
     "item.createpropulsion.cable_spool.first_set": "Стартовий набір кабелю",
     "block.createpropulsion.cable": "Кабель",

@@ -204,6 +204,7 @@
   "item.createpropulsion.platinum_nugget": "铂粒",
   "item.createpropulsion.platinum_sheet": "铂板",
   "item.createpropulsion.raw_platinum": "粗铂",
+  "item.createpropulsion.crushed_raw_platinum": "粉碎粗铂",
   "item.createpropulsion.cable_spool": "线缆卷轴",
   "item.createpropulsion.cable_spool.first_set": "线缆起点已设置",
   "block.createpropulsion.cable": "线缆",
