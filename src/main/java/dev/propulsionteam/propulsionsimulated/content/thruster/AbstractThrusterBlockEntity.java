@@ -234,9 +234,7 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
 
         boolean startupChanged = updateStartupState();
         sampleResourceDemandForTick();
-        if (!PropulsionConfig.useShaderPlumes()) {
-            emitResolvedParticles(level, worldPosition, currentBlockState);
-        }
+        emitResolvedParticles(level, worldPosition, currentBlockState);
 
         currentTick++;
         final int tick_rate = 10;
@@ -823,6 +821,9 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
             if (level instanceof ServerLevel serverLevel) {
                 double maxDistSq = getParticleBroadcastRange() * getParticleBroadcastRange();
                 for (ServerPlayer player : serverLevel.players()) {
+                    if (!PlumeViewerPreferences.wantsParticles(player)) {
+                        continue;
+                    }
                     if (player.distanceToSqr(broadcastPosition.x, broadcastPosition.y, broadcastPosition.z) > maxDistSq) {
                         continue;
                     }

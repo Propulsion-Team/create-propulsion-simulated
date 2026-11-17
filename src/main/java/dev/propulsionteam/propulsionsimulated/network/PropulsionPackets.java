@@ -8,7 +8,7 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 public class PropulsionPackets {
-    private static final String NETWORK_PROTOCOL_VERSION = "2";
+    private static final String NETWORK_PROTOCOL_VERSION = "3";
 
     public static void register(RegisterPayloadHandlersEvent event) {
         PayloadRegistrar registrar = event.registrar(NETWORK_PROTOCOL_VERSION);
@@ -21,6 +21,11 @@ public class PropulsionPackets {
             SyncSolidThrusterFuelsPacket.TYPE,
             SyncSolidThrusterFuelsPacket.STREAM_CODEC,
             (payload, context) -> payload.handle()
+        );
+        registrar.playToServer(
+            PlumeRenderModePacket.TYPE,
+            PlumeRenderModePacket.STREAM_CODEC,
+            PlumeRenderModePacket::handle
         );
     }
 

@@ -10,6 +10,7 @@ import dev.propulsionteam.propulsionsimulated.content.thruster.SolidThrusterFuel
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionCommands;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionFluids;
 import dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterFuelManager;
+import dev.propulsionteam.propulsionsimulated.content.thruster.PlumeViewerPreferences;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -31,6 +32,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.AddReloadListenerEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
@@ -74,6 +76,16 @@ public class ForgeEvents {
                 serverPlayer
             );
         }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
+        PlumeViewerPreferences.forget(event.getEntity().getUUID());
+    }
+
+    @SubscribeEvent
+    public static void onServerStopped(ServerStoppedEvent event) {
+        PlumeViewerPreferences.clear();
     }
 
     @SubscribeEvent
