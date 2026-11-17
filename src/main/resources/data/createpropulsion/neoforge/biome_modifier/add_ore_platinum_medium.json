@@ -1,4 +1,9 @@
 {
+  "neoforge:conditions": [
+    {
+      "type": "createpropulsion:worldgen_enabled"
+    }
+  ],
   "type": "neoforge:add_features",
   "biomes": "#c:is_overworld",
   "features": "createpropulsion:ore_platinum_medium",

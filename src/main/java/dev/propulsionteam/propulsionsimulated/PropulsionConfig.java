@@ -92,6 +92,9 @@ public class PropulsionConfig {
     public static final ModConfigSpec.ConfigValue<Double> STIRLING_CRANK_RADIUS;
     public static final ModConfigSpec.ConfigValue<Double> STIRLING_CONROD_LENGTH;
 
+    // Worldgen
+    public static final ModConfigSpec.BooleanValue DISABLE_WORLDGEN;
+
     // Burners
     public static final ModConfigSpec.ConfigValue<Boolean> BURNERS_POWER_HEATED_MIXERS;
     public static final ModConfigSpec.ConfigValue<Boolean> BURNERS_HEAT_STEAM_ENGINES;
@@ -346,6 +349,12 @@ public class PropulsionConfig {
             THRUSTER_DYE_COLORS.put("minecraft:" + e[0] + "_dye",
                     COMMON_BUILDER.define(e[0], e[1]));
         }
+        COMMON_BUILDER.pop();
+
+        COMMON_BUILDER.push("Worldgen");
+        DISABLE_WORLDGEN = COMMON_BUILDER.comment(
+                        "If true, platinum ore does not generate. Applies to newly generated chunks after a world restart.")
+                .define("Disable Worldgen", false);
         COMMON_BUILDER.pop();
 
         PropulsionDefaultStress.INSTANCE.registerAll(COMMON_BUILDER);

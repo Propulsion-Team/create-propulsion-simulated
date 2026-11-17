@@ -79,6 +79,12 @@ class PlatinumWorldgenTest {
             assertEquals("#c:is_overworld", modifier.get("biomes").getAsString());
             assertEquals("underground_ores", modifier.get("step").getAsString());
             assertEquals("createpropulsion:" + expectation.name(), modifier.get("features").getAsString());
+
+            JsonArray conditions = modifier.getAsJsonArray("neoforge:conditions");
+            assertNotNull(conditions, "add_" + expectation.name() + " must be gated by the worldgen config");
+            assertEquals(1, conditions.size());
+            assertEquals("createpropulsion:worldgen_enabled",
+                    conditions.get(0).getAsJsonObject().get("type").getAsString());
         }
     }
 

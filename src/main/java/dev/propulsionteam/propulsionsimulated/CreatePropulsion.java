@@ -8,6 +8,7 @@ import dev.propulsionteam.propulsionsimulated.events.ModSetupEvents;
 import dev.propulsionteam.propulsionsimulated.network.PropulsionPackets;
 import dev.propulsionteam.propulsionsimulated.particles.ParticleTypes;
 import dev.propulsionteam.propulsionsimulated.assemblerstick.item.ModItems;
+import dev.propulsionteam.propulsionsimulated.worldgen.WorldgenEnabledCondition;
 import com.simibubi.create.compat.Mods;
 
 import net.minecraft.resources.ResourceLocation;
@@ -39,6 +40,7 @@ public class CreatePropulsion {
         ModItems.register(modBus);
         PropulsionSoundEvents.register(modBus);
         PropulsionFluids.register(modBus);
+        WorldgenEnabledCondition.register(modBus);
         PropulsionPartialModels.register();
         PropulsionCreativeTab.register(modBus);
         modBus.addListener(PropulsionPackets::register);
