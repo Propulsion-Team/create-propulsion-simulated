@@ -1,17 +1,33 @@
 package dev.propulsionteam.propulsionsimulated.client.render.plume;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
+import dev.propulsionteam.propulsionsimulated.CreatePropulsion;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 
+import java.util.ArrayList;
+import java.util.List;
+
+@EventBusSubscriber(modid = CreatePropulsion.ID, value = Dist.CLIENT)
 public final class PlumeRenderer {
+    private static final List<PendingPlume> PENDING = new ArrayList<>();
+
+    private record PendingPlume(Matrix4f pose, Matrix4f modelView, Matrix4f projection,
+                                PlumeRenderParams params, float time, Vec3 direction) {}
+
     private PlumeRenderer() {
     }
 
@@ -31,6 +47,43 @@ public final class PlumeRenderer {
         if (params.radius() <= 0.004f) return;
         if (direction.lengthSqr() <= 1.0e-8d) return;
 
+        PENDING.add(new PendingPlume(new Matrix4f(ms.last().pose()),
+                new Matrix4f(RenderSystem.getModelViewMatrix()), new Matrix4f(RenderSystem.getProjectionMatrix()),
+                params, time, direction));
+    }
+
+    @SubscribeEvent
+    public static void renderPending(RenderLevelStageEvent event) {
+        if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_SKY) {
+            PENDING.clear();
+            return;
+        }
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_LEVEL) return;
+        if (PENDING.isEmpty()) return;
+        MultiBufferSource.BufferSource buffer = Minecraft.getInstance().renderBuffers().bufferSource();
+        PoseStack ms = new PoseStack();
+        Matrix4f projection = new Matrix4f(RenderSystem.getProjectionMatrix());
+        var sorting = RenderSystem.getVertexSorting();
+        var modelView = RenderSystem.getModelViewStack();
+        modelView.pushMatrix();
+        try {
+            for (PendingPlume plume : PENDING) {
+                modelView.set(plume.modelView());
+                RenderSystem.applyModelViewMatrix();
+                RenderSystem.setProjectionMatrix(plume.projection(), sorting);
+                ms.last().pose().set(plume.pose());
+                draw(ms, buffer, plume.params(), plume.time(), plume.direction());
+                buffer.endBatch(PlumeRenderType.plume());
+            }
+        } finally {
+            modelView.popMatrix();
+            RenderSystem.applyModelViewMatrix();
+            RenderSystem.setProjectionMatrix(projection, sorting);
+            PENDING.clear();
+        }
+    }
+
+    private static void draw(PoseStack ms, MultiBufferSource buffer, PlumeRenderParams params, float time, Vec3 direction) {
         ShaderInstance shader = PlumeShaders.plume();
         if (shader != null) {
             set(shader, "Time", time);

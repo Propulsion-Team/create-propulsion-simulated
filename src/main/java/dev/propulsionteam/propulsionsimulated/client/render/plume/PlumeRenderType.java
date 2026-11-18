@@ -34,6 +34,7 @@ public final class PlumeRenderType extends RenderType {
                     ))
                     .setDepthTestState(RenderStateShard.LEQUAL_DEPTH_TEST)
                     .setWriteMaskState(RenderStateShard.COLOR_WRITE)
+                    .setOutputState(RenderStateShard.MAIN_TARGET)
                     .setCullState(RenderStateShard.NO_CULL)
                     .setLightmapState(RenderStateShard.NO_LIGHTMAP)
                     .setOverlayState(RenderStateShard.NO_OVERLAY)
