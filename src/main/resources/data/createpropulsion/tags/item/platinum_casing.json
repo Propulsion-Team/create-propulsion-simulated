@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "createpropulsion:platinum_casing",
+    "createpropulsion:striped_platinum_casing",
+    "createpropulsion:barred_platinum_casing",
+    "createpropulsion:reinforced_platinum_casing"
+  ]
+}

@@ -28,6 +28,9 @@
     "createpropulsion:platinum_fluid_tank",
     "createpropulsion:platinum_fluid_vessel",
     "createpropulsion:platinum_casing",
+    "createpropulsion:striped_platinum_casing",
+    "createpropulsion:barred_platinum_casing",
+    "createpropulsion:reinforced_platinum_casing",
     "createpropulsion:single_rcs_thruster",
     "createpropulsion:rcs_thruster"
   ]

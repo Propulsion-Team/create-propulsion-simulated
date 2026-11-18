@@ -22,6 +22,9 @@
     "createpropulsion:cable_hub",
     "createpropulsion:cable_relay",
     "createpropulsion:platinum_casing",
+    "createpropulsion:striped_platinum_casing",
+    "createpropulsion:barred_platinum_casing",
+    "createpropulsion:reinforced_platinum_casing",
     "createpropulsion:platinum_fluid_tank",
     "createpropulsion:platinum_fluid_vessel"
   ]

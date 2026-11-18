@@ -173,6 +173,9 @@ public class ModClientEvents {
         PropulsionInstanceTypes.register();
 
         CreateClient.CASING_CONNECTIVITY.makeCasing(PropulsionBlocks.PLATINUM_CASING.get(), PropulsionSpriteShifts.PLATINUM_CASING_TEXTURE);
+        CreateClient.CASING_CONNECTIVITY.makeCasing(PropulsionBlocks.STRIPED_PLATINUM_CASING.get(), PropulsionSpriteShifts.STRIPED_PLATINUM_CASING_TEXTURE);
+        CreateClient.CASING_CONNECTIVITY.makeCasing(PropulsionBlocks.BARRED_PLATINUM_CASING.get(), PropulsionSpriteShifts.BARRED_PLATINUM_CASING_TEXTURE);
+        CreateClient.CASING_CONNECTIVITY.makeCasing(PropulsionBlocks.REINFORCED_PLATINUM_CASING.get(), PropulsionSpriteShifts.REINFORCED_PLATINUM_CASING_TEXTURE);
 
         SimpleBlockEntityVisualizer.builder(PropulsionBlockEntities.STIRLING_ENGINE_BLOCK_ENTITY.get())
             .factory(StirlingEngineVisual::new)
@@ -212,6 +215,15 @@ public class ModClientEvents {
         ModelSwapper.swapModels(event.getModels(),
             ModelSwapper.getAllBlockStateModelLocations(PropulsionBlocks.PLATINUM_CASING.get()),
             model -> new CTModel(model, behaviour));
+        ModelSwapper.swapModels(event.getModels(),
+            ModelSwapper.getAllBlockStateModelLocations(PropulsionBlocks.STRIPED_PLATINUM_CASING.get()),
+            model -> new CTModel(model, new EncasedCTBehaviour(PropulsionSpriteShifts.STRIPED_PLATINUM_CASING_TEXTURE)));
+        ModelSwapper.swapModels(event.getModels(),
+            ModelSwapper.getAllBlockStateModelLocations(PropulsionBlocks.BARRED_PLATINUM_CASING.get()),
+            model -> new CTModel(model, new EncasedCTBehaviour(PropulsionSpriteShifts.BARRED_PLATINUM_CASING_TEXTURE)));
+        ModelSwapper.swapModels(event.getModels(),
+            ModelSwapper.getAllBlockStateModelLocations(PropulsionBlocks.REINFORCED_PLATINUM_CASING.get()),
+            model -> new CTModel(model, new EncasedCTBehaviour(PropulsionSpriteShifts.REINFORCED_PLATINUM_CASING_TEXTURE)));
         ModelSwapper.swapModels(event.getModels(),
             ModelSwapper.getAllBlockStateModelLocations(PropulsionBlocks.PLATINUM_FLUID_TANK.get()),
             PlatinumFluidTankModel::new);

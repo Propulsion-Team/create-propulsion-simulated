@@ -127,6 +127,12 @@ public class PropulsionBlocks {
     public static final DeferredBlock<PlatinumCasingBlock> PLATINUM_CASING = BLOCKS.register("platinum_casing",
         () -> new PlatinumCasingBlock(Block.Properties.of().mapColor(MapColor.METAL).sound(SoundType.METAL)
             .requiresCorrectToolForDrops().strength(5.0f, 6.0f)));
+    public static final DeferredBlock<PlatinumCasingBlock> STRIPED_PLATINUM_CASING = BLOCKS.register("striped_platinum_casing",
+        () -> new PlatinumCasingBlock(Block.Properties.ofFullCopy(PLATINUM_CASING.get())));
+    public static final DeferredBlock<PlatinumCasingBlock> BARRED_PLATINUM_CASING = BLOCKS.register("barred_platinum_casing",
+        () -> new PlatinumCasingBlock(Block.Properties.ofFullCopy(PLATINUM_CASING.get())));
+    public static final DeferredBlock<PlatinumCasingBlock> REINFORCED_PLATINUM_CASING = BLOCKS.register("reinforced_platinum_casing",
+        () -> new PlatinumCasingBlock(Block.Properties.ofFullCopy(PLATINUM_CASING.get())));
     public static final DeferredBlock<PlatinumFluidTankBlock> PLATINUM_FLUID_TANK = BLOCKS.register("platinum_fluid_tank",
         () -> new PlatinumFluidTankBlock(Block.Properties.of().mapColor(MapColor.METAL).sound(SoundType.COPPER)
             .requiresCorrectToolForDrops().strength(2.5f, 2.0f).noOcclusion().isRedstoneConductor((s, l, p) -> true)));
@@ -177,6 +183,9 @@ public class PropulsionBlocks {
         registerDefaultBlockItem("platinum_block", PLATINUM_BLOCK);
         registerDefaultBlockItem("raw_platinum_block", RAW_PLATINUM_BLOCK);
         registerDefaultBlockItem("platinum_casing", PLATINUM_CASING);
+        registerDefaultBlockItem("striped_platinum_casing", STRIPED_PLATINUM_CASING);
+        registerDefaultBlockItem("barred_platinum_casing", BARRED_PLATINUM_CASING);
+        registerDefaultBlockItem("reinforced_platinum_casing", REINFORCED_PLATINUM_CASING);
         BLOCK_ITEMS.register("platinum_fluid_tank", () -> new PlatinumFluidTankItem(PLATINUM_FLUID_TANK.get(), new BlockItem.Properties()));
         BLOCK_ITEMS.register("platinum_fluid_vessel", () -> new PlatinumFluidVesselItem(PLATINUM_FLUID_VESSEL.get(), new BlockItem.Properties()));
         registerBlockItem("coral_generator", CORAL_GENERATOR, new BlockItem.Properties().rarity(Rarity.RARE));

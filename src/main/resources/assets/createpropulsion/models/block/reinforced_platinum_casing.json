@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "createpropulsion:block/reinforced_platinum_casing"
+  }
+}

@@ -13,7 +13,7 @@
       "item": "createpropulsion:cable"
     },
     "D": {
-      "item": "createpropulsion:platinum_casing"
+      "tag": "createpropulsion:platinum_casing"
     }
   },
   "result": {

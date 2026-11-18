@@ -15,6 +15,9 @@
     "createpropulsion:raw_platinum_block",
     "createpropulsion:coral_generator",
     "createpropulsion:platinum_casing",
+    "createpropulsion:striped_platinum_casing",
+    "createpropulsion:barred_platinum_casing",
+    "createpropulsion:reinforced_platinum_casing",
     "createpropulsion:single_rcs_thruster",
     "createpropulsion:rcs_thruster"
   ]

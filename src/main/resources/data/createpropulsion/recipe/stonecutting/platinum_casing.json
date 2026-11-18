@@ -1,0 +1,10 @@
+{
+    "type": "minecraft:stonecutting",
+    "ingredient": {
+        "tag": "createpropulsion:platinum_casing"
+    },
+    "result": {
+        "id": "createpropulsion:platinum_casing",
+        "count": 1
+    }
+}
