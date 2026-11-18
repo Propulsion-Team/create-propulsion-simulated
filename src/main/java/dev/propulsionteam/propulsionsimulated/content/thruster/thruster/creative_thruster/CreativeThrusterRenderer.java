@@ -7,7 +7,6 @@ import com.simibubi.create.foundation.blockEntity.renderer.SmartBlockEntityRende
 import dev.propulsionteam.propulsionsimulated.client.render.plume.ThrusterPlumeRenderer;
 import dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterDebugRenderer;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionPartialModels;
-import dev.engine_room.flywheel.api.visualization.VisualizationManager;
 import dev.engine_room.flywheel.lib.model.baked.PartialModel;
 import net.createmod.catnip.render.CachedBuffers;
 import net.createmod.catnip.render.SuperByteBuffer;
@@ -38,10 +37,6 @@ public class CreativeThrusterRenderer extends SmartBlockEntityRenderer<CreativeT
 
         if (be.isController() && be.isMultiblock()) {
             renderMultiblock(be, ms, buffer, light, overlay, state);
-            return;
-        }
-
-        if (VisualizationManager.supportsVisualization(be.getLevel())) {
             return;
         }
 
