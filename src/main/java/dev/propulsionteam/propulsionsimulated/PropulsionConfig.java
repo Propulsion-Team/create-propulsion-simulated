@@ -38,6 +38,8 @@ public class PropulsionConfig {
 
     public static final ModConfigSpec.DoubleValue SINGLE_RCS_THRUST;
     public static final ModConfigSpec.DoubleValue RCS_THRUST;
+    public static final ModConfigSpec.DoubleValue RCS_HYDRAZINE_THRUST_MULTIPLIER;
+    public static final ModConfigSpec.IntValue RCS_HYDRAZINE_DRAIN_PER_TICK;
     public static final ModConfigSpec.DoubleValue RCS_FLAME_SCALE;
     public static final ModConfigSpec.DoubleValue RCS_SOUND_VOLUME;
     public static final ModConfigSpec.IntValue RCS_SOUND_RANGE;
@@ -165,6 +167,8 @@ public class PropulsionConfig {
         COMMON_BUILDER.push("rcsThruster");
         SINGLE_RCS_THRUST = COMMON_BUILDER.defineInRange("singleThrustPn", 100.0d, 0.0d, 10000000.0d);
         RCS_THRUST = COMMON_BUILDER.defineInRange("fullThrustPerNozzlePn", 100.0d, 0.0d, 10000000.0d);
+        RCS_HYDRAZINE_THRUST_MULTIPLIER = COMMON_BUILDER.defineInRange("hydrazineThrustMultiplier", 2.5d, 1.0d, 1000.0d);
+        RCS_HYDRAZINE_DRAIN_PER_TICK = COMMON_BUILDER.defineInRange("hydrazineDrainPerTick", 2, 0, 1000);
         RCS_FLAME_SCALE = COMMON_BUILDER.defineInRange("flameScale", 1.0d, 0.0d, 8.0d);
         RCS_SOUND_VOLUME = COMMON_BUILDER.defineInRange("soundVolume", 1.0d, 0.0d, 4.0d);
         RCS_SOUND_RANGE = COMMON_BUILDER.defineInRange("soundRangeBlocks", 32, 1, 256);

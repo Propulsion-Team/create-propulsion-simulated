@@ -47,6 +47,11 @@ public class ModCapabilityEvents {
             PropulsionBlockEntities.LIQUID_VECTOR_THRUSTER_BLOCK_ENTITY.get(),
             ModCapabilityEvents::getLiquidVectorThrusterFluidHandler
         );
+        event.registerBlockEntity(
+            Capabilities.FluidHandler.BLOCK,
+            PropulsionBlockEntities.RCS_THRUSTER_BLOCK_ENTITY.get(),
+            (be, side) -> be.tank.getPrimaryHandler()
+        );
 
         event.registerBlockEntity(
             Capabilities.FluidHandler.BLOCK,

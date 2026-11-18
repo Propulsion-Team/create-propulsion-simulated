@@ -1,6 +1,7 @@
 package dev.propulsionteam.propulsionsimulated.content.thruster.rcs_thruster;
 
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
+import com.simibubi.create.foundation.blockEntity.behaviour.fluid.SmartFluidTankBehaviour;
 import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
 import com.simibubi.create.foundation.utility.CreateLang;
 import dev.createpropulsionsimulated.client.sound.RcsThrusterSoundController;
@@ -13,6 +14,7 @@ import dev.propulsionteam.propulsionsimulated.content.thruster.SimulatedThrustAd
 import dev.propulsionteam.propulsionsimulated.content.thruster.SoundMufflerBehaviour;
 import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.VectorRedstoneLinkBehaviour;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionBlockEntities;
+import dev.propulsionteam.propulsionsimulated.registries.PropulsionFluids;
 import dev.ryanhcode.sable.api.block.BlockEntitySubLevelActor;
 import dev.ryanhcode.sable.api.block.BlockSubLevelAssemblyListener;
 import dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle;
@@ -24,14 +26,17 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import org.joml.Vector3d;
 import java.util.List;
 import java.util.Locale;
 
 public class RcsThrusterBlockEntity extends SmartBlockEntity implements BlockEntitySubLevelActor, BlockSubLevelAssemblyListener, IHaveGoggleInformation {
+    public SmartFluidTankBehaviour tank;
     public VectorRedstoneLinkBehaviour[] links;
     private int wirelessMask;
     private volatile int activeMask;
+    private volatile boolean hydrazineBoost;
 
     public RcsThrusterBlockEntity(BlockPos pos, BlockState state) {
         super(PropulsionBlockEntities.RCS_THRUSTER_BLOCK_ENTITY.get(), pos, state);
@@ -42,7 +47,8 @@ public class RcsThrusterBlockEntity extends SmartBlockEntity implements BlockEnt
     public boolean isFiring(int nozzle) { return (activeMask & (1 << nozzle)) != 0; }
 
     public double thrust() {
-        return (isSingle() ? PropulsionConfig.SINGLE_RCS_THRUST : PropulsionConfig.RCS_THRUST).get();
+        return (isSingle() ? PropulsionConfig.SINGLE_RCS_THRUST : PropulsionConfig.RCS_THRUST).get()
+                * (hydrazineBoost ? PropulsionConfig.RCS_HYDRAZINE_THRUST_MULTIPLIER.get() : 1.0d);
     }
 
     public boolean isActive() { return activeMask != 0 && thrust() > 0; }
@@ -66,6 +72,10 @@ public class RcsThrusterBlockEntity extends SmartBlockEntity implements BlockEnt
 
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
+        tank = SmartFluidTankBehaviour.single(this, 1000);
+        tank.getPrimaryHandler().setValidator(stack -> stack.getFluid() == PropulsionFluids.HYDRAZINE.get()
+                || stack.getFluid() == PropulsionFluids.FLOWING_HYDRAZINE.get());
+        behaviours.add(tank);
         behaviours.add(new SoundMufflerBehaviour(this));
         links = new VectorRedstoneLinkBehaviour[isSingle() ? 1 : 4];
         for (int i = 0; i < links.length; i++) {
@@ -93,7 +103,19 @@ public class RcsThrusterBlockEntity extends SmartBlockEntity implements BlockEnt
     public void tick() {
         super.tick();
         if (level.isClientSide) RcsThrusterSoundController.tick(this);
-        else refreshPower();
+        else {
+            refreshPower();
+            int drain = PropulsionConfig.RCS_HYDRAZINE_DRAIN_PER_TICK.get();
+            boolean boost = isActive() && !tank.getPrimaryHandler().isEmpty()
+                    && tank.getPrimaryHandler().getFluidAmount() >= drain;
+            if (boost && drain > 0) {
+                tank.getPrimaryHandler().drain(drain, IFluidHandler.FluidAction.EXECUTE);
+            }
+            if (hydrazineBoost != boost) {
+                hydrazineBoost = boost;
+                sendData();
+            }
+        }
     }
 
     public void refreshPower() {
@@ -136,12 +158,14 @@ public class RcsThrusterBlockEntity extends SmartBlockEntity implements BlockEnt
     protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.write(tag, registries, clientPacket);
         if (clientPacket) tag.putInt("ActiveNozzles", activeMask);
+        if (clientPacket) tag.putBoolean("HydrazineBoost", hydrazineBoost);
     }
 
     @Override
     protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.read(tag, registries, clientPacket);
         if (clientPacket) activeMask = tag.getInt("ActiveNozzles");
+        if (clientPacket) hydrazineBoost = tag.getBoolean("HydrazineBoost");
     }
 
     @Override
