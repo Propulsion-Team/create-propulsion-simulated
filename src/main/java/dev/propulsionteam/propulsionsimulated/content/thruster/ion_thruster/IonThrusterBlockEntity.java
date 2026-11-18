@@ -1,6 +1,7 @@
 package dev.propulsionteam.propulsionsimulated.content.thruster.ion_thruster;
 
 import dev.propulsionteam.propulsionsimulated.content.thruster.SoundMufflerBehaviour;
+import dev.propulsionteam.propulsionsimulated.content.thruster.PropulsionCoreBehaviour;
 import dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterDamager;
 
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
@@ -113,6 +114,7 @@ public class IonThrusterBlockEntity extends ThrusterBlockEntity {
     @Override
     public void addBehaviours(final List<BlockEntityBehaviour> behaviours) {
         behaviours.add(new SoundMufflerBehaviour(this));
+        behaviours.add(new PropulsionCoreBehaviour(this));
         // Keep ion/vector tankless, but still inherit base behaviours like CC + plume damage.
         if (PropulsionCompatibility.CC_ACTIVE) {
             behaviours.add(computerBehaviour = new ComputerBehaviour(this));

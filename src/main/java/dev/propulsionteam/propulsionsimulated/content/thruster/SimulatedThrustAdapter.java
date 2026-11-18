@@ -9,6 +9,7 @@ import dev.ryanhcode.sable.sublevel.SubLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3d;
@@ -46,6 +47,16 @@ public final class SimulatedThrustAdapter {
         }
         final QueuedForceGroup forceGroup = subLevel.getOrCreateQueuedForceGroup(group);
         forceGroup.applyAndRecordPointForce(pointLocal, impulseLocal);
+    }
+
+    public static void applyImpulseAtPoint(final ServerSubLevel subLevel, final Vector3d pointLocal,
+                                           final Vector3d impulseLocal, final BlockEntity thruster) {
+        Vector3d applicationPoint = pointLocal;
+        if (PropulsionCoreBehaviour.isInstalled(thruster)) {
+            var centerOfMass = subLevel.getMassTracker().getCenterOfMass();
+            if (centerOfMass != null) applicationPoint = new Vector3d(centerOfMass);
+        }
+        applyImpulseAtPoint(subLevel, applicationPoint, impulseLocal);
     }
 
     public static void applyGroundFriction(final ServerSubLevel subLevel, final Vector3d groundFrictionImpulse) {

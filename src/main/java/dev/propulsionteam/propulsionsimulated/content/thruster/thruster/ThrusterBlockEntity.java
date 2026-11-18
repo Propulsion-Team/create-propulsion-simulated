@@ -816,7 +816,7 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
             Vector3d applicationPoint = new Vector3d(centerNozzle.x, centerNozzle.y, centerNozzle.z);
             Vector3d impulseLocal = new Vector3d(directionLocal).mul(thrust * timeStep);
             Vector3d adjustedImpulse = new Vector3d(impulseLocal).div(getThrustUnitsPerKn());
-            SimulatedThrustAdapter.applyImpulseAtPoint(subLevel, applicationPoint, adjustedImpulse);
+            SimulatedThrustAdapter.applyImpulseAtPoint(subLevel, applicationPoint, adjustedImpulse, this);
             return;
         }
         super.sable$physicsTick(subLevel, handle, timeStep);

@@ -5,6 +5,9 @@ import com.simibubi.create.CreateClient;
 import com.simibubi.create.content.decoration.encasing.EncasedCTBehaviour;
 import com.simibubi.create.foundation.block.connected.CTModel;
 import com.simibubi.create.foundation.model.ModelSwapper;
+import com.simibubi.create.foundation.item.render.SimpleCustomRenderer;
+import dev.propulsionteam.propulsionsimulated.content.propulsion_core.PropulsionCoreRenderer;
+import dev.propulsionteam.propulsionsimulated.registries.PropulsionItems;
 import dev.createpropulsionsimulated.client.sound.ThrusterLoopSoundController;
 import dev.createpropulsionsimulated.client.sound.RcsThrusterSoundController;
 import dev.propulsionteam.propulsionsimulated.CreatePropulsion;
@@ -74,6 +77,8 @@ public class ModClientEvents {
 
     @SubscribeEvent
     public static void registerClientExtensions(RegisterClientExtensionsEvent event) {
+        event.registerItem(SimpleCustomRenderer.create(PropulsionItems.PROPULSION_CORE.get(), new PropulsionCoreRenderer()),
+            PropulsionItems.PROPULSION_CORE.get());
         event.registerFluidType(new IClientFluidTypeExtensions() {
             @Override
             public ResourceLocation getStillTexture() {

@@ -194,6 +194,7 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
         behaviours.add(new SoundMufflerBehaviour(this));
+        behaviours.add(new PropulsionCoreBehaviour(this));
         if (PropulsionCompatibility.CC_ACTIVE) {
             ComputerBehaviour behaviour = ComputerBehaviour.tryCreate(this);
             if (behaviour != null) {
@@ -687,7 +688,7 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         }
 
         Vector3d adjustedImpulse = new Vector3d(sample.impulseLocal()).div(getThrustUnitsPerKn());
-        SimulatedThrustAdapter.applyImpulseAtPoint(subLevel, sample.pointLocal(), adjustedImpulse);
+        SimulatedThrustAdapter.applyImpulseAtPoint(subLevel, sample.pointLocal(), adjustedImpulse, this);
     }
 
     @Override

@@ -86,7 +86,8 @@ public abstract class AbstractThrusterBlock extends DirectionalBlock implements 
                                               final Player player,
                                               final InteractionHand hand,
                                               final BlockHitResult hitResult) {
-        if (SoundMufflerBehaviour.handleInteraction(level.getBlockEntity(pos), player, hand)) {
+        if (PropulsionCoreBehaviour.handleInteraction(level.getBlockEntity(pos), player, hand)
+                || SoundMufflerBehaviour.handleInteraction(level.getBlockEntity(pos), player, hand)) {
             return ItemInteractionResult.sidedSuccess(level.isClientSide());
         }
         if (!stack.isEmpty()) {
@@ -132,7 +133,8 @@ public abstract class AbstractThrusterBlock extends DirectionalBlock implements 
                                                final BlockPos pos,
                                                final Player player,
                                                final BlockHitResult hitResult) {
-        if (SoundMufflerBehaviour.handleInteraction(level.getBlockEntity(pos), player, InteractionHand.MAIN_HAND)) {
+        if (PropulsionCoreBehaviour.handleInteraction(level.getBlockEntity(pos), player, InteractionHand.MAIN_HAND)
+                || SoundMufflerBehaviour.handleInteraction(level.getBlockEntity(pos), player, InteractionHand.MAIN_HAND)) {
             return InteractionResult.sidedSuccess(level.isClientSide());
         }
         if (!level.isClientSide()) {

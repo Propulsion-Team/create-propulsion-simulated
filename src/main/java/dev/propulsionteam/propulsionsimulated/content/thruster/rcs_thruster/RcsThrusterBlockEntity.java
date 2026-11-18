@@ -12,6 +12,7 @@ import com.simibubi.create.foundation.blockEntity.behaviour.ValueBoxTransform;
 import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
 import dev.propulsionteam.propulsionsimulated.content.thruster.SimulatedThrustAdapter;
 import dev.propulsionteam.propulsionsimulated.content.thruster.SoundMufflerBehaviour;
+import dev.propulsionteam.propulsionsimulated.content.thruster.PropulsionCoreBehaviour;
 import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.VectorRedstoneLinkBehaviour;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionBlockEntities;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionFluids;
@@ -77,6 +78,7 @@ public class RcsThrusterBlockEntity extends SmartBlockEntity implements BlockEnt
                 || stack.getFluid() == PropulsionFluids.FLOWING_HYDRAZINE.get());
         behaviours.add(tank);
         behaviours.add(new SoundMufflerBehaviour(this));
+        behaviours.add(new PropulsionCoreBehaviour(this));
         links = new VectorRedstoneLinkBehaviour[isSingle() ? 1 : 4];
         for (int i = 0; i < links.length; i++) {
             int nozzle = i;
@@ -140,7 +142,7 @@ public class RcsThrusterBlockEntity extends SmartBlockEntity implements BlockEnt
             Vector3d point = RcsOrientation.point(RcsOrientation.nozzle(isSingle(), i), normal)
                     .add(worldPosition.getX(), worldPosition.getY(), worldPosition.getZ());
             Vector3d impulse = RcsOrientation.impulse(isSingle(), i, normal, thrust(), timeStep);
-            SimulatedThrustAdapter.applyImpulseAtPoint(subLevel, point, impulse);
+            SimulatedThrustAdapter.applyImpulseAtPoint(subLevel, point, impulse, this);
         }
     }
 

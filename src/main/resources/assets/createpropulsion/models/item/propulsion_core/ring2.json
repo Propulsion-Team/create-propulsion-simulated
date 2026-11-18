@@ -1,0 +1,15 @@
+{
+    "textures": {
+        "0": "createpropulsion:item/propulsion_core"
+    },
+    "elements": [
+        {
+            "from": [4, 8, 4],
+            "to": [12, 8, 12],
+            "faces": {
+                "up": {"uv": [0, 0, 8, 8], "texture": "#0"},
+                "down": {"uv": [0, 8, 8, 16], "texture": "#0"}
+            }
+        }
+    ]
+}

@@ -1,6 +1,7 @@
 {
     "item.createpropulsion.toolgun": "Toolgun",
     "item.createpropulsion.super_bucket": "Super Bucket",
+    "item.createpropulsion.propulsion_core": "Propulsion Core",
     "item.createpropulsion.sound_muffler": "Sound Muffler",
     "item.createpropulsion.sound_muffler.tooltip.summary": "Reduces a thruster's sound volume by _70%%_.",
     "item.createpropulsion.sound_muffler.tooltip.control1": "Right-click a thruster",
