@@ -5,6 +5,7 @@
     "createpropulsion:creative_thruster",
     "createpropulsion:ion_thruster",
     "createpropulsion:vector_thruster",
-    "createpropulsion:creative_vector_thruster"
+    "createpropulsion:creative_vector_thruster",
+    "createpropulsion:liquid_vector_thruster"
   ]
 }
