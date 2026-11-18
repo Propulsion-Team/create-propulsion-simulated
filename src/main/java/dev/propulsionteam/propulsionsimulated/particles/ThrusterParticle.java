@@ -1,5 +1,6 @@
 package dev.propulsionteam.propulsionsimulated.particles;
 
+import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
 import dev.propulsionteam.propulsionsimulated.mixin.client.ParticleTrackingAccessor;
 import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.api.particle.ParticleSubLevelKickable;
@@ -64,7 +65,8 @@ public abstract class ThrusterParticle extends SimpleAnimatedParticle implements
             Vec3 local = owner.lastPose().transformPositionInverse(position);
             movement = movement.add(owner.logicalPose().transformPosition(local).subtract(position));
         }
-        ParticleCollision.Hit hit = ParticleCollision.sweep(level, getBoundingBox(), movement, owner);
+        ParticleCollision.Hit hit = PropulsionConfig.DISABLE_PARTICLE_PHYSICS.get()
+                ? null : ParticleCollision.sweep(level, getBoundingBox(), movement, owner);
         onGround = false;
         if (hit != null) {
             double epsilon = 1.0e-5d * particleScale.owner();
