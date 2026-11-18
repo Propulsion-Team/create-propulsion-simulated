@@ -747,6 +747,7 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         previousParticleExhaustWorld = worldExhaustDirection;
         previousParticleNozzleVelocity = nozzleVelocity;
 
+        if (level.isClientSide && PropulsionConfig.useShaderPlumes()) return;
         ThrusterPlumeSpec plume = ThrusterPlumeResolver.resolve(this);
         if (!plume.active() || plume.particle() == null) return;
         if (emptyBlocks == 0) return;
@@ -811,7 +812,7 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
                 inheritedVelocity = Vec3.ZERO;
             }
 
-            ParticleOptions particleData = withMotion(baseParticleData, inheritedVelocity, adaptiveTrailCoverage);
+            ParticleOptions particleData = withMotion(baseParticleData, inheritedVelocity, 0.0f);
             Vector3d sampleParticleVelocity = new Vector3d(spawnDirection.x, spawnDirection.y, spawnDirection.z)
                     .mul(speedPerTick);
             double spawnX = spawnPosition.x;

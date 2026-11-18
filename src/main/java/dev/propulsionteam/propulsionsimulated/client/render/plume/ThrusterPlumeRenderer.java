@@ -12,11 +12,8 @@ public final class ThrusterPlumeRenderer {
     private ThrusterPlumeRenderer() {}
 
     public static void render(AbstractThrusterBlockEntity be, float partialTicks, PoseStack ms, MultiBufferSource buffer) {
+        if (!PropulsionConfig.useShaderPlumes()) return;
         ThrusterPlumeSpec spec = ThrusterPlumeResolver.resolve(be);
-        if (!PropulsionConfig.useShaderPlumes()) {
-            AdaptivePlumeTrailRenderer.render(be, partialTicks, ms, buffer, spec);
-            return;
-        }
         if (!spec.active()) return;
         ThrusterVisualEffects.render(be, partialTicks, ms, buffer, preset(spec.style()), spec.power());
     }
