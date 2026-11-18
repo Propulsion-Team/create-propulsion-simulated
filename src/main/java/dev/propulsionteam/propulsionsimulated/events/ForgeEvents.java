@@ -21,6 +21,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.LevelAccessor;
@@ -28,6 +31,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.level.material.Fluid;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.AddReloadListenerEvent;
@@ -95,6 +99,43 @@ public class ForgeEvents {
         }
 
         Player player = event.getEntity();
+        if (!hasFullNetheriteDivingProtection(player)
+            && isTouchingFluid(serverLevel, player, PropulsionFluids.HYDRAZINE.get(), PropulsionFluids.FLOWING_HYDRAZINE.get())) {
+            int exposureTicks = Math.min(player.getPersistentData().getInt("createpropulsion:hydrazine_exposure") + 1, 1200);
+            player.getPersistentData().putInt("createpropulsion:hydrazine_exposure", exposureTicks);
+            if (exposureTicks < 20) {
+                applyHydrazineEffect(player, MobEffects.POISON, 100, 1);
+            } else if (exposureTicks < 60) {
+                applyHydrazineEffect(player, MobEffects.POISON, 200, 2);
+                applyHydrazineEffect(player, MobEffects.CONFUSION, 200, 0);
+            } else if (exposureTicks <= 100) {
+                applyHydrazineEffect(player, MobEffects.POISON, 200, 3);
+                applyHydrazineEffect(player, MobEffects.WEAKNESS, 200, 1);
+            } else {
+                applyHydrazineEffect(player, MobEffects.WITHER, 200, 1);
+            }
+
+            Vec3 eye = player.getEyePosition();
+            BlockPos eyePos = BlockPos.containing(eye);
+            FluidState eyeFluid = serverLevel.getFluidState(eyePos);
+            if (isFluid(eyeFluid, PropulsionFluids.HYDRAZINE.get(), PropulsionFluids.FLOWING_HYDRAZINE.get())
+                && eye.y < eyePos.getY() + eyeFluid.getHeight(serverLevel, eyePos)) {
+                int immersionTicks = player.getPersistentData().getInt("createpropulsion:hydrazine_immersion") + 1;
+                player.getPersistentData().putInt("createpropulsion:hydrazine_immersion", immersionTicks);
+                if ((immersionTicks - 1) % 20 == 0) {
+                    player.hurt(player.damageSources().magic(), 2.0f + Math.min(immersionTicks / 20, 10));
+                }
+            } else {
+                player.getPersistentData().remove("createpropulsion:hydrazine_immersion");
+                if (exposureTicks > 100 && player.tickCount % 20 == 0) {
+                    player.hurt(player.damageSources().magic(), 2.0f);
+                }
+            }
+        } else {
+            player.getPersistentData().remove("createpropulsion:hydrazine_exposure");
+            player.getPersistentData().remove("createpropulsion:hydrazine_immersion");
+        }
+
         if (player.tickCount % CORAL_DAMAGE_INTERVAL_TICKS != 0) {
             return;
         }
@@ -142,6 +183,13 @@ public class ForgeEvents {
         }
     }
 
+    private static void applyHydrazineEffect(Player player, Holder<MobEffect> effect, int duration, int amplifier) {
+        MobEffectInstance current = player.getEffect(effect);
+        if (current == null || current.getAmplifier() < amplifier || current.getDuration() <= 20) {
+            player.addEffect(new MobEffectInstance(effect, duration, amplifier));
+        }
+    }
+
     private static boolean hasFullNetheriteDivingProtection(net.minecraft.world.entity.player.Player player) {
         return NetheriteDivingHandler.isNetheriteDivingHelmet(player.getItemBySlot(EquipmentSlot.HEAD))
             && NetheriteDivingHandler.isNetheriteBacktank(player.getItemBySlot(EquipmentSlot.CHEST))
@@ -150,16 +198,20 @@ public class ForgeEvents {
     }
 
     private static boolean isTouchingCoralFluid(ServerLevel level, Player player) {
+        return isTouchingFluid(level, player, PropulsionFluids.CORAL.get(), PropulsionFluids.FLOWING_CORAL.get());
+    }
+
+    private static boolean isTouchingFluid(ServerLevel level, Player player, Fluid source, Fluid flowing) {
         Vec3 pos = player.position();
         double midY = player.getBoundingBox().minY + player.getBbHeight() * 0.5;
         double eyeY = player.getEyeY();
-        return isCoralFluid(level.getFluidState(BlockPos.containing(pos.x, player.getBoundingBox().minY + 0.01, pos.z)))
-            || isCoralFluid(level.getFluidState(BlockPos.containing(pos.x, midY, pos.z)))
-            || isCoralFluid(level.getFluidState(BlockPos.containing(pos.x, eyeY, pos.z)));
+        return isFluid(level.getFluidState(BlockPos.containing(pos.x, player.getBoundingBox().minY + 0.01, pos.z)), source, flowing)
+            || isFluid(level.getFluidState(BlockPos.containing(pos.x, midY, pos.z)), source, flowing)
+            || isFluid(level.getFluidState(BlockPos.containing(pos.x, eyeY, pos.z)), source, flowing);
     }
 
-    private static boolean isCoralFluid(FluidState fluidState) {
-        return fluidState.is(PropulsionFluids.CORAL.get()) || fluidState.is(PropulsionFluids.FLOWING_CORAL.get());
+    private static boolean isFluid(FluidState fluidState, Fluid source, Fluid flowing) {
+        return fluidState.is(source) || fluidState.is(flowing);
     }
 
     private static DamageSource coralSubmersionDamageSource(ServerLevel level) {

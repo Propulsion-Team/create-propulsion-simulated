@@ -1,0 +1,19 @@
+{
+  "type": "create:mixing",
+  "heat_requirement": "heated",
+  "ingredients": [
+    {
+      "type": "neoforge:single",
+      "amount": 500,
+      "fluid": "minecraft:water"
+    },
+    { "item": "minecraft:redstone" },
+    { "item": "minecraft:blaze_powder" }
+  ],
+  "results": [
+    {
+      "amount": 500,
+      "id": "createpropulsion:hydrazine"
+    }
+  ]
+}

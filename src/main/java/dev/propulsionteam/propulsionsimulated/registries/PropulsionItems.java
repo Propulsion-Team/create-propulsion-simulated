@@ -24,6 +24,8 @@ public class PropulsionItems {
         ITEMS.register("coral_bucket", () -> new net.minecraft.world.item.BucketItem(PropulsionFluids.CORAL.get(), new Item.Properties().craftRemainder(net.minecraft.world.item.Items.BUCKET).stacksTo(1)));
     public static final DeferredHolder<Item, Item> OXIDIZER_BUCKET =
         ITEMS.register("oxidizer_bucket", () -> new net.minecraft.world.item.BucketItem(PropulsionFluids.OXIDIZER.get(), new Item.Properties().craftRemainder(net.minecraft.world.item.Items.BUCKET).stacksTo(1)));
+    public static final DeferredHolder<Item, Item> HYDRAZINE_BUCKET =
+        ITEMS.register("hydrazine_bucket", () -> new net.minecraft.world.item.BucketItem(PropulsionFluids.HYDRAZINE.get(), new Item.Properties().craftRemainder(net.minecraft.world.item.Items.BUCKET).stacksTo(1)));
     public static final DeferredHolder<Item, Item> PLATINUM_INGOT =
         ITEMS.register("platinum_ingot", () -> new Item(new Item.Properties()));
     public static final DeferredHolder<Item, Item> PLATINUM_NUGGET =

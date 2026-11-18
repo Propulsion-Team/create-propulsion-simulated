@@ -1,0 +1,12 @@
+{
+  "sources": [
+    {
+      "type": "minecraft:single",
+      "resource": "createpropulsion:fluid/hydrazine_still"
+    },
+    {
+      "type": "minecraft:single",
+      "resource": "createpropulsion:fluid/hydrazine_flow"
+    }
+  ]
+}

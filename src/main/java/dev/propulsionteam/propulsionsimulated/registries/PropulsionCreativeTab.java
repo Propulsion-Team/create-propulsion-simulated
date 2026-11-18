@@ -91,6 +91,7 @@ public class PropulsionCreativeTab {
         registerSectionItem(MAIN_SECTION, "raw_platinum", () -> PropulsionItems.RAW_PLATINUM.get());
         registerSectionItem(MAIN_SECTION, "crushed_raw_platinum", () -> PropulsionItems.CRUSHED_RAW_PLATINUM.get());
         registerSectionItem(MAIN_SECTION, "coral_bucket", () -> PropulsionItems.CORAL_BUCKET.get());
+        registerSectionItem(MAIN_SECTION, "hydrazine_bucket", () -> PropulsionItems.HYDRAZINE_BUCKET.get());
         registerSectionItem(MAIN_SECTION, "oxidizer_bucket", () -> PropulsionItems.OXIDIZER_BUCKET.get());
         registerSectionItem(MAIN_SECTION, "cable", () -> PropulsionBlocks.FE_CABLE.get().asItem());
         registerSectionItem(MAIN_SECTION, "cable_relay", () -> PropulsionBlocks.CABLE_RELAY.get().asItem());
