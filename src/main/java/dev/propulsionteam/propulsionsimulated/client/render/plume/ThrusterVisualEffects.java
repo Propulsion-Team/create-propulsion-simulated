@@ -99,10 +99,13 @@ public final class ThrusterVisualEffects {
             ms.translate(localNozzle.x, localNozzle.y, localNozzle.z);
         }
 
+        PlumeRenderParams params = paramsFor(preset, fallbackDirection, power, length, radius);
+        params = new PlumeRenderParams(params.direction(), params.power(), params.length(), params.radius(),
+                params.alpha(), params.red(), params.green(), params.blue(), params.shape(), be.getDyeColor());
         PlumeRenderer.render(
                 ms,
                 buffer,
-                paramsFor(preset, fallbackDirection, power, length, radius),
+                params,
                 time,
                 exhaust
         );

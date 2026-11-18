@@ -11,8 +11,14 @@ public record PlumeRenderParams(
         float red,
         float green,
         float blue,
-        PlumeShape shape
+        PlumeShape shape,
+        Integer dyeColor
 ) {
+    public PlumeRenderParams(Direction direction, float power, float length, float radius, float alpha,
+                             float red, float green, float blue, PlumeShape shape) {
+        this(direction, power, length, radius, alpha, red, green, blue, shape, null);
+    }
+
     public static PlumeRenderParams fire(Direction direction, float power, float length, float radius) {
         return new PlumeRenderParams(
                 direction,

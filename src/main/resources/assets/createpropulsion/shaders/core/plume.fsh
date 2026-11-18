@@ -5,8 +5,14 @@ in vec4 vertexColor;
 
 uniform float Time;
 uniform float Power;
+uniform vec3 DyeColor;
 
 out vec4 fragColor;
+
+vec3 recolor(vec3 color) {
+    if (DyeColor.r < 0.0) return color;
+    return DyeColor * max(color.r, max(color.g, color.b));
+}
 
 float hash(float n) {
     return fract(sin(n) * 43758.5453123);
@@ -57,7 +63,7 @@ void main() {
         alpha *= 0.95 + Power * 0.10;
 
         if (alpha <= 0.003) discard;
-        fragColor = vec4(color, alpha);
+        fragColor = vec4(recolor(color), alpha);
         return;
     }
 
@@ -87,7 +93,7 @@ void main() {
         alpha *= 0.75 + electricBands * 0.35;
 
         if (alpha <= 0.003) discard;
-        fragColor = vec4(color, alpha);
+        fragColor = vec4(recolor(color), alpha);
         return;
     }
 
@@ -121,5 +127,5 @@ void main() {
     alpha *= 0.92 + 0.08 * Power;
 
     if (alpha <= 0.003) discard;
-    fragColor = vec4(fire, alpha);
+    fragColor = vec4(recolor(fire), alpha);
 }

@@ -88,6 +88,16 @@ public final class PlumeRenderer {
         if (shader != null) {
             set(shader, "Time", time);
             set(shader, "Power", params.power());
+            var dye = shader.getUniform("DyeColor");
+            if (dye != null) {
+                Integer color = params.dyeColor();
+                if (color == null) {
+                    dye.set(-1.0f, -1.0f, -1.0f);
+                } else {
+                    dye.set(((color >> 16) & 0xFF) / 255.0f,
+                            ((color >> 8) & 0xFF) / 255.0f, (color & 0xFF) / 255.0f);
+                }
+            }
         }
 
         Vec3 dir = direction.normalize();

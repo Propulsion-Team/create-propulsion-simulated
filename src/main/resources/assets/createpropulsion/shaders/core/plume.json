@@ -48,6 +48,12 @@
       "type": "float",
       "count": 1,
       "values": [1.0]
+    },
+    {
+      "name": "DyeColor",
+      "type": "float",
+      "count": 3,
+      "values": [-1.0, -1.0, -1.0]
     }
   ]
 }
