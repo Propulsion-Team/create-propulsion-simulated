@@ -44,6 +44,7 @@ public class PlasmaParticle extends ThrusterParticle {
                             double dxSource, double dySource, double dzSource,
                             SpriteSet spriteSet, PlasmaParticleData data) {
         super(level, x, y, z, spriteSet);
+        setSource(data.source());
         this.spriteSet = spriteSet;
         this.overrideTextures = data.overrideTextures();
         this.startupProgress = data.startupProgress() == null ? 1.0f : Mth.clamp(data.startupProgress(), 0.0f, 1.0f);

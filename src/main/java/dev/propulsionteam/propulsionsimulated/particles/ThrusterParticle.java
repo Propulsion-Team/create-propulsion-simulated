@@ -1,6 +1,7 @@
 package dev.propulsionteam.propulsionsimulated.particles;
 
 import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
+import dev.propulsionteam.propulsionsimulated.content.thruster.AbstractThrusterBlockEntity;
 import dev.propulsionteam.propulsionsimulated.mixin.client.ParticleTrackingAccessor;
 import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.api.particle.ParticleSubLevelKickable;
@@ -10,6 +11,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.SimpleAnimatedParticle;
 import net.minecraft.client.particle.SpriteSet;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.fml.ModList;
 
@@ -19,6 +21,9 @@ public abstract class ThrusterParticle extends SimpleAnimatedParticle implements
     private final double initialOwnerScale;
     private boolean initialized;
     private Vec3 anchor;
+    private BlockPos source;
+    private double sourceDistance;
+    private boolean followingSource;
     protected Vec3 inheritedVelocity = Vec3.ZERO;
     protected boolean hasCollided;
 
@@ -41,6 +46,14 @@ public abstract class ThrusterParticle extends SimpleAnimatedParticle implements
         return particleScale.size();
     }
 
+    protected void setSource(BlockPos source) {
+        this.source = source;
+    }
+
+    private boolean followsSource() {
+        return source != null && PropulsionConfig.DISABLE_PARTICLE_PLUME_CURVING.get();
+    }
+
     protected void updateScale() {
         SubLevel owner = ((ParticleExtension) this).sable$getTrackingSubLevel();
         if (owner != null && owner.isRemoved()) {
@@ -58,6 +71,11 @@ public abstract class ThrusterParticle extends SimpleAnimatedParticle implements
 
     @Override
     public void move(double dx, double dy, double dz) {
+        if (followsSource()) {
+            moveWithSource(new Vec3(dx, dy, dz).length() * particleScale.motion());
+            return;
+        }
+        followingSource = false;
         SubLevel owner = ((ParticleExtension) this).sable$getTrackingSubLevel();
         Vec3 movement = new Vec3(dx, dy, dz).scale(particleScale.motion()).add(inheritedVelocity);
         if (owner != null && !owner.isRemoved()) {
@@ -84,6 +102,39 @@ public abstract class ThrusterParticle extends SimpleAnimatedParticle implements
                 && owner.logicalPose().transformPositionInverse(new Vec3(x, y, z)).distanceToSqr(anchor) > 0.25d) {
             detach(owner);
         }
+    }
+
+    private void moveWithSource(double step) {
+        if (!(level.getBlockEntity(source) instanceof AbstractThrusterBlockEntity thruster) || thruster.isRemoved()) {
+            remove();
+            return;
+        }
+        Vec3 nozzle = thruster.getParticleDebugNozzlePositionLocal();
+        Vec3 direction = thruster.getParticleDebugExhaustDirectionLocal().normalize();
+        SubLevel owner = Sable.HELPER.getContaining(level, nozzle);
+        double scale = owner == null ? 1.0d : ParticleScale.valid(owner.logicalPose().scale().x());
+        Vec3 worldNozzle = Sable.HELPER.projectOutOfSubLevel(level, nozzle);
+        if (!followingSource) {
+            Vec3 worldDirection = Sable.HELPER.projectOutOfSubLevel(level, nozzle.add(direction))
+                    .subtract(worldNozzle).normalize();
+            sourceDistance = Math.max(0.0d, new Vec3(x, y, z).subtract(worldNozzle).dot(worldDirection) / scale);
+            followingSource = true;
+        }
+        sourceDistance += step / scale;
+        Vec3 target = Sable.HELPER.projectOutOfSubLevel(level, nozzle.add(direction.scale(sourceDistance)));
+        onGround = false;
+        if (!PropulsionConfig.DISABLE_PARTICLE_PHYSICS.get()) {
+            Vec3 position = new Vec3(x, y, z);
+            ParticleCollision.Hit hit = ParticleCollision.sweep(level,
+                    getBoundingBox().move(worldNozzle.subtract(position)), target.subtract(worldNozzle), owner);
+            if (hit != null) {
+                target = worldNozzle.add(hit.movement());
+                sourceDistance = hit.movement().length() / scale;
+                hasCollided = true;
+            }
+        }
+        setBoundingBox(getBoundingBox().move(target.subtract(new Vec3(x, y, z))));
+        setLocationFromBoundingbox();
     }
 
     protected void collide(Vec3 normal) {
@@ -122,7 +173,7 @@ public abstract class ThrusterParticle extends SimpleAnimatedParticle implements
 
     @Override
     public boolean sable$shouldKickFromTracking() {
-        return true;
+        return !followsSource();
     }
 
     @Override

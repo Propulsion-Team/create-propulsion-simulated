@@ -83,6 +83,7 @@ public class PropulsionConfig {
 
     public static final ModConfigSpec.EnumValue<PlumeRenderMode> PLUME_RENDER_MODE;
     public static final ModConfigSpec.BooleanValue DISABLE_PARTICLE_PHYSICS;
+    public static final ModConfigSpec.BooleanValue DISABLE_PARTICLE_PLUME_CURVING;
 
 
     public static final ModConfigSpec.BooleanValue DEBUG_THRUSTER;
@@ -383,6 +384,7 @@ public class PropulsionConfig {
         PLUME_RENDER_MODE = CLIENT_BUILDER.comment("How every thruster plume is rendered. Particle uses normal particle effects; Shader uses the procedural plume shader.")
                 .defineEnum("renderMode", PlumeRenderMode.PARTICLE);
         DISABLE_PARTICLE_PHYSICS = CLIENT_BUILDER.define("disableParticlePhysics", false);
+        DISABLE_PARTICLE_PLUME_CURVING = CLIENT_BUILDER.define("disableParticlePlumeCurving", false);
         CLIENT_BUILDER.pop();
 
 

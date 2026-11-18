@@ -866,18 +866,18 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         return particle;
     }
 
-    private static ParticleOptions withMotion(ParticleOptions particle, Vec3 velocity, float trailCoverage) {
+    private ParticleOptions withMotion(ParticleOptions particle, Vec3 velocity, float trailCoverage) {
         if (particle instanceof PlumeParticleData plume) {
             return new PlumeParticleData(plume.overrideTextures(), plume.overrideColor(), plume.overrideSize(),
-                    plume.startupProgress(), velocity, trailCoverage);
+                    plume.startupProgress(), velocity, trailCoverage, worldPosition);
         }
         if (particle instanceof IonParticleData ion) {
             return new IonParticleData(ion.overrideTextures(), ion.overrideColor(), ion.overrideSize(),
-                    ion.startupProgress(), velocity, trailCoverage);
+                    ion.startupProgress(), velocity, trailCoverage, worldPosition);
         }
         if (particle instanceof PlasmaParticleData plasma) {
             return new PlasmaParticleData(plasma.overrideTextures(), plasma.overrideColor(), plasma.overrideSize(),
-                    plasma.startupProgress(), velocity, trailCoverage);
+                    plasma.startupProgress(), velocity, trailCoverage, worldPosition);
         }
         return particle;
     }
