@@ -924,7 +924,6 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         return 1.0d;
     }
 
-    @SuppressWarnings("deprecation") // i hate compilers let me use ts
     public void calculateObstruction(Level level, BlockPos pos, Direction forwardDirection){
         // Raycast in world space so sublevel thrusters correctly collide against real-world blocks.
         int oldEmptyBlocks = this.emptyBlocks;

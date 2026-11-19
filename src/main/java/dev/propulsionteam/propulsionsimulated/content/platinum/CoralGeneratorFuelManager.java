@@ -56,7 +56,6 @@ public class CoralGeneratorFuelManager extends SimpleJsonResourceReloadListener 
     }
 
     @Nullable
-    @SuppressWarnings("deprecation")
     public static CoralGeneratorFuelProperties getProperties(Fluid fluid) {
         if (fluid == null || fluid == Fluids.EMPTY) {
             return null;

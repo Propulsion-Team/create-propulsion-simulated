@@ -44,7 +44,7 @@ public final class SolidFuelThrusterFuelHelper {
         if (stack.isEmpty()) {
             return 0;
         }
-        BlazeBurnerFuel fuel = stack.getItem().builtInRegistryHolder().getData(CreateDataMaps.SUPERHEATED_BLAZE_BURNER_FUELS);
+        BlazeBurnerFuel fuel = stack.getItemHolder().getData(CreateDataMaps.SUPERHEATED_BLAZE_BURNER_FUELS);
         return fuel == null ? 0 : fuel.burnTime();
     }
 

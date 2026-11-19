@@ -12,8 +12,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ModelEvent;
 
-@SuppressWarnings("removal")
-@EventBusSubscriber(modid = CreatePropulsion.ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+@EventBusSubscriber(modid = CreatePropulsion.ID, value = Dist.CLIENT)
 public class Bakery {
     public static final BakedModel[] BAKED_COMPASS_MODELS = new BakedModel[32];
     public static final ModelResourceLocation[] COMPASS_MODELS = new ModelResourceLocation[32];

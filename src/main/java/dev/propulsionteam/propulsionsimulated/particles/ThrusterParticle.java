@@ -12,10 +12,12 @@ import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.SimpleAnimatedParticle;
 import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.fml.ModList;
 
 public abstract class ThrusterParticle extends SimpleAnimatedParticle implements ParticleSubLevelKickable {
+    protected static final ResourceLocation PARTICLES_ATLAS = ResourceLocation.withDefaultNamespace("textures/atlas/particles.png");
     private static final boolean PYM = ModList.get().isLoaded("pym");
     private final ParticleScale particleScale = new ParticleScale();
     private final double initialOwnerScale;

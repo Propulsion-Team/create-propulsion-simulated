@@ -17,12 +17,10 @@ import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.fml.common.EventBusSubscriber.Bus;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
-@SuppressWarnings("removal")
-@EventBusSubscriber(modid = CreatePropulsion.ID, bus = Bus.MOD, value = Dist.CLIENT)
+@EventBusSubscriber(modid = CreatePropulsion.ID, value = Dist.CLIENT)
 public enum ParticleTypes {
     PLUME(PlumeParticleData::new),
     PLASMA(PlasmaParticleData::new),

@@ -27,8 +27,7 @@ import org.joml.Matrix4f;
 
 import java.util.LinkedList;
 
-@SuppressWarnings("removal")
-@EventBusSubscriber(modid = CreatePropulsion.ID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
+@EventBusSubscriber(modid = CreatePropulsion.ID, value = Dist.CLIENT)
 public class ToolgunRenderHandler extends ZapperRenderHandler {
     private static ToolgunRenderHandler instance = new ToolgunRenderHandler();
     static final Vec3 HANDLE_GRIP = new Vec3((4.90119 - Math.sqrt(0.125)) / 16,

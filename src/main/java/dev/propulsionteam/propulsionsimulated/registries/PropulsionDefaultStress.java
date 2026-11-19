@@ -17,8 +17,7 @@ import java.util.function.DoubleSupplier;
 
 import javax.annotation.Nonnull;
 
-@SuppressWarnings("removal")
-@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber
 public class PropulsionDefaultStress extends ConfigBase {
     private static final int VERSION = 1;
     public static final PropulsionDefaultStress INSTANCE = new PropulsionDefaultStress();

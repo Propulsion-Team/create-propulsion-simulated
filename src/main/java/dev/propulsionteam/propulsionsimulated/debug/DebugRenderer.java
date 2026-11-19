@@ -25,8 +25,7 @@ import java.awt.Color;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-@SuppressWarnings("removal")
-@EventBusSubscriber(modid = CreatePropulsion.ID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
+@EventBusSubscriber(modid = CreatePropulsion.ID, value = Dist.CLIENT)
 public class DebugRenderer {
     private static class TimedBoxData {
         final Vec3 position;

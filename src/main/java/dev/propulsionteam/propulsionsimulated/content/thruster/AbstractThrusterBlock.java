@@ -59,7 +59,7 @@ public abstract class AbstractThrusterBlock extends DirectionalBlock implements 
 
     @Override
     public BlockState mirror(final BlockState state, final Mirror mirror) {
-        return state.rotate(mirror.getRotation(state.getValue(FACING)));
+        return rotate(state, mirror.getRotation(state.getValue(FACING)));
     }
 
     @Override

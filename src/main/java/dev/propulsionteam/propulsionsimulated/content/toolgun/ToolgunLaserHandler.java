@@ -27,8 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.UnaryOperator;
 
-@SuppressWarnings("removal")
-@EventBusSubscriber(modid = CreatePropulsion.ID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
+@EventBusSubscriber(modid = CreatePropulsion.ID, value = Dist.CLIENT)
 public class ToolgunLaserHandler {
     private static final double RANGE = 128;
     private static final int COLOR = 0xFFFFFF;

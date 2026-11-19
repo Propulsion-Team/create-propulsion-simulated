@@ -49,7 +49,7 @@ public class CoralGeneratorBlock extends Block implements IBE<CoralGeneratorBloc
 
     @Override
     public BlockState mirror(BlockState state, Mirror mirror) {
-        return state.rotate(mirror.getRotation(state.getValue(FACING)));
+        return rotate(state, mirror.getRotation(state.getValue(FACING)));
     }
 
     @Override

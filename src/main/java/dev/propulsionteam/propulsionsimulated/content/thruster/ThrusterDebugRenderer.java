@@ -101,7 +101,7 @@ public final class ThrusterDebugRenderer {
             }
 
             BlockState stateAt = worldLevel.getBlockState(hitPos);
-            if (stateAt.isAir() || !stateAt.isSolid()) {
+            if (stateAt.isAir() || stateAt.getCollisionShape(worldLevel, hitPos).isEmpty()) {
                 continue;
             }
 

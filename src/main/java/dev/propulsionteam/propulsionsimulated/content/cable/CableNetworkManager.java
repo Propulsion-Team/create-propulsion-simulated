@@ -6,6 +6,7 @@ import dev.propulsionteam.propulsionsimulated.content.cable.fe.FeCableBlockEntit
 import dev.propulsionteam.propulsionsimulated.content.cable.relay.CableRelayBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -38,7 +39,7 @@ public final class CableNetworkManager {
         LevelNetworks networks = networks(level);
         Network network = networks.byNode.get(nodePos);
         if (network == null || network.dirty
-            || !level.hasChunkAt(network.controller)
+            || !level.getChunkSource().hasChunk(SectionPos.blockToSectionCoord(network.controller.getX()), SectionPos.blockToSectionCoord(network.controller.getZ()))
             || !isNetworkNode(level, network.controller)) {
             network = rebuild(level, networks, nodePos);
         }
@@ -118,7 +119,8 @@ public final class CableNetworkManager {
                     continue;
                 }
                 BlockPos neighbor = current.relative(direction);
-                if (!level.hasChunkAt(neighbor) || !isNetworkNode(level, neighbor)) {
+                if (!level.getChunkSource().hasChunk(SectionPos.blockToSectionCoord(neighbor.getX()), SectionPos.blockToSectionCoord(neighbor.getZ()))
+                    || !isNetworkNode(level, neighbor)) {
                     continue;
                 }
                 BlockState neighborState = level.getBlockState(neighbor);

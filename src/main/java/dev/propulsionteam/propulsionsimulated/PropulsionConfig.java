@@ -328,7 +328,7 @@ public class PropulsionConfig {
         ADDITIONAL_THRUSTER_FUEL_PROPERTY_LINES = COMMON_BUILDER.comment(
                         "Additional thruster fuel lines (same format as defaults: fluid_id=efficiencyPercent,burnRatePercent).",
                         "Use for fluids that do not have a fuelProperties subsection. Entries here override matching fluids from the table above.")
-                .defineListAllowEmpty("additionalThrusterFuelLines", ArrayList::new, obj -> obj instanceof String);
+                .defineListAllowEmpty("additionalThrusterFuelLines", ArrayList::new, () -> "", obj -> obj instanceof String);
 
         COMMON_BUILDER.pop();
 

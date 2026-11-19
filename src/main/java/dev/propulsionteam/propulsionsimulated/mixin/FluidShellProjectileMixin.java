@@ -3,6 +3,7 @@ package dev.propulsionteam.propulsionsimulated.mixin;
 import dev.propulsionteam.propulsionsimulated.CreatePropulsion;
 import dev.propulsionteam.propulsionsimulated.mixin.plugin.MixinIf;
 import net.minecraft.core.Position;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
@@ -44,7 +45,7 @@ public abstract class FluidShellProjectileMixin {
                 return;
             }
 
-            ResourceLocation fluidId = fluid.builtInRegistryHolder().key().location();
+            ResourceLocation fluidId = BuiltInRegistries.FLUID.getKey(fluid);
             if (!CORAL_ID.equals(fluidId)) {
                 return;
             }

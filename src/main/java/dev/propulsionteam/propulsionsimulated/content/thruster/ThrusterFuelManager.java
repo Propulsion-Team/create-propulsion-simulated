@@ -72,7 +72,6 @@ public class ThrusterFuelManager extends SimpleJsonResourceReloadListener {
     }
 
     @Nullable
-    @SuppressWarnings("deprecation")
     public static FluidThrusterProperties getProperties(Fluid fluid) {
         if (fluid == null || fluid == Fluids.EMPTY) return null;
         fluid = FluidHelper.convertToStill(fluid);
@@ -491,7 +490,6 @@ public class ThrusterFuelManager extends SimpleJsonResourceReloadListener {
         return Boolean.parseBoolean(value.toString());
     }
 
-    @SuppressWarnings("deprecation")
     private static boolean registerScriptedFuelInternal(ResourceLocation fluidId, float thrustMultiplier, float consumptionMultiplier, String particleName, List<String> overrideTextureIds, Integer overrideColor, boolean useFluidColor) {
         Fluid fluid = FluidHelper.convertToStill(BuiltInRegistries.FLUID.get(fluidId));
         if (fluid == null || fluid == Fluids.EMPTY) {

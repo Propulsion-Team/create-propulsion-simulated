@@ -4,6 +4,7 @@ import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.companion.math.BoundingBox3d;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
@@ -74,7 +75,7 @@ public final class ParticleCollision {
             int highY = Math.min(y1, center.getY() + padding);
             if (x0 > x1 || lowY > highY || z0 > z1) return null;
             for (BlockPos pos : BlockPos.betweenClosed(x0, lowY, z0, x1, highY, z1)) {
-                if (!level.hasChunkAt(pos)) continue;
+                if (!level.getChunkSource().hasChunk(SectionPos.blockToSectionCoord(pos.getX()), SectionPos.blockToSectionCoord(pos.getZ()))) continue;
                 var state = level.getBlockState(pos);
                 if (state.isAir()) continue;
                 for (AABB box : state.getCollisionShape(level, pos).toAabbs()) {

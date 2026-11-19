@@ -55,8 +55,7 @@ import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsE
 import net.neoforged.neoforge.fluids.FluidStack;
 import dev.propulsionteam.propulsionsimulated.content.thruster.solid_fuel_thruster.SolidFuelThrusterRenderer;
 
-@SuppressWarnings("removal")
-@EventBusSubscriber(modid = CreatePropulsion.ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+@EventBusSubscriber(modid = CreatePropulsion.ID, value = Dist.CLIENT)
 public class ModClientEvents {
 
     @SubscribeEvent
@@ -183,8 +182,6 @@ public class ModClientEvents {
             ItemBlockRenderTypes.setRenderLayer(PropulsionFluids.FLOWING_OXIDIZER.get(), RenderType.translucent());
             ItemBlockRenderTypes.setRenderLayer(PropulsionFluids.HYDRAZINE.get(), RenderType.translucent());
             ItemBlockRenderTypes.setRenderLayer(PropulsionFluids.FLOWING_HYDRAZINE.get(), RenderType.translucent());
-            ItemBlockRenderTypes.setRenderLayer(PropulsionBlocks.PLATINUM_FLUID_TANK.get(), RenderType.cutoutMipped());
-            ItemBlockRenderTypes.setRenderLayer(PropulsionBlocks.PLATINUM_FLUID_VESSEL.get(), RenderType.cutoutMipped());
         });
 
         PonderIndex.addPlugin(new DeltaPonderPlugin());

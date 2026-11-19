@@ -12,7 +12,6 @@ import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.SpriteSet;
-import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
@@ -100,7 +99,7 @@ public class PlumeParticle extends ThrusterParticle {
 
         if (!this.overrideTextures.isEmpty()) {
             try {
-                var atlas = Minecraft.getInstance().getTextureAtlas(TextureAtlas.LOCATION_PARTICLES);
+                var atlas = Minecraft.getInstance().getTextureAtlas(PARTICLES_ATLAS);
                 this.cachedOverrideSprites = new TextureAtlasSprite[this.overrideTextures.size()];
                 for (int i = 0; i < this.overrideTextures.size(); i++) {
                     this.cachedOverrideSprites[i] = atlas.apply(this.overrideTextures.get(i));
