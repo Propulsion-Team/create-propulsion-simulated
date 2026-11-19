@@ -550,6 +550,7 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
 
             if (thrustPercentage > 0 && properties != null) {
                 final int tickRate = getThrustUpdateIntervalTicks();
+                float fuelEfficiency = ThrusterFuelManager.getEfficiency(fluidStack().getFluid());
                 double requestedConsumption = ThrusterFuelConsumptionMath.requestedFuel(
                     getFuelConsumptionPerTickAtFullThrottle(), sampledFuelDemand);
                 int consumption = consumeFuelWithAccumulator(requestedConsumption);
@@ -562,7 +563,6 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
                     float consumptionRatio = consumption > 0
                         ? (float) fuelConsumed / (float) consumption
                         : 1.0f;
-                    float fuelEfficiency = ThrusterFuelManager.getEfficiency(fluidStack().getFluid());
                     float baseThrustPn = (float) (getBaseThrust() * getThrustUnitsPerKn());
                     baseThrustPn *= (float) calculateAtmosphericFactor();
                     thrust = baseThrustPn * thrustPercentage * properties.thrustMultiplier() * fuelEfficiency * consumptionRatio;
@@ -607,6 +607,7 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
             float thrustPercentage = getEffectiveThrustPercentage();
             if (thrustPercentage > 0 && properties != null) {
                 final int tickRate = getThrustUpdateIntervalTicks();
+                float fuelEfficiency = ThrusterFuelManager.getEfficiency(fluidStack().getFluid());
                 double baseConsumption = ThrusterFuelConsumptionMath.requestedFuel(
                     getFuelConsumptionPerTickAtFullThrottle(), sampledFuelDemand);
                 
@@ -638,7 +639,6 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
                         lastOxidizerConsumedMbPerTick = (double) oxToDrain / (double) tickRate;
                     }
 
-                    float fuelEfficiency = ThrusterFuelManager.getEfficiency(fluidStack().getFluid());
                     float baseThrustPn = (float) (getBaseThrust() * getThrustUnitsPerKn());
                     baseThrustPn *= (float) calculateAtmosphericFactor();
                     float oxidizerThrustMultiplier = canUseOxidizer ? getMultiblockOxidizerThrustMultiplier(width) : 1.0f;
@@ -808,7 +808,7 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
     public void sable$physicsTick(final dev.ryanhcode.sable.sublevel.ServerSubLevel subLevel, final dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle handle, final double timeStep) {
         if (isMultiblock() && !isController()) return;
         if (isMultiblock()) {
-            if (!isActive()) return;
+            if (!canApplyThrust()) return;
             float thrust = getCurrentThrust();
             if (thrust <= 0.0f || !Float.isFinite(thrust)) return;
             Vector3d directionLocal = new Vector3d(getThrustDirectionLocal()).normalize();
