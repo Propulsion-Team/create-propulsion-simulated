@@ -1,6 +1,8 @@
 package dev.propulsionteam.propulsionsimulated.events;
 
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
+import dev.propulsionteam.propulsionsimulated.content.thruster.AbstractThrusterBlockEntity;
+import dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterDyeItemHandler;
 import dev.propulsionteam.propulsionsimulated.compat.PropulsionCompatibility;
 import dev.propulsionteam.propulsionsimulated.content.thruster.SoundMufflerBehaviour;
 import dev.propulsionteam.propulsionsimulated.content.thruster.PropulsionCoreBehaviour;
@@ -36,9 +38,7 @@ public class ModCapabilityEvents {
                 PropulsionBlockEntities.LIQUID_VECTOR_THRUSTER_BLOCK_ENTITY.get(),
                 PropulsionBlockEntities.RCS_THRUSTER_BLOCK_ENTITY.get())) {
             event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, type,
-                    (be, side) -> new CombinedInvWrapper(
-                            be.getBehaviour(SoundMufflerBehaviour.TYPE).getItemHandler(),
-                            be.getBehaviour(PropulsionCoreBehaviour.TYPE).getItemHandler()));
+                    (be, side) -> getThrusterItemHandler(be));
         }
         event.registerBlockEntity(
             Capabilities.FluidHandler.BLOCK,
@@ -198,7 +198,16 @@ public class ModCapabilityEvents {
         IItemHandler fuel = blockEntity.getItemHandler(side);
         var muffler = blockEntity.getBehaviour(SoundMufflerBehaviour.TYPE).getItemHandler();
         var core = blockEntity.getBehaviour(PropulsionCoreBehaviour.TYPE).getItemHandler();
-        return fuel == null ? new CombinedInvWrapper(muffler, core)
-                : new CombinedInvWrapper(blockEntity.inventory, muffler, core);
+        var dye = new ThrusterDyeItemHandler(blockEntity);
+        return fuel == null ? new CombinedInvWrapper(muffler, core, dye)
+                : new CombinedInvWrapper(blockEntity.inventory, muffler, core, dye);
+    }
+
+    private static IItemHandler getThrusterItemHandler(SmartBlockEntity blockEntity) {
+        var muffler = blockEntity.getBehaviour(SoundMufflerBehaviour.TYPE).getItemHandler();
+        var core = blockEntity.getBehaviour(PropulsionCoreBehaviour.TYPE).getItemHandler();
+        return blockEntity instanceof AbstractThrusterBlockEntity thruster
+                ? new CombinedInvWrapper(muffler, core, new ThrusterDyeItemHandler(thruster))
+                : new CombinedInvWrapper(muffler, core);
     }
 }

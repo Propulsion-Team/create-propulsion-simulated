@@ -6,7 +6,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 public class ThrusterInteractionHandler {
@@ -24,7 +23,7 @@ public class ThrusterInteractionHandler {
             if (currentDye == null) return false;
             if (!thruster.getLevel().isClientSide()) {
                 thruster.setDyeId(null);
-                Block.popResource(thruster.getLevel(), thruster.getBlockPos(), new ItemStack(
+                player.getInventory().placeItemBackInInventory(new ItemStack(
                         BuiltInRegistries.ITEM.get(ResourceLocation.parse(currentDye))));
             }
             return true;
@@ -33,7 +32,7 @@ public class ThrusterInteractionHandler {
         if (!PropulsionConfig.isDyeConfigured(itemId)) return false;
         if (!thruster.getLevel().isClientSide() && !itemId.equals(currentDye)) {
             if (currentDye != null) {
-                Block.popResource(thruster.getLevel(), thruster.getBlockPos(), new ItemStack(
+                player.getInventory().placeItemBackInInventory(new ItemStack(
                         BuiltInRegistries.ITEM.get(ResourceLocation.parse(currentDye))));
             }
             thruster.setDyeId(itemId);
