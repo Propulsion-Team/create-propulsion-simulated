@@ -1,6 +1,7 @@
 package dev.propulsionteam.propulsionsimulated.client.render.plume;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
@@ -17,6 +18,8 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL30;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,12 +64,17 @@ public final class PlumeRenderer {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_LEVEL) return;
         if (PENDING.isEmpty()) return;
         MultiBufferSource.BufferSource buffer = Minecraft.getInstance().renderBuffers().bufferSource();
+        int drawFramebuffer = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
+        int readFramebuffer = GL11.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING);
+        int[] viewport = new int[4];
+        GL11.glGetIntegerv(GL11.GL_VIEWPORT, viewport);
         PoseStack ms = new PoseStack();
         Matrix4f projection = new Matrix4f(RenderSystem.getProjectionMatrix());
         var sorting = RenderSystem.getVertexSorting();
         var modelView = RenderSystem.getModelViewStack();
         modelView.pushMatrix();
         try {
+            Minecraft.getInstance().getMainRenderTarget().bindWrite(true);
             for (PendingPlume plume : PENDING) {
                 modelView.set(plume.modelView());
                 RenderSystem.applyModelViewMatrix();
@@ -79,6 +87,9 @@ public final class PlumeRenderer {
             modelView.popMatrix();
             RenderSystem.applyModelViewMatrix();
             RenderSystem.setProjectionMatrix(projection, sorting);
+            GlStateManager._glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, drawFramebuffer);
+            GlStateManager._glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, readFramebuffer);
+            RenderSystem.viewport(viewport[0], viewport[1], viewport[2], viewport[3]);
             PENDING.clear();
         }
     }
