@@ -5,8 +5,7 @@ import com.simibubi.create.content.equipment.wrench.IWrenchable;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntityTicker;
 import dev.propulsionteam.propulsionsimulated.content.thruster.AbstractThrusterBlock;
 import dev.propulsionteam.propulsionsimulated.content.thruster.AbstractThrusterBlockEntity;
-import dev.propulsionteam.propulsionsimulated.content.thruster.SoundMufflerBehaviour;
-import dev.propulsionteam.propulsionsimulated.content.thruster.PropulsionCoreBehaviour;
+import dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterInteractionHandler;
 import dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterShapes;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionBlockEntities;
 import net.minecraft.core.BlockPos;
@@ -79,8 +78,7 @@ public class SolidFuelThrusterBlock extends AbstractThrusterBlock {
     @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
                                                InteractionHand hand, BlockHitResult hitResult) {
-        if (PropulsionCoreBehaviour.handleInteraction(level.getBlockEntity(pos), player, hand)
-                || SoundMufflerBehaviour.handleInteraction(level.getBlockEntity(pos), player, hand)) {
+        if (ThrusterInteractionHandler.handleInteraction(level.getBlockEntity(pos), player, hand)) {
             return ItemInteractionResult.sidedSuccess(level.isClientSide());
         }
         if (player != null && !player.isShiftKeyDown() && level.getBlockEntity(pos) instanceof SolidFuelThrusterBlockEntity thruster) {

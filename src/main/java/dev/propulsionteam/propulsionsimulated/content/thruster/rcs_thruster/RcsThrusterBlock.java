@@ -4,8 +4,7 @@ import com.mojang.serialization.MapCodec;
 import com.simibubi.create.content.equipment.wrench.IWrenchable;
 import com.simibubi.create.foundation.block.IBE;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntityTicker;
-import dev.propulsionteam.propulsionsimulated.content.thruster.SoundMufflerBehaviour;
-import dev.propulsionteam.propulsionsimulated.content.thruster.PropulsionCoreBehaviour;
+import dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterInteractionHandler;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.ItemInteractionResult;
@@ -95,8 +94,7 @@ public class RcsThrusterBlock extends DirectionalBlock implements IBE<RcsThruste
     @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
                                                Player player, InteractionHand hand, BlockHitResult hitResult) {
-        if (PropulsionCoreBehaviour.handleInteraction(level.getBlockEntity(pos), player, hand)
-                || SoundMufflerBehaviour.handleInteraction(level.getBlockEntity(pos), player, hand)) {
+        if (ThrusterInteractionHandler.handleInteraction(level.getBlockEntity(pos), player, hand)) {
             return ItemInteractionResult.sidedSuccess(level.isClientSide());
         }
         return super.useItemOn(stack, state, level, pos, player, hand, hitResult);
@@ -105,8 +103,7 @@ public class RcsThrusterBlock extends DirectionalBlock implements IBE<RcsThruste
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player,
                                                 BlockHitResult hitResult) {
-        if (PropulsionCoreBehaviour.handleInteraction(level.getBlockEntity(pos), player, InteractionHand.MAIN_HAND)
-                || SoundMufflerBehaviour.handleInteraction(level.getBlockEntity(pos), player, InteractionHand.MAIN_HAND)) {
+        if (ThrusterInteractionHandler.handleInteraction(level.getBlockEntity(pos), player, InteractionHand.MAIN_HAND)) {
             return InteractionResult.sidedSuccess(level.isClientSide());
         }
         return super.useWithoutItem(state, level, pos, player, hitResult);
