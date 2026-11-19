@@ -12,6 +12,7 @@ import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.SpriteSet;
+import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
@@ -50,6 +51,7 @@ public class PlumeParticle extends ThrusterParticle {
     private final float spreadMagnitude;
     private final List<ResourceLocation> overrideTextures;
     private TextureAtlasSprite[] cachedOverrideSprites;
+    private TextureAtlasSprite[] grayscaleSprites;
     private final float startupProgress;
     private final float trailCoverage;
     private Vec3 sableResolvedSpreadDirection;
@@ -109,7 +111,16 @@ public class PlumeParticle extends ThrusterParticle {
             }
         }
 
-        setSpriteFromAge(this.spriteSet);
+        if (data.overrideColor() != null && this.overrideTextures.isEmpty()) {
+            var atlas = (TextureAtlas) Minecraft.getInstance().getTextureManager().getTexture(PARTICLES_ATLAS);
+            this.grayscaleSprites = new TextureAtlasSprite[PLUME_SPRITE_COUNT];
+            for (int i = 0; i < PLUME_SPRITE_COUNT; i++) {
+                this.grayscaleSprites[i] = atlas.getSprite(ResourceLocation.fromNamespaceAndPath(
+                        "createpropulsion", "plume/plume" + (i + 1) + "_grayscale"));
+            }
+        }
+
+        this.pickSprite();
         if (data.overrideColor() == null) {
             setColor(0xFFFFFF);
         } else {
@@ -141,6 +152,7 @@ public class PlumeParticle extends ThrusterParticle {
         //Smoke update
         if (currentState == ParticleState.PLUME && this.age >= this.smokeTransitionAge) {
             currentState = ParticleState.SMOKE;
+            setColor(0xFFFFFF);
             this.baseSize *= 1.2f;
             this.friction = getSmokeFriction();
         }
@@ -200,6 +212,10 @@ public class PlumeParticle extends ThrusterParticle {
             frameIndex = PLUME_SPRITE_COUNT + smokeFrame;
         }
 
+        if (currentState == ParticleState.PLUME && this.grayscaleSprites != null) {
+            this.setSprite(this.grayscaleSprites[frameIndex]);
+            return;
+        }
         if (this.cachedOverrideSprites != null) {
             this.setSprite(this.cachedOverrideSprites[frameIndex % this.cachedOverrideSprites.length]);
             return;

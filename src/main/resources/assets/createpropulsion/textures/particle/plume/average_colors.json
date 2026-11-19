@@ -1,0 +1,50 @@
+﻿[
+    {
+        "file":  "plume1.png",
+        "average_rgba":  "#FFFFFCD9"
+    },
+    {
+        "file":  "plume1_e.png",
+        "average_rgba":  "#FFFFFCD9"
+    },
+    {
+        "file":  "plume2.png",
+        "average_rgba":  "#FFFFF7D0"
+    },
+    {
+        "file":  "plume2_e.png",
+        "average_rgba":  "#FFFFF7D0"
+    },
+    {
+        "file":  "plume3.png",
+        "average_rgba":  "#FFFFEDC0"
+    },
+    {
+        "file":  "plume3_e.png",
+        "average_rgba":  "#FFFFEDC0"
+    },
+    {
+        "file":  "plume4.png",
+        "average_rgba":  "#FFFFD494"
+    },
+    {
+        "file":  "plume4_e.png",
+        "average_rgba":  "#FFFFD494"
+    },
+    {
+        "file":  "plume5.png",
+        "average_rgba":  "#FFF4A35C"
+    },
+    {
+        "file":  "plume5_e.png",
+        "average_rgba":  "#FFF4A35C"
+    },
+    {
+        "file":  "plume6.png",
+        "average_rgba":  "#FFC37957"
+    },
+    {
+        "file":  "plume6_e.png",
+        "average_rgba":  "#FFC37957"
+    }
+]

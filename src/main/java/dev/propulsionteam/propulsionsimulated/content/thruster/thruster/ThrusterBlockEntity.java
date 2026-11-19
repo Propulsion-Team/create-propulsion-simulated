@@ -1378,15 +1378,17 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
             return super.createParticleOptions();
         }
         FluidThrusterProperties resolvedProperties = properties;
-        if (properties.useFluidColor()) {
-            int fluidColor = IClientFluidTypeExtensions.of(fluidStack().getFluid()).getTintColor(fluidStack()) & 0xFFFFFF;
+        Integer dyeColor = getDyeColor();
+        if (dyeColor != null || properties.useFluidColor()) {
+            int color = dyeColor != null ? dyeColor
+                : IClientFluidTypeExtensions.of(fluidStack().getFluid()).getTintColor(fluidStack()) & 0xFFFFFF;
             resolvedProperties = new FluidThrusterProperties(
                 properties.thrustMultiplier(),
                 properties.consumptionMultiplier(),
                 properties.particleType(),
                 properties.overrideTextures(),
-                fluidColor,
-                true
+                color,
+                properties.useFluidColor()
             );
         }
         return resolvedProperties.particleType().createParticleOptions(resolvedProperties);
