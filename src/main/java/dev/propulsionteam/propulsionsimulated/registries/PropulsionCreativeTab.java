@@ -62,7 +62,7 @@ public class PropulsionCreativeTab {
         registerSectionItem(MAIN_SECTION, "liquid_vector_thruster", () -> PropulsionBlocks.LIQUID_VECTOR_THRUSTER_BLOCK.get().asItem());
         registerSectionItem(MAIN_SECTION, "solid_fuel_thruster", () -> PropulsionBlocks.SOLID_FUEL_THRUSTER_BLOCK.get().asItem());
         registerSectionItem(MAIN_SECTION, "hush_kit", () -> PropulsionItems.HUSH_KIT.get());
-        registerSectionItem(MAIN_SECTION, "propulsion_core", () -> PropulsionItems.PROPULSION_CORE.get());
+        registerSectionItem(MAIN_SECTION, "vector_core", () -> PropulsionItems.VECTOR_CORE.get());
         registerSectionItem(MAIN_SECTION, "redstone_transmission", () -> PropulsionBlocks.REDSTONE_TRANSMISSION_BLOCK.get().asItem());
         registerSectionItem(MAIN_SECTION, "redstone_converter", () -> PropulsionBlocks.REDSTONE_CONVERTER_BLOCK.get().asItem());
         registerSectionItem(MAIN_SECTION, "turpentine_bucket", () -> PropulsionItems.TURPENTINE_BUCKET.get());

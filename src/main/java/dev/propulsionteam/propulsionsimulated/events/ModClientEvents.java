@@ -77,8 +77,8 @@ public class ModClientEvents {
 
     @SubscribeEvent
     public static void registerClientExtensions(RegisterClientExtensionsEvent event) {
-        event.registerItem(SimpleCustomRenderer.create(PropulsionItems.PROPULSION_CORE.get(), new PropulsionCoreRenderer()),
-            PropulsionItems.PROPULSION_CORE.get());
+        event.registerItem(SimpleCustomRenderer.create(PropulsionItems.VECTOR_CORE.get(), new PropulsionCoreRenderer()),
+            PropulsionItems.VECTOR_CORE.get());
         event.registerFluidType(new IClientFluidTypeExtensions() {
             @Override
             public ResourceLocation getStillTexture() {

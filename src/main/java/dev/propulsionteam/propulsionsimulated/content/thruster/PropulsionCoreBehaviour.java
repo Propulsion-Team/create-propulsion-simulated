@@ -26,7 +26,7 @@ public class PropulsionCoreBehaviour extends BlockEntityBehaviour {
 
         @Override
         public boolean isItemValid(int slot, ItemStack stack) {
-            return stack.is(PropulsionItems.PROPULSION_CORE.get());
+            return stack.is(PropulsionItems.VECTOR_CORE.get());
         }
 
         @Override
@@ -85,7 +85,7 @@ public class PropulsionCoreBehaviour extends BlockEntityBehaviour {
             }
             return true;
         }
-        if (!held.is(PropulsionItems.PROPULSION_CORE.get())) return false;
+        if (!held.is(PropulsionItems.VECTOR_CORE.get())) return false;
         if (!behaviour.getWorld().isClientSide && !isInstalled(blockEntity)) {
             behaviour.inventory.setStackInSlot(0, held.copyWithCount(1));
             if (!player.isCreative()) held.shrink(1);
