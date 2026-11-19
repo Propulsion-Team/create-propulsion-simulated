@@ -54,6 +54,7 @@ public class VectorThrusterBlockEntity extends IonThrusterBlockEntity {
     private double maxVectorAngle = 30.0d;
     private float obstructionEfficiency = 1.0f;
     private boolean clientInitialized = false;
+    protected boolean vectorObstructionDirty;
 
     // Flap animation: 0 = idle (wide), 1 = full throttle (narrow)
     private float targetFlapProgress;
@@ -204,7 +205,14 @@ public class VectorThrusterBlockEntity extends IonThrusterBlockEntity {
         tickVector();
         if (level != null && !level.isClientSide && maxVectorAngle != getMaxVectorAngle()) {
             maxVectorAngle = getMaxVectorAngle();
+            vectorObstructionDirty = true;
             isDirty = true;
+        }
+
+        if (level != null && !level.isClientSide && vectorObstructionDirty
+                && PropulsionConfig.VECTOR_THRUSTER_REFRESH_OBSTRUCTION_WHILE_VECTORING.get()) {
+            calculateObstruction(level, worldPosition, getFacing());
+            vectorObstructionDirty = false;
         }
 
         targetFlapProgress = (float) getThrottle();
@@ -232,6 +240,7 @@ public class VectorThrusterBlockEntity extends IonThrusterBlockEntity {
             currentVectorX = next.x();
             currentVectorY = next.y();
             if (level != null && !level.isClientSide) {
+                vectorObstructionDirty = true;
                 setChanged();
                 isDirty = true;
             }
@@ -261,10 +270,13 @@ public class VectorThrusterBlockEntity extends IonThrusterBlockEntity {
     }
 
     private Vector3d computeExhaustDirectionLocal() {
+        return computeExhaustDirectionLocal(VectorThrusterControlMath.direction(currentVectorX, currentVectorY, getMaxVectorAngle()));
+    }
+
+    private Vector3d computeExhaustDirectionLocal(Vector3d direction) {
         Vector3d forward = new Vector3d(getFacing().getStepX(), getFacing().getStepY(), getFacing().getStepZ()).normalize();
         Vector3d right = computeRight(forward);
         Vector3d up = new Vector3d(right).cross(forward).normalize();
-        Vector3d direction = VectorThrusterControlMath.direction(currentVectorX, currentVectorY, getMaxVectorAngle());
         Vector3d exhaust = new Vector3d(forward).mul(-direction.z)
                 .fma(direction.x, right)
                 .fma(direction.y, up);
@@ -275,6 +287,17 @@ public class VectorThrusterBlockEntity extends IonThrusterBlockEntity {
             exhaust.normalize();
         }
         return exhaust;
+    }
+
+    @Override
+    public Vec3 getRenderExhaustDirectionLocal(float partialTicks) {
+        Vector3d exhaust = computeExhaustDirectionLocal(getInterpolatedVectorDirection(partialTicks));
+        return new Vec3(exhaust.x, exhaust.y, exhaust.z);
+    }
+
+    @Override
+    public Vec3 getRenderNozzlePositionLocal(float partialTicks) {
+        return getLocalNozzlePosition(worldPosition, getRenderExhaustDirectionLocal(partialTicks), getNozzleOffsetFromCenter());
     }
 
     @Override

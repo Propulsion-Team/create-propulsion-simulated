@@ -24,7 +24,7 @@ public class ThrusterRenderer extends SmartBlockEntityRenderer<ThrusterBlockEnti
 
     @Override
     protected void renderSafe(ThrusterBlockEntity be, float partialTicks, PoseStack ms, MultiBufferSource buffer, int light, int overlay) {
-        ThrusterDebugRenderer.render(be, ms, buffer);
+        ThrusterDebugRenderer.render(be, partialTicks, ms, buffer);
 
         ThrusterPlumeRenderer.render(be, partialTicks, ms, buffer);
 

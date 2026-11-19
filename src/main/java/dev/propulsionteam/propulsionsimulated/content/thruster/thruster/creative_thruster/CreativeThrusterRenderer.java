@@ -29,7 +29,7 @@ public class CreativeThrusterRenderer extends SmartBlockEntityRenderer<CreativeT
                               final MultiBufferSource buffer,
                               final int light,
                               final int overlay) {
-        ThrusterDebugRenderer.render(be, ms, buffer);
+        ThrusterDebugRenderer.render(be, partialTicks, ms, buffer);
 
         ThrusterPlumeRenderer.render(be, partialTicks, ms, buffer);
 

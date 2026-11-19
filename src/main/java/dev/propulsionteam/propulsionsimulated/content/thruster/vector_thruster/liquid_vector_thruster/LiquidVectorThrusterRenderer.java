@@ -27,7 +27,7 @@ public class LiquidVectorThrusterRenderer extends SmartBlockEntityRenderer<Liqui
     @Override
     protected void renderSafe(LiquidVectorThrusterBlockEntity be, float partialTick, PoseStack ms, MultiBufferSource buffer, int light, int overlay) {
         super.renderSafe(be, partialTick, ms, buffer, light, overlay);
-        ThrusterDebugRenderer.render(be, ms, buffer);
+        ThrusterDebugRenderer.render(be, partialTick, ms, buffer);
 
         ThrusterPlumeRenderer.render(be, partialTick, ms, buffer);
 

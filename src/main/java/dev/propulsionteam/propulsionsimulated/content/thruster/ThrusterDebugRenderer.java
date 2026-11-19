@@ -5,6 +5,8 @@ import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
 import dev.propulsionteam.propulsionsimulated.debug.DebugRenderer;
 import dev.propulsionteam.propulsionsimulated.debug.PropulsionDebug;
 import dev.propulsionteam.propulsionsimulated.debug.routes.MainDebugRoute;
+import dev.ryanhcode.sable.Sable;
+import dev.ryanhcode.sable.sublevel.ClientSubLevel;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -38,14 +40,22 @@ public final class ThrusterDebugRenderer {
         }
     }
 
-    public static void render(AbstractThrusterBlockEntity be, PoseStack ms, MultiBufferSource buffer) {
+    public static void render(AbstractThrusterBlockEntity be, float partialTicks, PoseStack ms, MultiBufferSource buffer) {
         if (!PropulsionDebug.isDebug(MainDebugRoute.THRUSTER) || be == null || be.isRemoved() || be.getLevel() == null) {
             return;
         }
         debug_drawRenderBoundingBox(be, ms, buffer);
 
-        AbstractThrusterBlockEntity.WorldExhaustRay worldRay = be.getWorldExhaustRay();
-        if (worldRay == null || worldRay.direction().lengthSqr() < 1.0e-8) {
+        Vec3 localNozzle = be.getRenderNozzlePositionLocal(partialTicks);
+        Vec3 localDirection = be.getRenderExhaustDirectionLocal(partialTicks);
+        var subLevel = Sable.HELPER.getContaining(be.getLevel(), be.getBlockPos());
+        var pose = subLevel instanceof ClientSubLevel client ? client.renderPose(partialTicks)
+                : subLevel == null ? null : subLevel.logicalPose();
+        Vec3 nozzle = pose == null ? localNozzle : pose.transformPosition(localNozzle);
+        Vec3 ahead = pose == null ? localNozzle.add(localDirection) : pose.transformPosition(localNozzle.add(localDirection));
+        AbstractThrusterBlockEntity.WorldExhaustRay worldRay = new AbstractThrusterBlockEntity.WorldExhaustRay(
+                be.getLevel(), nozzle, ahead.subtract(nozzle).normalize());
+        if (worldRay.direction().lengthSqr() < 1.0e-8) {
             return;
         }
 
@@ -77,7 +87,7 @@ public final class ThrusterDebugRenderer {
         if (hitResult.getType() == BlockHitResult.Type.BLOCK) {
             DebugRenderer.drawBox(
                     idBase + "_ray_hit",
-                    hitResult.getLocation(),
+                    Sable.HELPER.projectOutOfSubLevel(worldLevel, hitResult.getLocation()),
                     new Vec3(0.14, 0.14, 0.14),
                     new Color(255, 100, 100, 255),
                     RENDER_TICKS

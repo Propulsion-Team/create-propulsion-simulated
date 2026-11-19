@@ -30,7 +30,7 @@ public class IonThrusterRenderer extends SmartBlockEntityRenderer<IonThrusterBlo
     protected void renderSafe(IonThrusterBlockEntity be, float partialTicks, PoseStack ms, MultiBufferSource buffer,
                               int light, int overlay) {
         super.renderSafe(be, partialTicks, ms, buffer, light, overlay);
-        ThrusterDebugRenderer.render(be, ms, buffer);
+        ThrusterDebugRenderer.render(be, partialTicks, ms, buffer);
 
         ThrusterPlumeRenderer.render(be, partialTicks, ms, buffer);
 

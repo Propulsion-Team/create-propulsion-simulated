@@ -59,13 +59,13 @@ public final class ThrusterVisualEffects {
 
         VISUAL_POWER.put(be, power);
 
-        Vec3 exhaust = be.getParticleDebugExhaustDirectionLocal();
+        Vec3 exhaust = be.getRenderExhaustDirectionLocal(partialTicks);
         if (exhaust.lengthSqr() <= 1.0e-8d) return;
         exhaust = exhaust.normalize();
 
         Direction fallbackDirection = Direction.getNearest(exhaust.x, exhaust.y, exhaust.z);
 
-        Vec3 localNozzle = be.getParticleDebugNozzlePositionLocal()
+        Vec3 localNozzle = be.getRenderNozzlePositionLocal(partialTicks)
                 .subtract(Vec3.atLowerCornerOf(be.getBlockPos()));
 
         int width = Math.max(1, be.width);

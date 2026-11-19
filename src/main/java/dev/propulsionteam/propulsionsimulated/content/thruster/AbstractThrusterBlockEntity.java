@@ -17,6 +17,7 @@ import dev.propulsionteam.propulsionsimulated.utility.math.MathUtility;
 import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.api.block.BlockSubLevelAssemblyListener;
 import dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle;
+import dev.ryanhcode.sable.mixinterface.clip_overwrite.ClipContextExtension;
 import dev.ryanhcode.sable.physics.config.dimension_physics.DimensionPhysicsData;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import net.createmod.catnip.lang.LangBuilder;
@@ -30,6 +31,7 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -37,6 +39,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import org.joml.Math;
 import org.joml.Vector3d;
@@ -538,6 +542,14 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         return getLocalNozzlePosition(worldPosition, localExhaustDirection, currentNozzleOffset);
     }
 
+    public Vec3 getRenderExhaustDirectionLocal(float partialTicks) {
+        return getParticleDebugExhaustDirectionLocal();
+    }
+
+    public Vec3 getRenderNozzlePositionLocal(float partialTicks) {
+        return getParticleDebugNozzlePositionLocal();
+    }
+
     public record WorldExhaustRay(Level level, Vec3 nozzlePos, Vec3 direction) {}
 
     public record ObstructionRaySample(double firstHitDistance, int emptyBlocksEstimate) {}
@@ -610,7 +622,15 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
                 ClipContext.Block.COLLIDER,
                 ClipContext.Fluid.NONE,
                 net.minecraft.world.phys.shapes.CollisionContext.empty()
-            );
+            ) {
+                @Override
+                public VoxelShape getBlockShape(BlockState state, BlockGetter blockGetter, BlockPos pos) {
+                    return Sable.HELPER.getContaining(level, pos) == containingSubLevel
+                            ? super.getBlockShape(state, blockGetter, pos)
+                            : Shapes.empty();
+                }
+            };
+            ((ClipContextExtension) clipContext).sable$setDoNotProject(true);
             BlockHitResult hitResult = level.clip(clipContext);
 
             double firstHitDistance = scanLength;
@@ -644,7 +664,8 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         double firstHitDistance = scanLength;
         boolean hit = hitResult.getType() == BlockHitResult.Type.BLOCK;
         if (hit) {
-            firstHitDistance = Math.min(scanLength, rayStart.distanceTo(hitResult.getLocation()));
+            Vec3 hitPosition = Sable.HELPER.projectOutOfSubLevel(worldRay.level(), hitResult.getLocation());
+            firstHitDistance = Math.min(scanLength, rayStart.distanceTo(hitPosition));
         }
 
         int emptyBlocksEstimate = hit

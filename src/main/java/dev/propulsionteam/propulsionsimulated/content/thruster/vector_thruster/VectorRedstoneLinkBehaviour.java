@@ -2,6 +2,7 @@ package dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster;
 
 import com.simibubi.create.Create;
 import com.simibubi.create.content.redstone.link.IRedstoneLinkable;
+import com.simibubi.create.content.redstone.link.RedstoneLinkNetworkHandler;
 import com.simibubi.create.content.redstone.link.RedstoneLinkNetworkHandler.Frequency;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BehaviourType;
@@ -90,13 +91,25 @@ public class VectorRedstoneLinkBehaviour extends BlockEntityBehaviour implements
 
     @Override
     public void setReceivedStrength(int networkPower) {
-        if (!newPosition)
+        if (!isListening())
             return;
         signalCallback.accept(networkPower);
     }
 
     public void notifySignalChange() {
         Create.REDSTONE_LINK_NETWORK_HANDLER.updateNetworkOf(getWorld(), this);
+        updateReceivedStrength();
+    }
+
+    private void updateReceivedStrength() {
+        if (!isListening()) return;
+        int power = 0;
+        for (IRedstoneLinkable link : Create.REDSTONE_LINK_NETWORK_HANDLER.getNetworkOf(getWorld(), this)) {
+            if (link != this && link.isAlive() && RedstoneLinkNetworkHandler.withinRange(this, link)) {
+                power = Math.max(power, link.getTransmittedStrength());
+            }
+        }
+        setReceivedStrength(power);
     }
 
     @Override
@@ -104,8 +117,11 @@ public class VectorRedstoneLinkBehaviour extends BlockEntityBehaviour implements
         super.initialize();
         if (getWorld().isClientSide)
             return;
-        Create.REDSTONE_LINK_NETWORK_HANDLER.addToNetwork(getWorld(), this);
         newPosition = true;
+        Create.REDSTONE_LINK_NETWORK_HANDLER.addToNetwork(getWorld(), this);
+        if (frequencyFirst != Frequency.EMPTY || frequencyLast != Frequency.EMPTY) {
+            updateReceivedStrength();
+        }
     }
 
     @Override
@@ -165,6 +181,7 @@ public class VectorRedstoneLinkBehaviour extends BlockEntityBehaviour implements
         blockEntity.setChanged();
         blockEntity.sendData();
         Create.REDSTONE_LINK_NETWORK_HANDLER.addToNetwork(getWorld(), this);
+        updateReceivedStrength();
     }
 
     @Override

@@ -40,7 +40,7 @@ public final class VectorThrusterRenderer {
 
     public static void renderThruster(VectorThrusterBlockEntity be, float partialTick, PoseStack ms, MultiBufferSource buffer, int light, int overlay) {
         if (be == null || be.isRemoved()) return;
-        ThrusterDebugRenderer.render(be, ms, buffer);
+        ThrusterDebugRenderer.render(be, partialTick, ms, buffer);
 
         BlockState state = be.getBlockState();
         boolean creative = be instanceof CreativeVectorThrusterBlockEntity;

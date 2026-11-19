@@ -1,6 +1,8 @@
 package dev.propulsionteam.propulsionsimulated.content.thruster;
 
 import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
+import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.VectorThrusterBlockEntity;
+import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.VectorThrusterPhysics;
 import net.minecraft.core.BlockPos;
 import org.joml.Vector3d;
 import javax.annotation.Nullable;
@@ -13,9 +15,14 @@ public final class ThrusterForceProvider {
     public static ForceSample createSample(final AbstractThrusterBlockEntity blockEntity, final double timeStep) {
         final BlockPos controller = blockEntity.controllerPos;
         if (controller != null) return null;
-        return createSample(blockEntity.getBlockPos(), controller, blockEntity.width,
+        final ForceSample sample = createSample(blockEntity.getBlockPos(), controller, blockEntity.width,
             blockEntity.getThrustDirectionLocal(), blockEntity.getCurrentThrust(), timeStep,
             PropulsionConfig.NOZZLE_OFFSET_FROM_CENTER.get());
+        if (sample == null || !(blockEntity instanceof VectorThrusterBlockEntity)
+                || !PropulsionConfig.VECTOR_THRUSTER_GEOMETRY_AWARE_TORQUE.get()) return sample;
+        final Vector3d point = VectorThrusterPhysics.applicationPoint(
+                blockEntity.getBlockPos(), blockEntity.getFacing(), sample.directionLocal());
+        return point.isFinite() ? new ForceSample(point, sample.impulseLocal(), sample.directionLocal()) : null;
     }
 
     @Nullable

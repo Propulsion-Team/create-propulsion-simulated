@@ -202,6 +202,7 @@ public class LiquidVectorThrusterBlockEntity extends VectorThrusterBlockEntity {
             currentVectorX = next.x();
             currentVectorY = next.y();
             if (level != null && !level.isClientSide) {
+                vectorObstructionDirty = true;
                 setChanged();
                 isDirty = true;
             }
