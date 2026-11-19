@@ -670,11 +670,13 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         return (isPowered() && isWorking()) || isFadingOut();
     }
 
+    protected boolean canApplyThrust() {
+        return isActive() || (isPowered() && level != null && lastThrustUpdateGameTime == level.getGameTime());
+    }
+
     @Override
     public void sable$physicsTick(final ServerSubLevel subLevel, final RigidBodyHandle handle, final double timeStep) {
-        // Resource loss is immediate, while a commanded shutdown keeps applying the
-        // explicitly tracked fade envelope until it reaches zero.
-        if (!this.isActive() || this.getCurrentThrust() <= 0.0d) {
+        if (!this.canApplyThrust() || this.getCurrentThrust() <= 0.0d) {
             return;
         }
 

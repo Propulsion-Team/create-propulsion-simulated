@@ -14,10 +14,6 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3d;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.util.function.Supplier;
-
 public final class SimulatedThrustAdapter {
     private static final ResourceLocation SPACE_DIMENSION = ResourceLocation.parse("astronautics:space");
     private static final ResourceLocation SPACE_THRUST_GROUP = ResourceLocation.parse("astronautics:thrusters");
@@ -25,23 +21,8 @@ public final class SimulatedThrustAdapter {
     private SimulatedThrustAdapter() {
     }
 
-    @SuppressWarnings("unchecked")
-    private static <T> T getForceGroup(String name) {
-        try {
-            Field field = ForceGroups.class.getField(name);
-            Object ro = field.get(null);
-            if (ro instanceof Supplier) {
-                return ((Supplier<T>) ro).get();
-            }
-            Method getMethod = ro.getClass().getMethod("get");
-            return (T) getMethod.invoke(ro);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to access Sable ForceGroup: " + name, e);
-        }
-    }
-
     public static void applyImpulseAtPoint(final ServerSubLevel subLevel, final Vector3d pointLocal, final Vector3d impulseLocal) {
-        ForceGroup group = getForceGroup("PROPULSION");
+        ForceGroup group = ForceGroups.PROPULSION.get();
         if (subLevel.getLevel().dimension().location().equals(SPACE_DIMENSION)) {
             group = ForceGroups.REGISTRY.getOptional(SPACE_THRUST_GROUP).orElse(group);
         }
@@ -60,7 +41,7 @@ public final class SimulatedThrustAdapter {
     }
 
     public static void applyGroundFriction(final ServerSubLevel subLevel, final Vector3d groundFrictionImpulse) {
-        final QueuedForceGroup dragGroup = subLevel.getOrCreateQueuedForceGroup(getForceGroup("DRAG"));
+        final QueuedForceGroup dragGroup = subLevel.getOrCreateQueuedForceGroup(ForceGroups.DRAG.get());
         dragGroup.getForceTotal().applyLinearImpulse(groundFrictionImpulse);
     }
 
