@@ -29,7 +29,7 @@ public class SoundMufflerBehaviour extends BlockEntityBehaviour {
 
         @Override
         public boolean isItemValid(int slot, ItemStack stack) {
-            return stack.is(PropulsionItems.SOUND_MUFFLER.get());
+            return stack.is(PropulsionItems.HUSH_KIT.get());
         }
 
         @Override
@@ -66,7 +66,7 @@ public class SoundMufflerBehaviour extends BlockEntityBehaviour {
         if (behaviour == null || player.isSpectator() || !player.mayBuild()) return false;
         ItemStack held = player.getItemInHand(hand);
         SoundMufflerBehaviour installed = behaviour.findInstalled();
-        if (held.is(PropulsionItems.SOUND_MUFFLER.get())) {
+        if (held.is(PropulsionItems.HUSH_KIT.get())) {
             if (!behaviour.getWorld().isClientSide && behaviour.inventory.getStackInSlot(0).isEmpty()) {
                 behaviour.inventory.setStackInSlot(0, held.copyWithCount(1));
                 if (!player.isCreative()) held.shrink(1);

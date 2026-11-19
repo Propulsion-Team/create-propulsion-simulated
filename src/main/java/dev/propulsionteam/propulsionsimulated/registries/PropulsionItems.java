@@ -38,8 +38,8 @@ public class PropulsionItems {
         ITEMS.register("raw_platinum", () -> new Item(new Item.Properties()));
     public static final DeferredHolder<Item, Item> CRUSHED_RAW_PLATINUM =
         ITEMS.register("crushed_raw_platinum", () -> new Item(new Item.Properties()));
-    public static final DeferredHolder<Item, Item> SOUND_MUFFLER =
-        ITEMS.register("sound_muffler", () -> new CreateStyleTooltipItem(new Item.Properties()));
+    public static final DeferredHolder<Item, Item> HUSH_KIT =
+        ITEMS.register("hush_kit", () -> new CreateStyleTooltipItem(new Item.Properties()));
     public static final DeferredHolder<Item, Item> TOOLGUN =
         ITEMS.register("toolgun", () -> new ToolgunItem(new Item.Properties().stacksTo(1)));
     public static final DeferredHolder<Item, SuperBucketItem> SUPER_BUCKET =

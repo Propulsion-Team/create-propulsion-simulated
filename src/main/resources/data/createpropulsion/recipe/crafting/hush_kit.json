@@ -1,16 +1,17 @@
 {
     "type": "minecraft:crafting_shaped",
     "pattern": [
-        " I ",
-        "IWI",
-        " I "
+        "NI ",
+        " WI",
+        "NI "
     ],
     "key": {
+        "N": { "item": "minecraft:iron_nugget" },
         "I": { "item": "create:iron_sheet" },
         "W": { "tag": "minecraft:wool" }
     },
     "result": {
-        "id": "createpropulsion:sound_muffler",
+        "id": "createpropulsion:hush_kit",
         "count": 1
     }
 }

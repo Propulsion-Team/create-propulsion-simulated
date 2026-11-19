@@ -17,15 +17,16 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 class RecipeResourcesTest {
     @Test
-    void soundMufflerUsesIronSheetsAndAnyWool() throws IOException {
-        JsonObject recipe = load("crafting/sound_muffler");
+    void hushKitUsesIronNuggetsIronSheetsAndAnyWool() throws IOException {
+        JsonObject recipe = load("crafting/hush_kit");
         assertEquals("minecraft:crafting_shaped", recipe.get("type").getAsString());
         var pattern = recipe.getAsJsonArray("pattern");
-        assertEquals(List.of(" I ", "IWI", " I "),
+        assertEquals(List.of("NI ", " WI", "NI "),
                 pattern.asList().stream().map(element -> element.getAsString()).toList());
+        assertEquals("minecraft:iron_nugget", recipe.getAsJsonObject("key").getAsJsonObject("N").get("item").getAsString());
         assertEquals("create:iron_sheet", recipe.getAsJsonObject("key").getAsJsonObject("I").get("item").getAsString());
         assertEquals("minecraft:wool", recipe.getAsJsonObject("key").getAsJsonObject("W").get("tag").getAsString());
-        assertEquals("createpropulsion:sound_muffler", recipe.getAsJsonObject("result").get("id").getAsString());
+        assertEquals("createpropulsion:hush_kit", recipe.getAsJsonObject("result").get("id").getAsString());
         assertEquals(1, recipe.getAsJsonObject("result").get("count").getAsInt());
     }
 
