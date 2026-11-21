@@ -99,6 +99,7 @@ public final class PlumeRenderer {
         if (shader != null) {
             set(shader, "Time", time);
             set(shader, "Power", params.power());
+            set(shader, "Voxel", isBoxes(params.shape()) ? params.length() * 16.0f : 0.0f);
             var dye = shader.getUniform("DyeColor");
             if (dye != null) {
                 Integer color = params.dyeColor();
@@ -118,7 +119,9 @@ public final class PlumeRenderer {
 
         VertexConsumer vc = buffer.getBuffer(PlumeRenderType.plume());
 
-        if (params.shape() == PlumeShape.ION_FULL) {
+        if (isBoxes(params.shape())) {
+            drawBoxes(ms, vc, params, time);
+        } else if (params.shape() == PlumeShape.ION_FULL) {
             drawPlumeMesh(ms.last().pose(), vc, params, params.length(), params.radius(), 4, 12, params.alpha(), time, 0.0f);
             drawPlumeMesh(ms.last().pose(), vc, params, params.length() * 0.88f, params.radius() * 0.68f, 4, 10, params.alpha() * 0.62f, time, 0.35f);
         } else {
@@ -128,6 +131,67 @@ public final class PlumeRenderer {
         }
 
         ms.popPose();
+    }
+
+    private static final float[] FLAME_WIDTHS = {1.0f, 0.786f, 0.571f};
+    private static final float[] FLAME_LENGTHS = {0.517f, 0.759f, 1.0f};
+    private static final float[] PLASMA_WIDTHS = {1.0f, 0.54f, 0.22f};
+    private static final float[] PLASMA_LENGTHS = {1.0f, 0.86f, 0.62f};
+    private static final float[] BOX_HEAT = {1.0f, 0.75f, 0.5f};
+    private static final float[] BOX_ALPHA = {0.75f, 0.85f, 0.85f};
+    private static final float[] BOX_FREQ = {0.83f, 1.07f, 1.31f};
+    private static final float[] BOX_PHASE = {0.0f, 2.1f, 4.4f};
+
+    private static boolean isBoxes(PlumeShape shape) {
+        return shape == PlumeShape.FLAME_BOXES || shape == PlumeShape.PLASMA_BOXES;
+    }
+
+    private static void drawBoxes(PoseStack ms, VertexConsumer vc, PlumeRenderParams params, float time) {
+        boolean plasma = params.shape() == PlumeShape.PLASMA_BOXES;
+        float[] widths = plasma ? PLASMA_WIDTHS : FLAME_WIDTHS;
+        float[] lengths = plasma ? PLASMA_LENGTHS : FLAME_LENGTHS;
+        float wobble = plasma || params.red() < 0.5f ? 0.4f : 1.0f;
+        float power = params.power();
+        float grow = power * power * (3.0f - 2.0f * power);
+        float diameter = params.radius() * 32.0f * (0.6f + 0.4f * grow);
+        float tick = time * 20.0f;
+
+        for (int i = 0; i < 3; i++) {
+            int voxels = Math.max(2, 2 * Math.round(diameter * widths[i] / 2.0f));
+            float half = voxels / 32.0f - 0.004f;
+            float stretch = wobble * (1.5f * Mth.sin(tick * BOX_FREQ[i] + BOX_PHASE[i])
+                    + 0.5f * Mth.sin(tick * BOX_FREQ[i] * 2.3f + BOX_PHASE[i] * 1.7f)) / 16.0f;
+            float length = Math.max(1.0f, Math.round((params.length() * lengths[i] + stretch) * 16.0f)) / 16.0f;
+            int alpha = Mth.clamp((int) (params.alpha() * BOX_ALPHA[i] * 255.0f), 0, 255);
+
+            ms.pushPose();
+            if (plasma && i == 1) ms.mulPose(Axis.YP.rotationDegrees(45.0f));
+            Matrix4f m = ms.last().pose();
+            float vEnd = BOX_HEAT[i];
+            float tipHalf = plasma ? half * 0.25f : half;
+            for (int side = 0; side < 4; side++) {
+                float[] a = squarePoint(half, side / 4.0f);
+                float[] b = squarePoint(half, (side + 1) / 4.0f);
+                float[] c = squarePoint(tipHalf, (side + 1) / 4.0f);
+                float[] d = squarePoint(tipHalf, side / 4.0f);
+                float u0 = side / 4.0f;
+                float u1 = (side + 1) / 4.0f;
+                v(vc, m, a[0], 0.0f, a[1], u0, 0.0f, alpha, params);
+                v(vc, m, b[0], 0.0f, b[1], u1, 0.0f, alpha, params);
+                v(vc, m, c[0], -length, c[1], u1, vEnd, 0, params);
+                v(vc, m, d[0], -length, d[1], u0, vEnd, 0, params);
+            }
+            if (i == 0) {
+                int capAlpha = Mth.clamp((int) (params.alpha() * 255.0f * Math.min(1.0f, power * 2.0f)), 0, 255);
+                float capY = -0.002f;
+                float capHalf = params.capRadius() > 0.0f ? params.capRadius() : half;
+                v(vc, m, -capHalf, capY, -capHalf, 0.0f, 0.0f, capAlpha, params);
+                v(vc, m, -capHalf, capY, capHalf, 0.25f, 0.0f, capAlpha, params);
+                v(vc, m, capHalf, capY, capHalf, 0.5f, 0.0f, capAlpha, params);
+                v(vc, m, capHalf, capY, -capHalf, 0.75f, 0.0f, capAlpha, params);
+            }
+            ms.popPose();
+        }
     }
 
     private static void rotateLocalDownTo(PoseStack ms, Direction direction) {

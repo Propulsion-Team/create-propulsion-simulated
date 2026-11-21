@@ -81,10 +81,12 @@ public class PropulsionConfig {
 
     public enum PlumeRenderMode {
         PARTICLE,
-        SHADER
+        SHADER,
+        SHADER_2
     }
 
     public static final ModConfigSpec.EnumValue<PlumeRenderMode> PLUME_RENDER_MODE;
+    public static final ModConfigSpec.BooleanValue PLUME_VEIL_LIGHT;
     public static final ModConfigSpec.BooleanValue DISABLE_PARTICLE_PHYSICS;
     public static final ModConfigSpec.BooleanValue DISABLE_PARTICLE_PLUME_CURVING;
 
@@ -387,8 +389,10 @@ public class PropulsionConfig {
         CLIENT_BUILDER.pop();
 
         CLIENT_BUILDER.push("Thruster Plumes");
-        PLUME_RENDER_MODE = CLIENT_BUILDER.comment("How every thruster plume is rendered. Particle uses normal particle effects; Shader uses the procedural plume shader.")
+        PLUME_RENDER_MODE = CLIENT_BUILDER.comment("How every thruster plume is rendered. Particle uses normal particle effects; Shader uses the procedural plume shader; Shader 2.0 uses the blocky voxel plume with a dynamic light.")
                 .defineEnum("renderMode", PlumeRenderMode.PARTICLE);
+        PLUME_VEIL_LIGHT = CLIENT_BUILDER.comment("Shader 2.0 only: thrusters cast a dynamic Veil light.")
+                .define("veilLight", true);
         DISABLE_PARTICLE_PHYSICS = CLIENT_BUILDER.define("disableParticlePhysics", false);
         DISABLE_PARTICLE_PLUME_CURVING = CLIENT_BUILDER.define("disableParticlePlumeCurving", false);
         CLIENT_BUILDER.pop();
@@ -686,9 +690,25 @@ public class PropulsionConfig {
     }
 
 
+    public static boolean useVeilLight() {
+        try {
+            return useShader2Plumes() && PLUME_VEIL_LIGHT.get();
+        } catch (IllegalStateException ignored) {
+            return false;
+        }
+    }
+
+    public static boolean useShader2Plumes() {
+        try {
+            return PLUME_RENDER_MODE.get() == PlumeRenderMode.SHADER_2;
+        } catch (IllegalStateException ignored) {
+            return false;
+        }
+    }
+
     public static boolean useShaderPlumes() {
         try {
-            return PLUME_RENDER_MODE.get() == PlumeRenderMode.SHADER;
+            return PLUME_RENDER_MODE.get() != PlumeRenderMode.PARTICLE;
         } catch (IllegalStateException ignored) {
             // Client configs are not loaded on dedicated servers. Particle plumes are the
             // safe fallback because server-side thruster ticking uses this value too.

@@ -6,6 +6,7 @@ in vec4 vertexColor;
 uniform float Time;
 uniform float Power;
 uniform vec3 DyeColor;
+uniform float Voxel;
 
 out vec4 fragColor;
 
@@ -24,9 +25,9 @@ float band(float x, float center, float width) {
 
 void main() {
     float u = texCoord0.x;
-    float t = texCoord0.y;
+    float t = Voxel > 0.0 ? floor(texCoord0.y * Voxel) / Voxel : texCoord0.y;
 
-    float fadeIn = smoothstep(0.0, 0.045, t);
+    float fadeIn = Voxel > 0.0 ? 1.0 : smoothstep(0.0, 0.045, t);
     float fadeOut = 1.0 - smoothstep(0.82, 1.0, t);
     float alpha = vertexColor.a * fadeIn * fadeOut;
 
