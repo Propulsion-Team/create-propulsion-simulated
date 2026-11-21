@@ -60,7 +60,7 @@ public final class PlumeGlow {
     @SubscribeEvent
     public static void onClientTick(ClientTickEvent.Post event) {
         Minecraft mc = Minecraft.getInstance();
-        boolean wanted = mc.level != null && !failed && PropulsionConfig.useVeilLight();
+        boolean wanted = mc.level != null && !failed && PropulsionConfig.useVeilLight() && !shaderPackActive();
         if (!wanted) {
             if (ready) shutDown();
             return;
@@ -79,6 +79,16 @@ public final class PlumeGlow {
             } catch (Throwable ignored) {
             }
             it.remove();
+        }
+    }
+
+    private static boolean shaderPackActive() {
+        try {
+            Class<?> api = Class.forName("net.irisshaders.iris.api.v0.IrisApi");
+            Object instance = api.getMethod("getInstance").invoke(null);
+            return (Boolean) api.getMethod("isShaderPackInUse").invoke(instance);
+        } catch (ReflectiveOperationException | LinkageError e) {
+            return false;
         }
     }
 

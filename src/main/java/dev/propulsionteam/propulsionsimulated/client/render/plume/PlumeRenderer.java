@@ -139,7 +139,9 @@ public final class PlumeRenderer {
     private static final float[] PLASMA_LENGTHS = {1.0f, 0.86f, 0.62f};
     private static final float[] BOX_HEAT = {1.0f, 0.75f, 0.5f};
     private static final float[] BOX_ALPHA = {0.75f, 0.85f, 0.85f};
-    private static final float[] BOX_FREQ = {0.83f, 1.07f, 1.31f};
+    private static final float[] LAYER_START = {0.0f, 0.1f, 0.25f};
+    private static final float[] LAYER_END = {0.15f, 0.4f, 0.7f};
+    private static final float[] BOX_FREQ ={0.83f, 1.07f, 1.31f};
     private static final float[] BOX_PHASE = {0.0f, 2.1f, 4.4f};
 
     private static boolean isBoxes(PlumeShape shape) {
@@ -152,23 +154,29 @@ public final class PlumeRenderer {
         float[] lengths = plasma ? PLASMA_LENGTHS : FLAME_LENGTHS;
         float wobble = plasma || params.red() < 0.5f ? 0.4f : 1.0f;
         float power = params.power();
-        float grow = power * power * (3.0f - 2.0f * power);
-        float diameter = params.radius() * 32.0f * (0.6f + 0.4f * grow);
+        float settle = params.settle();
+        float flare = params.flare();
+        float diameter = params.radius() * 32.0f * (0.35f + 0.65f * smoothstep(0.0f, 0.6f, power));
+        float lengthScale = 0.2f + 0.8f * smoothstep(0.0f, 0.3f, power);
+        float fadeAll = smoothstep(0.0f, 0.15f, power);
         float tick = time * 20.0f;
 
         for (int i = 0; i < 3; i++) {
-            int voxels = Math.max(2, 2 * Math.round(diameter * widths[i] / 2.0f));
+            float exactVoxels = diameter * widths[i];
+            float voxels = Math.max(1.0f, Mth.lerp(settle, exactVoxels, 2.0f * Math.round(exactVoxels / 2.0f)));
             float half = voxels / 32.0f - 0.004f;
             float stretch = wobble * (1.5f * Mth.sin(tick * BOX_FREQ[i] + BOX_PHASE[i])
                     + 0.5f * Mth.sin(tick * BOX_FREQ[i] * 2.3f + BOX_PHASE[i] * 1.7f)) / 16.0f;
-            float length = Math.max(1.0f, Math.round((params.length() * lengths[i] + stretch) * 16.0f)) / 16.0f;
-            int alpha = Mth.clamp((int) (params.alpha() * BOX_ALPHA[i] * 255.0f), 0, 255);
+            float exactLength = Math.max(1.0f / 16.0f, params.length() * lengths[i] * lengthScale + stretch);
+            float length = Mth.lerp(settle, exactLength, Math.max(1.0f, Math.round(exactLength * 16.0f)) / 16.0f);
+            float layerFade = smoothstep(LAYER_START[i], LAYER_END[i], power);
+            int alpha = Mth.clamp((int) (params.alpha() * BOX_ALPHA[i] * 255.0f * layerFade * fadeAll), 0, 255);
 
             ms.pushPose();
             if (plasma && i == 1) ms.mulPose(Axis.YP.rotationDegrees(45.0f));
             Matrix4f m = ms.last().pose();
             float vEnd = BOX_HEAT[i];
-            float tipHalf = plasma ? half * 0.25f : half;
+            float tipHalf = plasma ? half * Mth.lerp(flare, 0.25f, 1.0f) : half;
             for (int side = 0; side < 4; side++) {
                 float[] a = squarePoint(half, side / 4.0f);
                 float[] b = squarePoint(half, (side + 1) / 4.0f);
@@ -182,7 +190,7 @@ public final class PlumeRenderer {
                 v(vc, m, d[0], -length, d[1], u0, vEnd, 0, params);
             }
             if (i == 0) {
-                int capAlpha = Mth.clamp((int) (params.alpha() * 255.0f * Math.min(1.0f, power * 2.0f)), 0, 255);
+                int capAlpha = Mth.clamp((int) (params.alpha() * 255.0f * fadeAll), 0, 255);
                 float capY = -0.002f;
                 float capHalf = params.capRadius() > 0.0f ? params.capRadius() : half;
                 v(vc, m, -capHalf, capY, -capHalf, 0.0f, 0.0f, capAlpha, params);

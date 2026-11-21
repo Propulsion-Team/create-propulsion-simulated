@@ -20,7 +20,13 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 public final class ThrusterVisualEffects {
-    private static final Map<AbstractThrusterBlockEntity, Float> VISUAL_POWER = new WeakHashMap<>();
+    private static final Map<AbstractThrusterBlockEntity, VisualState> VISUAL_STATES = new WeakHashMap<>();
+
+    private static final class VisualState {
+        float power;
+        float burst;
+        long nanos;
+    }
 
     private ThrusterVisualEffects() {
     }
@@ -56,16 +62,31 @@ public final class ThrusterVisualEffects {
     }
 
     private static void renderInternal(AbstractThrusterBlockEntity be, float partialTicks, PoseStack ms, MultiBufferSource buffer, Preset preset, float targetPower) {
-        float oldPower = VISUAL_POWER.getOrDefault(be, 0.0f);
-        float speed = targetPower > oldPower ? getRiseSpeed(preset) : getFallSpeed(preset);
-        float power = oldPower + (targetPower - oldPower) * speed;
+        VisualState state = VISUAL_STATES.computeIfAbsent(be, k -> new VisualState());
+        long nowNanos = System.nanoTime();
+        float dt = state.nanos == 0L ? 1.0f / 60.0f : Math.min(0.25f, (nowNanos - state.nanos) / 1.0e9f);
+        state.nanos = nowNanos;
 
-        if (power < 0.002f) {
-            VISUAL_POWER.remove(be);
+        float explosive = Mth.clamp((targetPower - 0.35f) / 0.5f, 0.0f, 1.0f);
+        explosive = explosive * explosive * (3.0f - 2.0f * explosive);
+        if (targetPower > state.power && state.power < 0.03f) {
+            state.burst = Math.max(state.burst, explosive);
+        }
+        state.burst = Math.max(0.0f, state.burst - dt / 0.7f);
+
+        float rate = targetPower > state.power
+                ? getRiseRate(preset) * (1.0f + 1.2f * explosive)
+                : getFallRate(preset);
+        float power = state.power + (targetPower - state.power) * (1.0f - (float) Math.exp(-rate * dt));
+
+        if (power < 0.002f && targetPower <= 0.0f) {
+            VISUAL_STATES.remove(be);
             return;
         }
 
-        VISUAL_POWER.put(be, power);
+        state.power = power;
+        float flare = state.burst;
+        float settle = 1.0f - Mth.clamp(Math.abs(targetPower - power) * 12.0f, 0.0f, 1.0f);
 
         Vec3 exhaust = be.getRenderExhaustDirectionLocal(partialTicks);
         if (exhaust.lengthSqr() <= 1.0e-8d) return;
@@ -100,6 +121,8 @@ public final class ThrusterVisualEffects {
                 * Mth.lerp(thrustNorm, 0.92f, 1.08f)
                 * getWidthRadiusScale(width, preset);
 
+        length *= 1.0f + 0.9f * flare;
+
         ms.pushPose();
 
         if (shader2) {
@@ -120,7 +143,7 @@ public final class ThrusterVisualEffects {
         PlumeRenderParams params = paramsFor(preset, fallbackDirection, power, length, radius);
         params = new PlumeRenderParams(params.direction(), params.power(), params.length(), params.radius(),
                 params.alpha(), params.red(), params.green(), params.blue(),
-                shader2 ? boxShape(preset) : params.shape(), be.getDyeColor(), capRadius);
+                shader2 ? boxShape(preset) : params.shape(), be.getDyeColor(), capRadius, flare, settle);
         if (shader2 && PropulsionConfig.useVeilLight()) {
             keepGlow(be, partialTicks, localNozzle, exhaust, params, time);
         }
@@ -362,17 +385,17 @@ public final class ThrusterVisualEffects {
         };
     }
 
-    private static float getRiseSpeed(Preset preset) {
+    private static float getRiseRate(Preset preset) {
         return switch (preset) {
-            case ION -> 0.28f;
-            default -> 0.34f;
+            case ION -> 10.0f;
+            default -> 14.0f;
         };
     }
 
-    private static float getFallSpeed(Preset preset) {
+    private static float getFallRate(Preset preset) {
         return switch (preset) {
-            case ION -> 0.18f;
-            default -> 0.22f;
+            case ION -> 5.0f;
+            default -> 7.0f;
         };
     }
 }
