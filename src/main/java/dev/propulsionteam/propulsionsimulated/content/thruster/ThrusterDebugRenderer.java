@@ -46,8 +46,14 @@ public final class ThrusterDebugRenderer {
         }
         debug_drawRenderBoundingBox(be, ms, buffer);
 
-        Vec3 localNozzle = be.getRenderNozzlePositionLocal(partialTicks);
         Vec3 localDirection = be.getRenderExhaustDirectionLocal(partialTicks);
+        int rayIndex = 0;
+        for (Vec3 localNozzle : be.getObstructionRayOriginsLocal(localDirection)) {
+            renderRay(be, partialTicks, localNozzle, localDirection, "thruster_debug_" + be.getBlockPos().asLong() + "_r" + rayIndex++);
+        }
+    }
+
+    private static void renderRay(AbstractThrusterBlockEntity be, float partialTicks, Vec3 localNozzle, Vec3 localDirection, String idBase) {
         var subLevel = Sable.HELPER.getContaining(be.getLevel(), be.getBlockPos());
         var pose = subLevel instanceof ClientSubLevel client ? client.renderPose(partialTicks)
                 : subLevel == null ? null : subLevel.logicalPose();
@@ -63,8 +69,6 @@ public final class ThrusterDebugRenderer {
         Level worldLevel = worldRay.level();
         Vec3 traceStart = worldRay.nozzlePos().add(worldRay.direction().scale(START_EPSILON));
         Vec3 worldEnd = traceStart.add(worldRay.direction().scale(obstructionLength));
-
-        String idBase = "thruster_debug_" + be.getBlockPos().asLong();
 
         DebugRenderer.drawElongatedBox(
                 idBase + "_ray",

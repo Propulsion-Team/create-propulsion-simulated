@@ -296,7 +296,11 @@ public class LiquidVectorThrusterBlockEntity extends VectorThrusterBlockEntity {
     @Override
     public void calculateObstruction(Level level, BlockPos pos, Direction forwardDirection) {
         int scanLength = PropulsionConfig.OBSTRUCTION_SCAN_LENGTH.get();
-        ObstructionRaySample sample = sampleObstructionRaycast(level, scanLength);
+        ObstructionRaySample sample = null;
+        for (Vec3 origin : getObstructionRayOriginsLocal(getParticleDebugExhaustDirectionLocal())) {
+            ObstructionRaySample other = sampleObstructionRaycast(level, scanLength, origin);
+            if (sample == null || other.firstHitDistance() < sample.firstHitDistance()) sample = other;
+        }
         double firstHitDistance = sample.firstHitDistance();
         float newEfficiency = scanLength <= 0
             ? 0.0f

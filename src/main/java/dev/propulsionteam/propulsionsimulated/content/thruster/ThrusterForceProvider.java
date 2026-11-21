@@ -18,8 +18,7 @@ public final class ThrusterForceProvider {
         final ForceSample sample = createSample(blockEntity.getBlockPos(), controller, blockEntity.width,
             blockEntity.getThrustDirectionLocal(), blockEntity.getCurrentThrust(), timeStep,
             PropulsionConfig.NOZZLE_OFFSET_FROM_CENTER.get());
-        if (sample == null || !(blockEntity instanceof VectorThrusterBlockEntity)
-                || !PropulsionConfig.VECTOR_THRUSTER_GEOMETRY_AWARE_TORQUE.get()) return sample;
+        if (sample == null || !(blockEntity instanceof VectorThrusterBlockEntity)) return sample;
         final Vector3d point = VectorThrusterPhysics.applicationPoint(
                 blockEntity.getBlockPos(), blockEntity.getFacing(), sample.directionLocal());
         return point.isFinite() ? new ForceSample(point, sample.impulseLocal(), sample.directionLocal()) : null;

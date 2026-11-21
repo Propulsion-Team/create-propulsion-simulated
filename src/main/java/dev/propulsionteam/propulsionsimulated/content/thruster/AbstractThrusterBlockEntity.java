@@ -542,6 +542,14 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         return getLocalNozzlePosition(worldPosition, localExhaustDirection, currentNozzleOffset);
     }
 
+    public Vec3 getObstructionRayOriginLocal(Vec3 exhaustDir) {
+        return getLocalNozzlePosition(worldPosition, exhaustDir, getNozzleOffsetFromCenter());
+    }
+
+    public java.util.List<Vec3> getObstructionRayOriginsLocal(Vec3 exhaustDir) {
+        return java.util.List.of(getObstructionRayOriginLocal(exhaustDir));
+    }
+
     public Vec3 getRenderExhaustDirectionLocal(float partialTicks) {
         return getParticleDebugExhaustDirectionLocal();
     }

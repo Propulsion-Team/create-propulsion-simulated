@@ -209,8 +209,7 @@ public class VectorThrusterBlockEntity extends IonThrusterBlockEntity {
             isDirty = true;
         }
 
-        if (level != null && !level.isClientSide && vectorObstructionDirty
-                && PropulsionConfig.VECTOR_THRUSTER_REFRESH_OBSTRUCTION_WHILE_VECTORING.get()) {
+        if (level != null && !level.isClientSide && vectorObstructionDirty) {
             calculateObstruction(level, worldPosition, getFacing());
             vectorObstructionDirty = false;
         }
@@ -327,9 +326,35 @@ public class VectorThrusterBlockEntity extends IonThrusterBlockEntity {
     }
 
     @Override
+    public Vec3 getObstructionRayOriginLocal(Vec3 exhaustDir) {
+        double axial = -(exhaustDir.x * getFacing().getStepX() + exhaustDir.y * getFacing().getStepY() + exhaustDir.z * getFacing().getStepZ());
+        return new Vec3(worldPosition.getX() + 0.5d, worldPosition.getY() + 0.5d, worldPosition.getZ() + 0.5d)
+                .add(exhaustDir.scale(0.51d / Math.max(0.1d, axial)));
+    }
+
+    @Override
+    public java.util.List<Vec3> getObstructionRayOriginsLocal(Vec3 exhaustDir) {
+        Vec3 origin = getObstructionRayOriginLocal(exhaustDir);
+        if (!PropulsionConfig.VECTOR_THRUSTER_PRECISE_OBSTRUCTION_RAYCAST.get()) {
+            return java.util.List.of(origin);
+        }
+        Vec3 center = new Vec3(worldPosition.getX() + 0.5d, worldPosition.getY() + 0.5d, worldPosition.getZ() + 0.5d);
+        Vec3 tip = getLocalNozzlePosition(worldPosition, exhaustDir, getNozzleOffsetFromCenter());
+        Vec3 facing = new Vec3(getFacing().getStepX(), getFacing().getStepY(), getFacing().getStepZ());
+        double tipAxial = -tip.subtract(center).dot(facing);
+        double dirAxial = Math.max(0.1d, -exhaustDir.dot(facing));
+        Vec3 offset = tip.add(exhaustDir.scale(Math.max(0.0d, (0.51d - tipAxial) / dirAxial))).subtract(origin);
+        return java.util.List.of(origin, origin.add(offset), origin.subtract(offset));
+    }
+
+    @Override
     public void calculateObstruction(Level level, BlockPos pos, Direction forwardDirection) {
         int scanLength = PropulsionConfig.OBSTRUCTION_SCAN_LENGTH.get();
-        ObstructionRaySample sample = sampleObstructionRaycast(level, scanLength);
+        ObstructionRaySample sample = null;
+        for (Vec3 origin : getObstructionRayOriginsLocal(getParticleDebugExhaustDirectionLocal())) {
+            ObstructionRaySample other = sampleObstructionRaycast(level, scanLength, origin);
+            if (sample == null || other.firstHitDistance() < sample.firstHitDistance()) sample = other;
+        }
         double firstHitDistance = sample.firstHitDistance();
         float newEfficiency = scanLength <= 0
                 ? 0.0f

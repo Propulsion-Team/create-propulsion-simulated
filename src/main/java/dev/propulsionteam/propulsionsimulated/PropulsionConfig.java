@@ -46,8 +46,7 @@ public class PropulsionConfig {
     public static final ModConfigSpec.DoubleValue VECTOR_THRUSTER_BASE_THRUST;
     public static final ModConfigSpec.DoubleValue VECTOR_THRUSTER_MAX_ANGLE;
     public static final ModConfigSpec.DoubleValue VECTOR_THRUSTER_MAX_ANGULAR_VELOCITY;
-    public static final ModConfigSpec.BooleanValue VECTOR_THRUSTER_GEOMETRY_AWARE_TORQUE;
-    public static final ModConfigSpec.BooleanValue VECTOR_THRUSTER_REFRESH_OBSTRUCTION_WHILE_VECTORING;
+    public static final ModConfigSpec.BooleanValue VECTOR_THRUSTER_PRECISE_OBSTRUCTION_RAYCAST;
     public static final ModConfigSpec.DoubleValue LIQUID_VECTOR_THRUSTER_BASE_THRUST;
     public static final ModConfigSpec.IntValue LIQUID_VECTOR_THRUSTER_FUEL_TANK_CAPACITY_MB;
     public static final ModConfigSpec.DoubleValue LIQUID_VECTOR_THRUSTER_FUEL_MB_PER_TICK_AT_FULL_THROTTLE;
@@ -182,8 +181,7 @@ public class PropulsionConfig {
                 .defineInRange("vectorThrusterBaseThrust", 733.333333333d, 1.0d, 10000000.0d);
         VECTOR_THRUSTER_MAX_ANGLE = COMMON_BUILDER.defineInRange("maxAngleDegrees", 30.0d, 0.0d, 90.0d);
         VECTOR_THRUSTER_MAX_ANGULAR_VELOCITY = COMMON_BUILDER.defineInRange("maxAngularVelocityDegreesPerSecond", 120.0d, 0.0d, 3600.0d);
-        VECTOR_THRUSTER_GEOMETRY_AWARE_TORQUE = COMMON_BUILDER.define("geometryAwareTorque", false);
-        VECTOR_THRUSTER_REFRESH_OBSTRUCTION_WHILE_VECTORING = COMMON_BUILDER.define("refreshObstructionWhileVectoring", false);
+        VECTOR_THRUSTER_PRECISE_OBSTRUCTION_RAYCAST = COMMON_BUILDER.define("preciseObstructionRaycast", false);
         COMMON_BUILDER.pop();
         COMMON_BUILDER.push("liquidVectorThruster");
         LIQUID_VECTOR_THRUSTER_BASE_THRUST = COMMON_BUILDER.comment("Liquid vector thruster base thrust at redstone 15 and full obstruction efficiency.",
