@@ -1,0 +1,77 @@
+{
+  "type": "create:sequenced_assembly",
+  "ingredient": {
+    "item": "simulated:gyroscopic_mechanism"
+  },
+  "transitional_item": {
+    "id": "createpropulsion:unfinished_vector_core"
+  },
+  "loops": 3,
+  "results": [
+    {
+      "id": "createpropulsion:vector_core"
+    }
+  ],
+  "sequence": [
+    {
+      "type": "create:filling",
+      "ingredients": [
+        {
+          "item": "createpropulsion:unfinished_vector_core"
+        },
+        {
+          "type": "neoforge:single",
+          "fluid": "aeronautics:levitite_blend",
+          "amount": 500
+        }
+      ],
+      "results": [
+        {
+          "id": "createpropulsion:unfinished_vector_core"
+        }
+      ]
+    },
+    {
+      "type": "create:pressing",
+      "ingredients": [
+        {
+          "item": "createpropulsion:unfinished_vector_core"
+        }
+      ],
+      "results": [
+        {
+          "id": "createpropulsion:unfinished_vector_core"
+        }
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "ingredients": [
+        {
+          "item": "createpropulsion:unfinished_vector_core"
+        },
+        {
+          "item": "create:precision_mechanism"
+        }
+      ],
+      "results": [
+        {
+          "id": "createpropulsion:unfinished_vector_core"
+        }
+      ]
+    },
+    {
+      "type": "create:pressing",
+      "ingredients": [
+        {
+          "item": "createpropulsion:unfinished_vector_core"
+        }
+      ],
+      "results": [
+        {
+          "id": "createpropulsion:unfinished_vector_core"
+        }
+      ]
+    }
+  ]
+}

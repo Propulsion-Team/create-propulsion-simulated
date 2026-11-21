@@ -1,5 +1,6 @@
 package dev.propulsionteam.propulsionsimulated.registries;
 
+import com.simibubi.create.content.processing.sequenced.SequencedAssemblyItem;
 import dev.propulsionteam.propulsionsimulated.CreatePropulsion;
 import dev.propulsionteam.propulsionsimulated.assemblerstick.item.CreateStyleTooltipItem;
 import dev.propulsionteam.propulsionsimulated.content.toolgun.ToolgunItem;
@@ -30,6 +31,8 @@ public class PropulsionItems {
         ITEMS.register("platinum_ingot", () -> new Item(new Item.Properties()));
     public static final DeferredHolder<Item, Item> VECTOR_CORE =
         ITEMS.register("vector_core", () -> new Item(new Item.Properties()));
+    public static final DeferredHolder<Item, SequencedAssemblyItem> UNFINISHED_VECTOR_CORE =
+        ITEMS.register("unfinished_vector_core", () -> new SequencedAssemblyItem(new Item.Properties()));
     public static final DeferredHolder<Item, Item> PLATINUM_NUGGET =
         ITEMS.register("platinum_nugget", () -> new Item(new Item.Properties()));
     public static final DeferredHolder<Item, Item> PLATINUM_SHEET =

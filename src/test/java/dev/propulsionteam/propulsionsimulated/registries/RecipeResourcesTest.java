@@ -31,6 +31,21 @@ class RecipeResourcesTest {
     }
 
     @Test
+    void vectorCoreSequencedAssemblyUsesUnfinishedItemAndFluidIngredient() throws IOException {
+        JsonObject recipe = load("sequenced_assembly/vector_core");
+        assertEquals("create:sequenced_assembly", recipe.get("type").getAsString());
+        assertEquals("createpropulsion:unfinished_vector_core", recipe.getAsJsonObject("transitional_item").get("id").getAsString());
+        assertEquals(3, recipe.get("loops").getAsInt());
+        assertEquals("createpropulsion:vector_core", recipe.getAsJsonArray("results").get(0).getAsJsonObject().get("id").getAsString());
+        var filling = recipe.getAsJsonArray("sequence").get(0).getAsJsonObject();
+        assertEquals("create:filling", filling.get("type").getAsString());
+        var fluid = filling.getAsJsonArray("ingredients").get(1).getAsJsonObject();
+        assertEquals("neoforge:single", fluid.get("type").getAsString());
+        assertEquals("aeronautics:levitite_blend", fluid.get("fluid").getAsString());
+        assertEquals(500, fluid.get("amount").getAsInt());
+    }
+
+    @Test
     void thrusterRecipesMatchTheirCraftingGrids() throws IOException {
         assertShaped("rcs_thruster",
                 "create:iron_sheet,create:iron_sheet,create:iron_sheet",
