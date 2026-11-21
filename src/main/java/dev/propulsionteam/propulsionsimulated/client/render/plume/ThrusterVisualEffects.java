@@ -167,7 +167,7 @@ public final class ThrusterVisualEffects {
             case PLASMA, VECTOR, CREATIVE -> new int[]{8, 22, 36};
             default -> new int[]{10, 22, 36};
         };
-        return diameters[Mth.clamp(width, 1, 3) - 1] / 32.0f;
+        return Math.min(diameters[Mth.clamp(width, 1, 3) - 1], openingVoxels(be, width)) / 32.0f;
     }
 
     private static PlumeShape boxShape(Preset preset) {
