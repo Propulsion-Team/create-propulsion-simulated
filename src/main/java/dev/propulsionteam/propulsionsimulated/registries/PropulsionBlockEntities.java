@@ -22,6 +22,9 @@ import dev.propulsionteam.propulsionsimulated.content.thruster.solid_fuel_thrust
 import dev.propulsionteam.propulsionsimulated.content.wing.PropulsionCopycatWingBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.wing.SymmetricPropulsionCopycatWingBlockEntity;
 import dev.propulsionteam.propulsionsimulated.CreatePropulsion;
+import dev.propulsionteam.propulsionsimulated.content.hydropump.HydropumpBlockEntity;
+import com.simibubi.create.content.fluids.pipes.FluidPipeBlockEntity;
+import com.simibubi.create.content.fluids.pipes.StraightPipeBlockEntity;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -32,6 +35,19 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 public class PropulsionBlockEntities {
     private static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITY_TYPES =
         DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, CreatePropulsion.ID);
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<FluidPipeBlockEntity>> PLATINUM_PIPE_BLOCK_ENTITY =
+        BLOCK_ENTITY_TYPES.register("platinum_pipe_block_entity", () -> BlockEntityType.Builder.of(
+            (pos, state) -> new FluidPipeBlockEntity(PropulsionBlockEntities.PLATINUM_PIPE_BLOCK_ENTITY.get(), pos, state),
+            PropulsionBlocks.PLATINUM_PIPE.get()).build(null));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<StraightPipeBlockEntity>> GLASS_PLATINUM_PIPE_BLOCK_ENTITY =
+        BLOCK_ENTITY_TYPES.register("glass_platinum_pipe_block_entity", () -> BlockEntityType.Builder.of(
+            (pos, state) -> new StraightPipeBlockEntity(PropulsionBlockEntities.GLASS_PLATINUM_PIPE_BLOCK_ENTITY.get(), pos, state),
+            PropulsionBlocks.GLASS_PLATINUM_PIPE.get()).build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<HydropumpBlockEntity>> HYDROPUMP_BLOCK_ENTITY =
+        BLOCK_ENTITY_TYPES.register("hydropump_block_entity",
+            () -> BlockEntityType.Builder.of(HydropumpBlockEntity::new, PropulsionBlocks.HYDROPUMP.get()).build(null));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<RcsThrusterBlockEntity>> RCS_THRUSTER_BLOCK_ENTITY =
         BLOCK_ENTITY_TYPES.register("rcs_thruster_block_entity", () -> BlockEntityType.Builder.of(

@@ -1,0 +1,8 @@
+{
+  "parent": "create:block/fluid_pipe/window",
+  "render_type": "minecraft:translucent",
+  "textures": {
+    "0": "createpropulsion:block/glass_platinum_pipe",
+    "particle": "createpropulsion:block/platinum_pipe"
+  }
+}

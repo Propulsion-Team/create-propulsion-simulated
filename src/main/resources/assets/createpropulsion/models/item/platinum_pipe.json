@@ -1,0 +1,7 @@
+{
+  "parent": "create:block/fluid_pipe/item",
+  "textures": {
+    "1": "createpropulsion:block/platinum_pipe",
+    "particle": "createpropulsion:block/platinum_pipe"
+  }
+}

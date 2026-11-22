@@ -3,6 +3,7 @@ package dev.propulsionteam.propulsionsimulated.registries;
 import dev.propulsionteam.propulsionsimulated.content.thruster.rcs_thruster.SingleRcsThrusterBlock;
 import dev.propulsionteam.propulsionsimulated.content.thruster.rcs_thruster.RcsThrusterBlock;
 import dev.propulsionteam.propulsionsimulated.CreatePropulsion;
+import dev.propulsionteam.propulsionsimulated.content.hydropump.HydropumpBlock;
 import dev.propulsionteam.propulsionsimulated.content.heat.burners.liquid.LiquidBurnerBlock;
 import dev.propulsionteam.propulsionsimulated.content.heat.burners.solid.SolidBurnerBlock;
 import dev.propulsionteam.propulsionsimulated.content.cable.fe.FeCableBlock;
@@ -11,6 +12,8 @@ import dev.propulsionteam.propulsionsimulated.content.heat.engine.StirlingEngine
 import dev.propulsionteam.propulsionsimulated.content.cable.relay.CableRelayBlock;
 import dev.propulsionteam.propulsionsimulated.content.platinum.CoralGeneratorBlock;
 import dev.propulsionteam.propulsionsimulated.content.platinum.PlatinumFluidTankBlock;
+import dev.propulsionteam.propulsionsimulated.content.platinum.PlatinumPipeBlock;
+import dev.propulsionteam.propulsionsimulated.content.platinum.GlassPlatinumPipeBlock;
 import dev.propulsionteam.propulsionsimulated.content.platinum.PlatinumFluidTankItem;
 import dev.propulsionteam.propulsionsimulated.content.platinum.PlatinumFluidVesselBlock;
 import dev.propulsionteam.propulsionsimulated.content.platinum.PlatinumFluidVesselItem;
@@ -37,12 +40,24 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Rarity;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.material.MapColor;
 
 public class PropulsionBlocks {
     public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(CreatePropulsion.ID);
     public static final DeferredRegister.Items BLOCK_ITEMS = DeferredRegister.createItems(CreatePropulsion.ID);
+
+    public static final DeferredBlock<PlatinumPipeBlock> PLATINUM_PIPE = BLOCKS.register("platinum_pipe",
+        () -> new PlatinumPipeBlock(Block.Properties.ofFullCopy(Blocks.COPPER_BLOCK)
+            .forceSolidOff().mapColor(MapColor.METAL)));
+    public static final DeferredBlock<GlassPlatinumPipeBlock> GLASS_PLATINUM_PIPE = BLOCKS.register("glass_platinum_pipe",
+        () -> new GlassPlatinumPipeBlock(Block.Properties.ofFullCopy(Blocks.COPPER_BLOCK)
+            .noOcclusion().mapColor(MapColor.METAL)));
+
+    public static final DeferredBlock<HydropumpBlock> HYDROPUMP = BLOCKS.register("hydropump",
+        () -> new HydropumpBlock(Block.Properties.of().mapColor(MapColor.METAL).sound(SoundType.METAL)
+            .requiresCorrectToolForDrops().strength(2.5f, 2.0f).noOcclusion()));
 
     public static final DeferredBlock<ThrusterBlock> THRUSTER_BLOCK = BLOCKS.register("thruster",
         () -> new ThrusterBlock(Block.Properties.of().mapColor(MapColor.METAL).requiresCorrectToolForDrops()
@@ -153,6 +168,8 @@ public class PropulsionBlocks {
             .requiresCorrectToolForDrops().strength(2.5f, 3.5f)));
 
     static {
+        registerDefaultBlockItem("platinum_pipe", PLATINUM_PIPE);
+        registerDefaultBlockItem("hydropump", HYDROPUMP);
         registerDefaultBlockItem("rcs_thruster", RCS_THRUSTER_BLOCK);
         registerDefaultBlockItem("single_rcs_thruster", SINGLE_RCS_THRUSTER_BLOCK);
         registerDefaultBlockItem("thruster", THRUSTER_BLOCK);

@@ -72,6 +72,9 @@ public class PropulsionConfig {
     public static final Map<String, ModConfigSpec.IntValue> FUEL_BURN_RATE_ENTRIES = new LinkedHashMap<>();
     public static final Map<String, ModConfigSpec.ConfigValue<String>> THRUSTER_DYE_COLORS = new LinkedHashMap<>();
     public static final ModConfigSpec.IntValue CABLE_ENERGY_TRANSFER;
+    public static final ModConfigSpec.IntValue HYDROPUMP_ENERGY_CAPACITY_FE;
+    public static final ModConfigSpec.IntValue HYDROPUMP_FE_PER_TICK_AT_MAX_SPEED;
+    public static final ModConfigSpec.IntValue HYDROPUMP_MAX_PUMPING_SPEED_MB;
 
     // Creative tools
     public static final ModConfigSpec.IntValue AUTO_GLUE_MAX_BLOCKS;
@@ -116,6 +119,12 @@ public class PropulsionConfig {
     public static final ModConfigSpec.ConfigValue<List<? extends String>> ADDITIONAL_THRUSTER_FUEL_PROPERTY_LINES;
 
     static {
+        COMMON_BUILDER.push("hydropump");
+        HYDROPUMP_ENERGY_CAPACITY_FE = COMMON_BUILDER.defineInRange("energyCapacityFe", 1000, 1, 100000000);
+        HYDROPUMP_FE_PER_TICK_AT_MAX_SPEED = COMMON_BUILDER.defineInRange("fePerTickAtMaxSpeed", 20, 1, 1000000);
+        HYDROPUMP_MAX_PUMPING_SPEED_MB = COMMON_BUILDER.defineInRange("maxPumpingSpeedMbPer20Ticks", 2000, 2, 1000000);
+        COMMON_BUILDER.pop();
+
         //#region Common (server)
         COMMON_BUILDER.push("thruster");
 

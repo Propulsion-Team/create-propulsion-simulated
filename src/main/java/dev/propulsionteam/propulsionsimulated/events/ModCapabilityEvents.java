@@ -30,6 +30,11 @@ import java.util.List;
 
 public class ModCapabilityEvents {
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {
+        event.registerBlockEntity(
+            Capabilities.EnergyStorage.BLOCK,
+            PropulsionBlockEntities.HYDROPUMP_BLOCK_ENTITY.get(),
+            (be, side) -> be.getEnergyHandler(side)
+        );
         for (BlockEntityType<? extends SmartBlockEntity> type : List.of(
                 PropulsionBlockEntities.THRUSTER_BLOCK_ENTITY.get(),
                 PropulsionBlockEntities.CREATIVE_THRUSTER_BLOCK_ENTITY.get(),

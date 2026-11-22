@@ -1,0 +1,16 @@
+{
+  "multipart": [
+    {"when":{"facing":"north"},"apply":{"model":"createpropulsion:block/hydropump"}},
+    {"when":{"facing":"east"},"apply":{"model":"createpropulsion:block/hydropump","y":90}},
+    {"when":{"facing":"south"},"apply":{"model":"createpropulsion:block/hydropump","y":180}},
+    {"when":{"facing":"west"},"apply":{"model":"createpropulsion:block/hydropump","y":270}},
+    {"when":{"facing":"up"},"apply":{"model":"createpropulsion:block/hydropump","x":90}},
+    {"when":{"facing":"down"},"apply":{"model":"createpropulsion:block/hydropump","x":270}},
+    {"when":{"north":"true"},"apply":{"model":"createpropulsion:block/cable_outer"}},
+    {"when":{"east":"true"},"apply":{"model":"createpropulsion:block/cable_outer","y":90}},
+    {"when":{"south":"true"},"apply":{"model":"createpropulsion:block/cable_outer","y":180}},
+    {"when":{"west":"true"},"apply":{"model":"createpropulsion:block/cable_outer","y":270}},
+    {"when":{"up":"true"},"apply":{"model":"createpropulsion:block/cable_outer","x":270}},
+    {"when":{"down":"true"},"apply":{"model":"createpropulsion:block/cable_outer","x":90}}
+  ]
+}

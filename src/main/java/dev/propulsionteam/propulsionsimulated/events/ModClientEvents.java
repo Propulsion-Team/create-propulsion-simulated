@@ -31,6 +31,8 @@ import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.l
 import dev.propulsionteam.propulsionsimulated.content.thruster.thruster.ThrusterRenderer;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionFluids;
 import com.simibubi.create.content.fluids.tank.FluidTankRenderer;
+import com.simibubi.create.content.fluids.pipes.TransparentStraightPipeRenderer;
+import dev.propulsionteam.propulsionsimulated.content.platinum.PlatinumPipeModel;
 
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
 import dev.engine_room.flywheel.lib.visualization.SimpleBlockEntityVisualizer;
@@ -210,6 +212,8 @@ public class ModClientEvents {
 
     @SubscribeEvent
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerBlockEntityRenderer(PropulsionBlockEntities.GLASS_PLATINUM_PIPE_BLOCK_ENTITY.get(),
+            TransparentStraightPipeRenderer::new);
         event.registerBlockEntityRenderer(PropulsionBlockEntities.RCS_THRUSTER_BLOCK_ENTITY.get(), RcsThrusterRenderer::new);
         event.registerBlockEntityRenderer(PropulsionBlockEntities.STIRLING_ENGINE_BLOCK_ENTITY.get(), StirlingEngineRenderer::new);
         event.registerBlockEntityRenderer(PropulsionBlockEntities.REDSTONE_TRANSMISSION_BLOCK_ENTITY.get(), RedstoneTransmissionRenderer::new);
@@ -226,6 +230,12 @@ public class ModClientEvents {
 
     @SubscribeEvent
     public static void onModifyBakingResult(ModelEvent.ModifyBakingResult event) {
+        ModelSwapper.swapModels(event.getModels(),
+            ModelSwapper.getAllBlockStateModelLocations(PropulsionBlocks.PLATINUM_PIPE.get()),
+            PlatinumPipeModel::new);
+        ModelSwapper.swapModels(event.getModels(),
+            ModelSwapper.getAllBlockStateModelLocations(PropulsionBlocks.GLASS_PLATINUM_PIPE.get()),
+            PlatinumPipeModel::new);
         EncasedCTBehaviour behaviour = new EncasedCTBehaviour(PropulsionSpriteShifts.PLATINUM_CASING_TEXTURE);
         ModelSwapper.swapModels(event.getModels(),
             ModelSwapper.getAllBlockStateModelLocations(PropulsionBlocks.PLATINUM_CASING.get()),

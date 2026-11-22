@@ -84,8 +84,10 @@ public class PropulsionCreativeTab {
         registerSectionItem(MAIN_SECTION, "barred_platinum_casing", () -> PropulsionBlocks.BARRED_PLATINUM_CASING.get().asItem());
         registerSectionItem(MAIN_SECTION, "reinforced_platinum_casing", () -> PropulsionBlocks.REINFORCED_PLATINUM_CASING.get().asItem());
         registerSectionItem(MAIN_SECTION, "platinum_fluid_tank", () -> PropulsionBlocks.PLATINUM_FLUID_TANK.get().asItem());
+        registerSectionItem(MAIN_SECTION, "platinum_pipe", () -> PropulsionBlocks.PLATINUM_PIPE.get().asItem());
         registerSectionItem(MAIN_SECTION, "platinum_fluid_vessel", () -> PropulsionBlocks.PLATINUM_FLUID_VESSEL.get().asItem());
         registerSectionItem(MAIN_SECTION, "coral_generator", () -> PropulsionBlocks.CORAL_GENERATOR.get().asItem());
+        registerSectionItem(MAIN_SECTION, "hydropump", () -> PropulsionBlocks.HYDROPUMP.get().asItem());
         registerSectionItem(MAIN_SECTION, "platinum_ingot", () -> PropulsionItems.PLATINUM_INGOT.get());
         registerSectionItem(MAIN_SECTION, "platinum_nugget", () -> PropulsionItems.PLATINUM_NUGGET.get());
         registerSectionItem(MAIN_SECTION, "platinum_sheet", () -> PropulsionItems.PLATINUM_SHEET.get());

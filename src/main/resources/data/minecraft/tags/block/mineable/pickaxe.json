@@ -1,6 +1,9 @@
 {
   "replace": false,
   "values": [
+    "createpropulsion:platinum_pipe",
+    "createpropulsion:glass_platinum_pipe",
+    "createpropulsion:hydropump",
     "createpropulsion:thruster",
     "createpropulsion:creative_thruster",
     "createpropulsion:ion_thruster",

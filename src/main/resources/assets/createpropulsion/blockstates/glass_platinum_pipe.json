@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "axis=x": {"model":"createpropulsion:block/platinum_pipe/window","x":90,"y":90},
+    "axis=y": {"model":"createpropulsion:block/platinum_pipe/window"},
+    "axis=z": {"model":"createpropulsion:block/platinum_pipe/window","x":90}
+  }
+}

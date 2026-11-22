@@ -1,4 +1,8 @@
 {
+    "block.createpropulsion.hydropump": "Hydropump",
+    "block.createpropulsion.platinum_pipe": "Platinum Pipe",
+    "block.createpropulsion.glass_platinum_pipe": "Glass Platinum Pipe",
+    "createpropulsion.hydropump.pumping_speed": "Pumping Speed",
     "item.createpropulsion.toolgun": "Toolgun",
     "item.createpropulsion.super_bucket": "Super Bucket",
     "item.createpropulsion.vector_core": "Vector Core",
