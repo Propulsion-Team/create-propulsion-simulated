@@ -29,7 +29,7 @@ public final class PlumeRenderer {
     private static final List<PendingPlume> PENDING = new ArrayList<>();
 
     private record PendingPlume(Matrix4f pose, Matrix4f modelView, Matrix4f projection,
-                                PlumeRenderParams params, float time, Vec3 direction) {}
+                                PlumeRenderParams params, float time, Vec3 direction, Quaternionf orientation) {}
 
     private PlumeRenderer() {
     }
@@ -44,6 +44,10 @@ public final class PlumeRenderer {
     }
 
     public static void render(PoseStack ms, MultiBufferSource buffer, PlumeRenderParams params, float time, Vec3 direction) {
+        render(ms, buffer, params, time, direction, null);
+    }
+
+    public static void render(PoseStack ms, MultiBufferSource buffer, PlumeRenderParams params, float time, Vec3 direction, Quaternionf orientation) {
         if (params.power() <= 0.004f) return;
         if (params.alpha() <= 0.004f) return;
         if (params.length() <= 0.004f) return;
@@ -52,7 +56,7 @@ public final class PlumeRenderer {
 
         PENDING.add(new PendingPlume(new Matrix4f(ms.last().pose()),
                 new Matrix4f(RenderSystem.getModelViewMatrix()), new Matrix4f(RenderSystem.getProjectionMatrix()),
-                params, time, direction));
+                params, time, direction, orientation));
     }
 
     @SubscribeEvent
@@ -80,7 +84,7 @@ public final class PlumeRenderer {
                 RenderSystem.applyModelViewMatrix();
                 RenderSystem.setProjectionMatrix(plume.projection(), sorting);
                 ms.last().pose().set(plume.pose());
-                draw(ms, buffer, plume.params(), plume.time(), plume.direction());
+                draw(ms, buffer, plume.params(), plume.time(), plume.direction(), plume.orientation());
                 buffer.endBatch(PlumeRenderType.plume());
             }
         } finally {
@@ -94,7 +98,7 @@ public final class PlumeRenderer {
         }
     }
 
-    private static void draw(PoseStack ms, MultiBufferSource buffer, PlumeRenderParams params, float time, Vec3 direction) {
+    private static void draw(PoseStack ms, MultiBufferSource buffer, PlumeRenderParams params, float time, Vec3 direction, Quaternionf orientation) {
         ShaderInstance shader = PlumeShaders.plume();
         if (shader != null) {
             set(shader, "Time", time);
@@ -115,7 +119,11 @@ public final class PlumeRenderer {
         Vec3 dir = direction.normalize();
 
         ms.pushPose();
-        rotateLocalDownTo(ms, dir);
+        if (orientation != null) {
+            ms.mulPose(orientation);
+        } else {
+            rotateLocalDownTo(ms, dir);
+        }
 
         VertexConsumer vc = buffer.getBuffer(PlumeRenderType.plume());
 

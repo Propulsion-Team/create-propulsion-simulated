@@ -1,6 +1,9 @@
 package dev.propulsionteam.propulsionsimulated.client.render.plume;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
 import dev.propulsionteam.propulsionsimulated.content.thruster.AbstractThrusterBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.thruster.ion_thruster.IonThrusterBlockEntity;
@@ -147,15 +150,50 @@ public final class ThrusterVisualEffects {
         if (shader2 && PropulsionConfig.useVeilLight()) {
             keepGlow(be, partialTicks, localNozzle, exhaust, params, time);
         }
+        Quaternionf orientation = be instanceof VectorThrusterBlockEntity vector
+                ? nozzleOrientation(vector, partialTicks, exhaust)
+                : null;
         PlumeRenderer.render(
                 ms,
                 buffer,
                 params,
                 time,
-                exhaust
+                exhaust,
+                orientation
         );
 
         ms.popPose();
+    }
+
+    private static Quaternionf nozzleOrientation(VectorThrusterBlockEntity be, float partialTicks, Vec3 exhaust) {
+        var direction = be.getInterpolatedVectorDirection(partialTicks);
+        float yaw = (float) Math.atan2(direction.x, direction.z);
+        float pitch = (float) -Math.asin(Mth.clamp(direction.y, -1.0d, 1.0d));
+        Direction facing = be.getFacing();
+        if (facing == Direction.UP) {
+            yaw = -yaw;
+            pitch = -pitch;
+        }
+
+        Quaternionf facingRotation = switch (facing) {
+            case SOUTH -> Axis.YP.rotationDegrees(-180.0f);
+            case WEST -> Axis.YP.rotationDegrees(-270.0f);
+            case EAST -> Axis.YP.rotationDegrees(-90.0f);
+            case UP -> Axis.XP.rotationDegrees(-270.0f);
+            case DOWN -> Axis.XP.rotationDegrees(-90.0f);
+            default -> new Quaternionf();
+        };
+
+        Quaternionf orientation = facingRotation
+                .mul(Axis.YP.rotation(yaw))
+                .mul(Axis.XP.rotation(pitch))
+                .mul(new Quaternionf().rotationTo(0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f));
+
+        Vector3f axis = orientation.transform(new Vector3f(0.0f, -1.0f, 0.0f));
+        if (axis.dot((float) exhaust.x, (float) exhaust.y, (float) exhaust.z) < 0.98f) {
+            return null;
+        }
+        return orientation;
     }
 
     private static float exhaustLead(AbstractThrusterBlockEntity be, int width) {
