@@ -626,9 +626,10 @@ public class CreativeThrusterBlockEntity extends AbstractThrusterBlockEntity {
     @Override
     public AABB getRenderBoundingBox() {
         if (isController() && isMultiblock()) {
+            double extra = 32.0d;
             return new AABB(
-                    worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(),
-                    worldPosition.getX() + width, worldPosition.getY() + width, worldPosition.getZ() + width);
+                    worldPosition.getX() - extra, worldPosition.getY() - extra, worldPosition.getZ() - extra,
+                    worldPosition.getX() + width + extra, worldPosition.getY() + width + extra, worldPosition.getZ() + width + extra);
         }
         return super.getRenderBoundingBox();
     }

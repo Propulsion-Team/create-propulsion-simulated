@@ -44,4 +44,14 @@ public class LiquidVectorThrusterRenderer extends SmartBlockEntityRenderer<Liqui
 
         VectorRedstoneLinkRenderer.renderOnBlockEntity(be, partialTick, ms, buffer, light, overlay);
     }
+
+    @Override
+    public boolean shouldRenderOffScreen(LiquidVectorThrusterBlockEntity be) {
+        return true;
+    }
+
+    @Override
+    public int getViewDistance() {
+        return 256;
+    }
 }

@@ -40,7 +40,7 @@ public class CreativeThrusterRenderer extends SmartBlockEntityRenderer<CreativeT
             return;
         }
 
-        if (!state.hasProperty(CreativeThrusterBlock.PLACEMENT_FACING)) {
+        if (be.isMultiblock() || !state.hasProperty(CreativeThrusterBlock.PLACEMENT_FACING)) {
             return;
         }
 

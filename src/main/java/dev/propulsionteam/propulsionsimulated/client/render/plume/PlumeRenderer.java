@@ -170,7 +170,8 @@ public final class PlumeRenderer {
             float exactLength = Math.max(1.0f / 16.0f, params.length() * lengths[i] * lengthScale + stretch);
             float length = Mth.lerp(settle, exactLength, Math.max(1.0f, Math.round(exactLength * 16.0f)) / 16.0f);
             float layerFade = smoothstep(LAYER_START[i], LAYER_END[i], power);
-            int alpha = Mth.clamp((int) (params.alpha() * BOX_ALPHA[i] * 255.0f * layerFade * fadeAll), 0, 255);
+            float layerAlpha = params.alpha() * BOX_ALPHA[i] * 255.0f * layerFade * fadeAll;
+            int alpha = Mth.clamp((int) layerAlpha, 0, 255);
 
             ms.pushPose();
             if (plasma && i == 1) ms.mulPose(Axis.YP.rotationDegrees(45.0f));

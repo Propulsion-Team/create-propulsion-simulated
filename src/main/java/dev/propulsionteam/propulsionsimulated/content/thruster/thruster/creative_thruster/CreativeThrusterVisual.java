@@ -25,7 +25,7 @@ public class CreativeThrusterVisual extends AbstractBlockEntityVisual<CreativeTh
         Direction facing = blockState.getValue(CreativeThrusterBlock.FACING);
         Direction placementFacing = blockState.getValue(CreativeThrusterBlock.PLACEMENT_FACING);
 
-        if (blockState.hasProperty(ThrusterBlock.MULTIBLOCK) && blockState.getValue(ThrusterBlock.MULTIBLOCK)) {
+        if (blockEntity.isMultiblock() || (blockState.hasProperty(ThrusterBlock.MULTIBLOCK) && blockState.getValue(ThrusterBlock.MULTIBLOCK))) {
             bracket = null;
             return;
         }
