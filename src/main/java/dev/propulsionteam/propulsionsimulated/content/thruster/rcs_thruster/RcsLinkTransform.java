@@ -23,12 +23,12 @@ public class RcsLinkTransform extends ValueBoxTransform.Dual {
     public Vec3 getLocalOffset(LevelAccessor level, BlockPos pos, BlockState state) {
         boolean single = ((RcsThrusterBlock) state.getBlock()).isSingle();
         Vector3d point;
-        if (single) point = new Vector3d(isFirst() ? 5 : 11, 7, 3.95);
+        if (single) point = new Vector3d(isFirst() ? 11 : 5, 7, 4.49);
         else point = switch (nozzle) {
-            case 0 -> new Vector3d(isFirst() ? 5 : 11, 2, 15.05);
-            case 1 -> new Vector3d(isFirst() ? 11 : 5, 2, 0.95);
-            case 2 -> new Vector3d(0.95, 2, isFirst() ? 5 : 11);
-            default -> new Vector3d(15.05, 2, isFirst() ? 6 : 11);
+            case 0 -> new Vector3d(isFirst() ? 5 : 11, 2, 14.51);
+            case 1 -> new Vector3d(isFirst() ? 11 : 5, 2, 1.49);
+            case 2 -> new Vector3d(1.49, 2, isFirst() ? 5 : 11);
+            default -> new Vector3d(14.51, 2, isFirst() ? 11 : 5);
         };
         point = RcsOrientation.point(point.div(16), RcsThrusterBlock.normal(state));
         return new Vec3(point.x, point.y, point.z);
@@ -40,12 +40,6 @@ public class RcsLinkTransform extends ValueBoxTransform.Dual {
         Direction side = single ? Direction.NORTH : RcsOrientation.exhaust(false, nozzle);
         ms.mulPose(RcsOrientation.rotation(RcsThrusterBlock.normal(state)));
         ms.mulPose(Axis.YP.rotationDegrees(AngleHelper.horizontalAngle(side) + 180));
-    }
-
-    @Override
-    public void transform(LevelAccessor level, BlockPos pos, BlockState state, PoseStack ms) {
-        super.transform(level, pos, state, ms);
-        ms.scale(0.75f, 0.75f, 0.75f);
     }
 
     @Override

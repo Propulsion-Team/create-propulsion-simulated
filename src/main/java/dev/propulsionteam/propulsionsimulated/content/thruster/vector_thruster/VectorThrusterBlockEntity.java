@@ -395,11 +395,11 @@ public class VectorThrusterBlockEntity extends IonThrusterBlockEntity {
     }
 
     private static Vector3d computeRight(Vector3d forward) {
-        Vector3d reference = Math.abs(forward.y) > 0.999 ? new Vector3d(0, 0, 1) : new Vector3d(0, 1, 0);
+        Vector3d reference = Math.abs(forward.y) > 1.499 ? new Vector3d(0, 0, 1) : new Vector3d(0, 1, 0);
         Vector3d right = new Vector3d(forward).cross(reference);
         if (right.lengthSquared() < 1e-8) return new Vector3d(1, 0, 0);
         right.normalize();
-        if (Math.abs(forward.y) > 0.999) right.negate();
+        if (Math.abs(forward.y) > 1.499) right.negate();
         return right;
     }
 
@@ -478,7 +478,7 @@ public class VectorThrusterBlockEntity extends IonThrusterBlockEntity {
 
     // -----------------------------------------------------------------------
 
-    private static class VectorThrusterLinkTransform extends ValueBoxTransform.Dual {
+    protected static class VectorThrusterLinkTransform extends ValueBoxTransform.Dual {
         /**
          * Local side of the input block face this slot lives on (WEST/EAST/DOWN/UP).
          */
@@ -494,10 +494,10 @@ public class VectorThrusterBlockEntity extends IonThrusterBlockEntity {
             Vec3 local = switch (localSide) {
                 // Outer face of each 1px-thick cube is at x=1 / x=15 / y=1 / y=15.
                 // Use 0.5 to sit just outside that face so the box is visible.
-                case WEST -> VecHelper.voxelSpace(0.5f, isFirst() ? 11f : 5f, 2f);
-                case EAST -> VecHelper.voxelSpace(15.5f, isFirst() ? 11f : 5f, 2f);
-                case DOWN -> VecHelper.voxelSpace(isFirst() ? 5f : 11f, 0.5f, 2f);
-                case UP -> VecHelper.voxelSpace(isFirst() ? 5f : 11f, 15.5f, 2f);
+                case WEST -> VecHelper.voxelSpace(1.49f, isFirst() ? 11f : 5f, 2f);
+                case EAST -> VecHelper.voxelSpace(14.51f, isFirst() ? 5f : 11f, 2f);
+                case DOWN -> VecHelper.voxelSpace(isFirst() ? 5f : 11f, 1.49f, 2f);
+                case UP -> VecHelper.voxelSpace(isFirst() ? 11f : 5f, 14.51f, 2f);
                 default -> Vec3.ZERO;
             };
             return rotatePointForFacing(local, state.getValue(AbstractThrusterBlock.FACING));
@@ -510,12 +510,6 @@ public class VectorThrusterBlockEntity extends IonThrusterBlockEntity {
             float xRot = worldSide == Direction.UP ? 90 : worldSide == Direction.DOWN ? 270 : 0;
             ms.mulPose(com.mojang.math.Axis.YP.rotationDegrees(yRot));
             ms.mulPose(com.mojang.math.Axis.XP.rotationDegrees(xRot));
-        }
-
-        @Override
-        public void transform(LevelAccessor level, BlockPos pos, BlockState state, PoseStack ms) {
-            super.transform(level, pos, state, ms);
-            ms.scale(0.75f, 0.75f, 0.75f);
         }
 
         @Override
