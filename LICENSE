@@ -11,7 +11,7 @@ The full GPL version 3 text is in LICENSES/GPL-3.0-or-later.txt.
 ## Assets
 
 The project's assets, including textures, models, sounds, icons, and other
-artwork in src/main/resources/assets/, assets/, and elsewhere in the repository,
+artwork in src/main/resources/assets/ and elsewhere in the repository,
 are licensed under Creative Commons Attribution-NonCommercial-ShareAlike 4.0
 International (SPDX: CC-BY-NC-SA-4.0), with the additional permission below.
 The full license text is in LICENSES/CC-BY-NC-SA-4.0.txt.
