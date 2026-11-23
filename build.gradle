@@ -235,6 +235,10 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 tasks.named('jar', Jar).configure {
+    from('LICENSE')
+    from('LICENSES') {
+        into 'LICENSES'
+    }
     manifest {
         attributes([
                 'Specification-Title'     : mod_id,

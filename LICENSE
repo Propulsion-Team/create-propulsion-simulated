@@ -1,3 +1,43 @@
+# Licensing
+
+Create Propulsion: Simulated uses separate licenses for source code and assets.
+
+## Source code
+
+The project's source code is licensed under the GNU General Public License,
+version 3 or (at your option) any later version (SPDX: GPL-3.0-or-later).
+The full GPL version 3 text is in LICENSES/GPL-3.0-or-later.txt.
+
+## Assets
+
+The project's assets, including textures, models, sounds, icons, and other
+artwork in src/main/resources/assets/, assets/, and elsewhere in the repository,
+are licensed under Creative Commons Attribution-NonCommercial-ShareAlike 4.0
+International (SPDX: CC-BY-NC-SA-4.0), with the additional permission below.
+The full license text is in LICENSES/CC-BY-NC-SA-4.0.txt.
+
+These licenses apply to project-owned material unless otherwise noted.
+Third-party material retains its respective license and required notices.
+Previously MIT-licensed material retains the original copyright and permission
+notices reproduced below; this licensing change does not revoke rights already
+granted under MIT.
+
+## Additional Permission - Mod Distribution and Creator Rewards
+
+Notwithstanding the NonCommercial restriction of CC BY-NC-SA 4.0, permission is granted to distribute this mod and legitimate derivative projects through third-party mod hosting and distribution platforms, including participation in their creator reward, advertising revenue-sharing, and similar monetization programs, subject to the following conditions:
+
+1. The mod must remain freely downloadable without mandatory payment, subscription, or purchase.
+2. Monetized derivative projects must contain meaningful original development, such as new functionality, substantial improvements, compatibility updates, bug fixes, or continued maintenance.
+3. Unmodified reuploads, automated repackaging, metadata-only changes, rebranding, and other superficial modifications do not qualify for this additional monetization permission.
+4. Derivative projects must clearly acknowledge the original project and its contributors, preserve required copyright notices, and must not falsely claim to be official releases.
+5. Any adaptations of the CC BY-NC-SA-covered assets must remain licensed under CC BY-NC-SA 4.0, except where separately authorized by their copyright holders.
+
+This additional permission applies only to the commercial use expressly described above. Direct sales of assets, paid access to the mod, and other commercial exploitation require separate authorization from the relevant copyright holders.
+
+Nothing in this additional permission restricts rights already granted under CC BY-NC-SA 4.0 or any applicable open-source software license.
+
+## Preserved original MIT notice
+
 MIT License
 
 Copyright (c) 2025 Sergey Feduk

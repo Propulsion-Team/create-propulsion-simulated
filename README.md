@@ -62,6 +62,13 @@ It adds three thruster types:
 - **FoxyFox909** - Multiblock Thrusters
 - **DeltaSF** - Original Create: Propulsion creator for 1.20.1
 
+## License
+
+- **Source code:** [GNU General Public License v3.0 or later (GPL-3.0-or-later)](LICENSES/GPL-3.0-or-later.txt).
+- **Assets:** [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)](LICENSES/CC-BY-NC-SA-4.0.txt), with an [additional permission for mod distribution and creator rewards](LICENSE#additional-permission---mod-distribution-and-creator-rewards).
+
+See [LICENSE](LICENSE) for scope, conditions, and preserved original MIT copyright and permission notices, including Sergey Feduk's. Third-party material retains its respective license.
+
 # Wiki
 
 - [ComputerCraft (CC: Tweaked)](wiki/cc/README.md)
