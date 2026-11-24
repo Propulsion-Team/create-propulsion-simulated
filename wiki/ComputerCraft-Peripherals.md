@@ -8,7 +8,7 @@ Create Propulsion registers these peripherals when **CC: Tweaked** is installed.
 
 ## Throttle control (all thrusters)
 
-All thrust readouts and thrust-derived physics use the shared `thrustUnitsPerKn` physics config value (default `1000`) so displayed values match assembled/physics behavior.
+All thrust readouts and thrust-derived physics use the shared `thrustUnitsPerPn` value in `thrusterGeneral` of the common config (default `1000`) so displayed values match assembled/physics behavior.
 
 While **any** computer is attached to a thruster peripheral:
 
@@ -47,7 +47,6 @@ Fluid thrusters, solid fuel thrusters, and ion thrusters use **different periphe
 | `setPowerNormalized(power)` | — | Precise normalized `power`: `0.0 … 1.0`; values are clamped but not quantized to redstone levels |
 | `getPower()` | `number` | Normalized throttle `0.0 … 1.0` |
 | `getCurrentThrustPN()` | `number` | |
-| `getDisplayedThrustPN()` | `number` | Tooltip-scale thrust |
 | `getAirflowMs()` | `number` | |
 | `getFuelAmountMb()` | `number` | |
 | `getFuelCapacityMb()` | `number` | |
@@ -67,7 +66,6 @@ Fluid thrusters, solid fuel thrusters, and ion thrusters use **different periphe
 | `getPower()` | `number` | |
 | `getObstruction()` | `number` | |
 | `getCurrentThrustPN()` | `number` | |
-| `getDisplayedThrustPN()` | `number` | |
 | `getAirflowMs()` | `number` | |
 | `getFuelItem()` | `table` or `nil` | `{name, count}` of the item in the fuel slot |
 | `getBurnTimeRemaining()` | `number` | Ticks left on current burn (only decreases while powered) |
@@ -90,7 +88,6 @@ FE-powered ion thrusters: same throttle and thrust readouts as [Thruster](#thrus
 | `getPower()` | `number` | |
 | `getObstruction()` | `number` | Returns unobstructed-block count from the obstruction scan |
 | `getCurrentThrustPN()` | `number` | |
-| `getDisplayedThrustPN()` | `number` | |
 | `getAirflowMs()` | `number` | |
 | `getEnergyAmountFe()` | `number` | Stored FE |
 | `getEnergyCapacityFe()` | `number` | Buffer capacity |
@@ -109,7 +106,6 @@ Same throttle methods as the normal thruster, plus scroll-equivalent thrust conf
 | `getThrustConfig()` | `number` | Current step |
 | `getTargetThrustPN()` | `number` | Base thrust target from scroll / config (before throttle & atmosphere) |
 | `getCurrentThrustPN()` | `number` | |
-| `getDisplayedThrustPN()` | `number` | |
 | `getAirflowMs()` | `number` | |
 | `getObstruction()` | `number` | Returns unobstructed-block count from the obstruction scan |
 
@@ -205,7 +201,7 @@ Separate peripheral implementation (`CreativeVectorThrusterPeripheral`): directi
 
 | Method | Returns | Notes |
 |--------|---------|--------|
-| `setThrustOutput(thrustOutputPn)` | — | Base thrust in goggles-tooltip **pN**. Clamped to the same maximum as the on-block scroll: `creativeVectorThrusterMaxThrust` from config. Pass **`< 0`** (e.g. `-1`) to clear override and use scroll thrust again. |
+| `setThrustOutput(thrustOutputPn)` | — | Base thrust in goggles-tooltip **pN**. Clamped to the same maximum as the on-block scroll: `maxThrust` in `creativeVectorThruster` of the common config. Pass **`< 0`** (e.g. `-1`) to clear override and use scroll thrust again. |
 | `clearThrustOutput()` | — | Same as `setThrustOutput(-1)` — removes Lua thrust override |
 | `getMaxThrustOutputPn()` | `number` | Max allowed `setThrustOutput` in pN from config |
 | `isCustomThrustOutputActive()` | `boolean` | `true` if a CC thrust override is active |

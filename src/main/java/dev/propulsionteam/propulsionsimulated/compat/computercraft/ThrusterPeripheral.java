@@ -56,11 +56,6 @@ public class ThrusterPeripheral extends ThrusterPeripheralBase<ThrusterBlockEnti
     }
 
     @LuaFunction(mainThread = true)
-    public final double getDisplayedThrustPN() {
-        return ThrusterComputerHelpers.toDisplayed(blockEntity.getDisplayedThrustPnForTooltip());
-    }
-
-    @LuaFunction(mainThread = true)
     public final double getAirflowMs() {
         return blockEntity.getDisplayedAirflowMsForTooltip();
     }

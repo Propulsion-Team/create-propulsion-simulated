@@ -563,7 +563,7 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
                     float consumptionRatio = consumption > 0
                         ? (float) fuelConsumed / (float) consumption
                         : 1.0f;
-                    float baseThrustPn = (float) (getBaseThrust() * getThrustUnitsPerKn());
+                    float baseThrustPn = (float) (getBaseThrust() * getThrustUnitsPerPn());
                     baseThrustPn *= (float) calculateAtmosphericFactor();
                     thrust = baseThrustPn * thrustPercentage * properties.thrustMultiplier() * fuelEfficiency * consumptionRatio;
                     lastConsumedMbPerTick = (double) fuelConsumed / (double) tickRate;
@@ -639,7 +639,7 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
                         lastOxidizerConsumedMbPerTick = (double) oxToDrain / (double) tickRate;
                     }
 
-                    float baseThrustPn = (float) (getBaseThrust() * getThrustUnitsPerKn());
+                    float baseThrustPn = (float) (getBaseThrust() * getThrustUnitsPerPn());
                     baseThrustPn *= (float) calculateAtmosphericFactor();
                     float oxidizerThrustMultiplier = canUseOxidizer ? getMultiblockOxidizerThrustMultiplier(width) : 1.0f;
                     totalThrust = baseThrustPn * thrustPercentage * properties.thrustMultiplier() * fuelEfficiency * fuelRatio * n * getMultiblockThrustMultiplier(width) * oxidizerThrustMultiplier;
@@ -815,7 +815,7 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
             Vec3 centerNozzle = getMultiblockCenterNozzlePositionLocal();
             Vector3d applicationPoint = new Vector3d(centerNozzle.x, centerNozzle.y, centerNozzle.z);
             Vector3d impulseLocal = new Vector3d(directionLocal).mul(thrust * timeStep);
-            Vector3d adjustedImpulse = new Vector3d(impulseLocal).div(getThrustUnitsPerKn());
+            Vector3d adjustedImpulse = new Vector3d(impulseLocal).div(getThrustUnitsPerPn());
             SimulatedThrustAdapter.applyImpulseAtPoint(subLevel, applicationPoint, adjustedImpulse, this);
             return;
         }
@@ -824,15 +824,15 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
 
     private static float getMultiblockFuelEfficiency(int cubeWidth) {
         if (cubeWidth <= 1) return 1.0f;
-        if (cubeWidth == 2) return PropulsionConfig.MULTIBLOCK_2X_FUEL_EFFICIENCY.get().floatValue();
-        if (cubeWidth == 3) return PropulsionConfig.MULTIBLOCK_3X_FUEL_EFFICIENCY.get().floatValue();
+        if (cubeWidth == 2) return PropulsionConfig.MULTIBLOCK_2X_FUEL_COST_MULTIPLIER.get().floatValue();
+        if (cubeWidth == 3) return PropulsionConfig.MULTIBLOCK_3X_FUEL_COST_MULTIPLIER.get().floatValue();
         return 1.0f;
     }
 
     private static float getMultiblockOxidizerEfficiency(int cubeWidth) {
         if (cubeWidth <= 1) return 1.0f;
-        if (cubeWidth == 2) return PropulsionConfig.MULTIBLOCK_2X_OXIDIZER_EFFICIENCY.get().floatValue();
-        if (cubeWidth == 3) return PropulsionConfig.MULTIBLOCK_3X_OXIDIZER_EFFICIENCY.get().floatValue();
+        if (cubeWidth == 2) return PropulsionConfig.MULTIBLOCK_2X_OXIDIZER_COST_MULTIPLIER.get().floatValue();
+        if (cubeWidth == 3) return PropulsionConfig.MULTIBLOCK_3X_OXIDIZER_COST_MULTIPLIER.get().floatValue();
         return 1.0f;
     }
 

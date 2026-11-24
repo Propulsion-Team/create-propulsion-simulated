@@ -46,7 +46,10 @@ import net.minecraft.world.level.material.FluidState;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.ModLoadingContext;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
+import net.createmod.catnip.config.ui.BaseConfigScreen;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.event.ModelEvent;
@@ -175,6 +178,8 @@ public class ModClientEvents {
 
     @SubscribeEvent
     public static void clientInit(final FMLClientSetupEvent event) {
+        ModLoadingContext.get().registerExtensionPoint(IConfigScreenFactory.class,
+                () -> (container, parent) -> new BaseConfigScreen(parent, CreatePropulsion.ID));
         event.enqueueWork(() -> {
             ItemBlockRenderTypes.setRenderLayer(PropulsionFluids.TURPENTINE.get(), RenderType.translucent());
             ItemBlockRenderTypes.setRenderLayer(PropulsionFluids.FLOWING_TURPENTINE.get(), RenderType.translucent());

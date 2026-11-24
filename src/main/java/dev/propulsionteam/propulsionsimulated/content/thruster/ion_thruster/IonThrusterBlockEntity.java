@@ -155,7 +155,7 @@ public class IonThrusterBlockEntity extends ThrusterBlockEntity {
                 }
                 float consumptionRatio = IonThrusterEnergyMath.poweredFraction(energyStored + consumed, totalDrain, consumed);
                 if (consumptionRatio > 0.0f) {
-                    float baseThrustPn = (float) (PropulsionConfig.ION_THRUSTER_BASE_THRUST.get() * getThrustUnitsPerKn());
+                    float baseThrustPn = (float) (PropulsionConfig.ION_THRUSTER_BASE_THRUST.get() * getThrustUnitsPerPn());
                     baseThrustPn *= (float) calculateAtmosphericFactor();
                     thrust = baseThrustPn * thrustPercentage * consumptionRatio;
                 }
@@ -201,7 +201,7 @@ public class IonThrusterBlockEntity extends ThrusterBlockEntity {
                 int consumed = drainEnergyFromMultiblock(totalDrain);
                 float consumptionRatio = IonThrusterEnergyMath.poweredFraction(energyBeforeDrain, totalDrain, consumed);
                 if (consumptionRatio > 0.0f) {
-                    float baseThrustPn = (float) (PropulsionConfig.ION_THRUSTER_BASE_THRUST.get() * getThrustUnitsPerKn());
+                    float baseThrustPn = (float) (PropulsionConfig.ION_THRUSTER_BASE_THRUST.get() * getThrustUnitsPerPn());
                     baseThrustPn *= (float) calculateAtmosphericFactor();
                     thrust = baseThrustPn * thrustPercentage * consumptionRatio * n * getIonMultiblockThrustMultiplier(width);
                 }
@@ -318,7 +318,7 @@ public class IonThrusterBlockEntity extends ThrusterBlockEntity {
         if (ctrl != null && ctrl != this) {
             return ctrl.getMaxThrustPn();
         }
-        double max = getBaseThrust() * getThrustUnitsPerKn();
+        double max = getBaseThrust() * getThrustUnitsPerPn();
         if (isMultiblock()) {
             max *= width * width * width * getIonMultiblockThrustMultiplier(width);
         }
@@ -495,7 +495,7 @@ public class IonThrusterBlockEntity extends ThrusterBlockEntity {
         CreateLang.builder()
                 .add(Component.literal("  "))
                 .add(Component.translatable("createpropulsion.tooltip.thrust1").withStyle(ChatFormatting.GRAY))
-                .add(Component.literal(String.format(Locale.ROOT, "%.2f", this.getDisplayedThrustPnForTooltip() / getThrustUnitsPerKn())).withStyle(ChatFormatting.AQUA))
+                .add(Component.literal(String.format(Locale.ROOT, "%.2f", this.getDisplayedThrustPnForTooltip() / getThrustUnitsPerPn())).withStyle(ChatFormatting.AQUA))
                 .add(Component.literal(" pN").withStyle(ChatFormatting.GRAY))
                 .forGoggles(tooltip);
     }

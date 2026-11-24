@@ -20,7 +20,7 @@ final class ThrusterComputerHelpers {
     }
 
     static double toDisplayed(double thrust) {
-        return thrust / PropulsionConfig.getThrustUnitsPerKnOrDefault();
+        return thrust / PropulsionConfig.getThrustUnitsPerPnOrDefault();
     }
 
     static void setThrustPn(AbstractThrusterBlockEntity be, double thrustPn) {

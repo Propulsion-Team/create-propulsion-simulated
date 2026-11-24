@@ -99,7 +99,7 @@ public class CreativeThrusterBlockEntity extends AbstractThrusterBlockEntity {
         float thrust = 0;
         float currentPower = getEffectiveThrottle();
         if (currentPower > 0) {
-            float baseThrustPn = (float) (getConfiguredTargetThrustKn() * getThrustUnitsPerKn());
+            float baseThrustPn = (float) (getConfiguredTargetThrustKn() * getThrustUnitsPerPn());
             baseThrustPn *= (float) calculateAtmosphericFactor();
             thrust = currentPower * baseThrustPn;
         }

@@ -39,7 +39,7 @@ public class PropulsionDefaultStress extends ConfigBase {
 
     @Override
     public void registerAll(@Nonnull ModConfigSpec.Builder builder) {
-        builder.push("Stress impacts");
+        builder.push("stressImpacts");
 
         //Internal impacts are not added into spec as they must not be modified!
         DEFAULT_IMPACTS.forEach((id, value) ->

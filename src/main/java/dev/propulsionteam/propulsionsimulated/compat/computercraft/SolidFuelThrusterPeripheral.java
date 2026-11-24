@@ -58,11 +58,6 @@ public class SolidFuelThrusterPeripheral extends ThrusterPeripheralBase<SolidFue
     }
 
     @LuaFunction
-    public final double getDisplayedThrustPN() {
-        return ThrusterComputerHelpers.toDisplayed(blockEntity.getDisplayedThrustPnForTooltip());
-    }
-
-    @LuaFunction
     public final double getAirflowMs() {
         return blockEntity.getDisplayedAirflowMsForTooltip();
     }

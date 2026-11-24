@@ -61,11 +61,6 @@ public class CreativeThrusterPeripheral extends ThrusterPeripheralBase<CreativeT
     }
 
     @LuaFunction(mainThread = true)
-    public final double getDisplayedThrustPN() {
-        return ThrusterComputerHelpers.toDisplayed(blockEntity.getDisplayedThrustPnForTooltip());
-    }
-
-    @LuaFunction(mainThread = true)
     public final double getAirflowMs() {
         return blockEntity.getDisplayedAirflowMsForTooltip();
     }

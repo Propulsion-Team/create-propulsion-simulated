@@ -50,7 +50,7 @@ import java.util.Locale;
 
 public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
     implements IHaveGoggleInformation, dev.ryanhcode.sable.api.block.BlockEntitySubLevelActor, BlockSubLevelAssemblyListener {
-    // ThrusterData thrust is stored in pN-like units where `thrustUnitsPerKn` units == 1 displayed kN.
+    // ThrusterData thrust is stored in pN-like units where `thrustUnitsPerPn` units == 1 displayed kN.
     // Sable impulse conversion must use the same basis so display/diagram and applied force match.
     protected static final double PARTICLE_BROADCAST_RANGE_BLOCKS = 150.0d;
     //Constants
@@ -94,7 +94,7 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
 
     protected double getParticleBroadcastRange() { return PARTICLE_BROADCAST_RANGE_BLOCKS; }
     protected float getParticleVelocity() { return PARTICLE_VELOCITY; }
-    protected double getThrustUnitsPerKn() { return PropulsionConfig.getThrustUnitsPerKnOrDefault(); }
+    protected double getThrustUnitsPerPn() { return PropulsionConfig.getThrustUnitsPerPnOrDefault(); }
 
     protected double getParticleCountMultiplier() {
         return 1.0;
@@ -511,7 +511,7 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
     }
 
     public double getMaxThrustPn() {
-        return getBaseThrust() * getThrustUnitsPerKn();
+        return getBaseThrust() * getThrustUnitsPerPn();
     }
 
     public float getObstructionEfficiency() {
@@ -726,7 +726,7 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
             return;
         }
 
-        Vector3d adjustedImpulse = new Vector3d(sample.impulseLocal()).div(getThrustUnitsPerKn());
+        Vector3d adjustedImpulse = new Vector3d(sample.impulseLocal()).div(getThrustUnitsPerPn());
         SimulatedThrustAdapter.applyImpulseAtPoint(subLevel, sample.pointLocal(), adjustedImpulse, this);
     }
 
@@ -1017,7 +1017,7 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         CreateLang.builder()
             .add(Component.literal("  "))
             .add(Component.translatable("createpropulsion.tooltip.thrust1").withStyle(ChatFormatting.GRAY))
-            .add(Component.literal(String.format(Locale.ROOT, "%.2f", this.getDisplayedThrustPnForTooltip() / getThrustUnitsPerKn())).withStyle(ChatFormatting.AQUA))
+            .add(Component.literal(String.format(Locale.ROOT, "%.2f", this.getDisplayedThrustPnForTooltip() / getThrustUnitsPerPn())).withStyle(ChatFormatting.AQUA))
             .add(Component.literal(" pN").withStyle(ChatFormatting.GRAY))
             .forGoggles(tooltip);
     }

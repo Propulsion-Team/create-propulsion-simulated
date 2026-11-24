@@ -312,7 +312,7 @@ public class SolidFuelThrusterBlockEntity extends AbstractThrusterBlockEntity im
                 if (superHeated) {
                     thrustMultiplier *= SUPERHEATED_THRUST_MULTIPLIER;
                 }
-                float baseThrustPn = (float) (getBaseThrust() * getThrustUnitsPerKn());
+                float baseThrustPn = (float) (getBaseThrust() * getThrustUnitsPerPn());
                 baseThrustPn *= (float) calculateAtmosphericFactor();
                 thrust = baseThrustPn * thrustPercentage * thrustMultiplier * fuelEfficiency;
             }

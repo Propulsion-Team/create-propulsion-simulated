@@ -21,7 +21,7 @@ public class CreativeVectorThrusterPeripheral extends VectorThrusterPeripheral {
 
     @LuaFunction(mainThread = true)
     public final void setThrustOutput(double thrustOutputPn) {
-        creative().setThrustOutput((float) (thrustOutputPn * PropulsionConfig.getThrustUnitsPerKnOrDefault()));
+        creative().setThrustOutput((float) (thrustOutputPn * PropulsionConfig.getThrustUnitsPerPnOrDefault()));
     }
 
     /** Clears CC thrust override; base thrust follows the on-block scroll again. Same as {@code setThrustOutput(-1)}. */
