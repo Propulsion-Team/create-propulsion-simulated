@@ -244,6 +244,16 @@ With hydrazine in the tank a nozzle is **boosted** (thrust multiplied by `hydraz
 
 ---
 
+## Hydropump (`hydropump`)
+
+| Method | Returns | Notes |
+|--------|---------|--------|
+| `getPumpingSpeed()` | `number` | Current pumping speed in mB per 20 ticks |
+| `setPumpingSpeed(speed)` | — | Clamped to `1 … getMaxPumpingSpeed()`, same as the on-block scroll |
+| `getMaxPumpingSpeed()` | `number` | Maximum from the `hydropump` config |
+
+---
+
 ## Stirling engine (`stirling_engine`)
 
 | Method | Notes |

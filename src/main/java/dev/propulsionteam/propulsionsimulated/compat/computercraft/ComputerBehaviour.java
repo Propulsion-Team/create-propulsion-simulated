@@ -9,6 +9,7 @@ import java.util.function.Function;
 import javax.annotation.Nullable;
 
 import dev.propulsionteam.propulsionsimulated.content.heat.engine.StirlingEngineBlockEntity;
+import dev.propulsionteam.propulsionsimulated.content.hydropump.HydropumpBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.platinum.CoralGeneratorBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.redstone_transmission.RedstoneTransmissionBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.creative_vector_thruster.CreativeVectorThrusterBlockEntity;
@@ -38,6 +39,7 @@ public class ComputerBehaviour extends AbstractComputerBehaviour {
     static {
         register(IonThrusterBlockEntity.class, IonThrusterPeripheral::new);
         register(RcsThrusterBlockEntity.class, RcsThrusterPeripheral::new);
+        register(HydropumpBlockEntity.class, HydropumpPeripheral::new);
         register(ThrusterBlockEntity.class, ThrusterPeripheral::new);
         register(SolidFuelThrusterBlockEntity.class, SolidFuelThrusterPeripheral::new);
         register(CreativeVectorThrusterBlockEntity.class, CreativeVectorThrusterPeripheral::new);

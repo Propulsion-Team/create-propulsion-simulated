@@ -133,6 +133,11 @@ public class ModCapabilityEvents {
             );
             event.registerBlockEntity(
                 capability,
+                PropulsionBlockEntities.HYDROPUMP_BLOCK_ENTITY.get(),
+                (be, side) -> be.computerBehaviour == null ? null : be.computerBehaviour.getPeripheralCapability()
+            );
+            event.registerBlockEntity(
+                capability,
                 PropulsionBlockEntities.RCS_THRUSTER_BLOCK_ENTITY.get(),
                 (be, side) -> be.computerBehaviour == null ? null : be.computerBehaviour.getPeripheralCapability()
             );

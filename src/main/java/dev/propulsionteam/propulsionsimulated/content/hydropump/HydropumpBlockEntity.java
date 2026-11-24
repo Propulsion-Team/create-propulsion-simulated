@@ -1,9 +1,12 @@
 package dev.propulsionteam.propulsionsimulated.content.hydropump;
 
+import com.simibubi.create.compat.computercraft.AbstractComputerBehaviour;
 import com.simibubi.create.content.fluids.pump.PumpBlockEntity;
 import com.simibubi.create.infrastructure.config.AllConfigs;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
+import dev.propulsionteam.propulsionsimulated.compat.PropulsionCompatibility;
+import dev.propulsionteam.propulsionsimulated.compat.computercraft.ComputerBehaviour;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -18,6 +21,7 @@ import net.neoforged.neoforge.energy.IEnergyStorage;
 import java.util.List;
 
 public class HydropumpBlockEntity extends PumpBlockEntity {
+    public AbstractComputerBehaviour computerBehaviour;
     private HydropumpSpeedBehaviour pumpingSpeed;
     private final PumpEnergyStorage energy = new PumpEnergyStorage();
     private class PumpEnergyStorage extends EnergyStorage {
@@ -61,6 +65,13 @@ public class HydropumpBlockEntity extends PumpBlockEntity {
         super.addBehaviours(behaviours);
         pumpingSpeed = new HydropumpSpeedBehaviour(this);
         behaviours.add(pumpingSpeed);
+        if (PropulsionCompatibility.CC_ACTIVE) {
+            behaviours.add(computerBehaviour = new ComputerBehaviour(this));
+        }
+    }
+
+    public void setPumpingSpeed(int speed) {
+        pumpingSpeed.setValue(Math.clamp(speed, 1, HydropumpSpeedBehaviour.maxSpeed()));
     }
 
     public int getPumpingSpeed() {
