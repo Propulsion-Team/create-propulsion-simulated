@@ -7,9 +7,9 @@
   ],
   "key": {
     "P": { "item": "createpropulsion:platinum_sheet" },
-    "S": { "item": "simulated:docking_connector" },
+    "S": { "item": "createpropulsion:cable_relay" },
     "T": { "item": "create:sturdy_sheet" },
-    "W": { "item": "create:stockpile_switch" }
+    "W": { "item": "createpropulsion:platinum_fluid_tank" }
   },
   "result": {
     "id": "createpropulsion:coral_generator",
