@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "NCN",
+    "CPC",
+    "NCN"
+  ],
+  "key": {
+    "N": {
+      "item": "createpropulsion:platinum_nugget"
+    },
+    "C": {
+      "item": "createpropulsion:cable"
+    },
+    "P": {
+      "item": "createpropulsion:platinum_pipe"
+    }
+  },
+  "result": {
+    "id": "createpropulsion:hydropump"
+  }
+}

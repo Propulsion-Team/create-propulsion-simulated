@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "S",
+    "I",
+    "S"
+  ],
+  "key": {
+    "S": {
+      "item": "createpropulsion:platinum_sheet"
+    },
+    "I": {
+      "item": "createpropulsion:platinum_ingot"
+    }
+  },
+  "result": {
+    "id": "createpropulsion:platinum_pipe",
+    "count": 4
+  }
+}
