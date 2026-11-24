@@ -61,20 +61,22 @@ public class PropulsionCreativeTab {
         registerSectionItem(MAIN_SECTION, "creative_vector_thruster", () -> PropulsionBlocks.CREATIVE_VECTOR_THRUSTER_BLOCK.get().asItem());
         registerSectionItem(MAIN_SECTION, "liquid_vector_thruster", () -> PropulsionBlocks.LIQUID_VECTOR_THRUSTER_BLOCK.get().asItem());
         registerSectionItem(MAIN_SECTION, "solid_fuel_thruster", () -> PropulsionBlocks.SOLID_FUEL_THRUSTER_BLOCK.get().asItem());
-        registerSectionItem(MAIN_SECTION, "hush_kit", () -> PropulsionItems.HUSH_KIT.get());
-        registerSectionItem(MAIN_SECTION, "vector_core", () -> PropulsionItems.VECTOR_CORE.get());
+
         registerSectionItem(MAIN_SECTION, "redstone_transmission", () -> PropulsionBlocks.REDSTONE_TRANSMISSION_BLOCK.get().asItem());
         registerSectionItem(MAIN_SECTION, "redstone_converter", () -> PropulsionBlocks.REDSTONE_CONVERTER_BLOCK.get().asItem());
-        registerSectionItem(MAIN_SECTION, "turpentine_bucket", () -> PropulsionItems.TURPENTINE_BUCKET.get());
-        registerSectionItem(MAIN_SECTION, "pine_resin", () -> PropulsionItems.PINE_RESIN.get());
-        //registerSectionItem(MAIN_SECTION, "wing", () -> PropulsionBlocks.WING_BLOCK.get().asItem());
-        //registerSectionItem(MAIN_SECTION, "symmetric_wing", () -> PropulsionBlocks.SYMMETRIC_WING_BLOCK.get().asItem());
-        registerSectionItem(MAIN_SECTION, "symmetric_copycat_wing", () -> PropulsionBlocks.SYMMETRIC_COPYCAT_WING.get().asItem());
-        //registerSectionItem(MAIN_SECTION, "tempered_wing", () -> PropulsionBlocks.TEMPERED_WING_BLOCK.get().asItem());
-        registerSectionItem(MAIN_SECTION, "copycat_wing", () -> PropulsionBlocks.COPYCAT_WING.get().asItem());
         registerSectionItem(MAIN_SECTION, "solid_burner", () -> PropulsionBlocks.SOLID_BURNER.get().asItem());
         registerSectionItem(MAIN_SECTION, "liquid_burner", () -> PropulsionBlocks.LIQUID_BURNER.get().asItem());
         registerSectionItem(MAIN_SECTION, "stirling_engine", () -> PropulsionBlocks.STIRLING_ENGINE_BLOCK.get().asItem());
+        registerSectionItem(MAIN_SECTION, "coral_generator", () -> PropulsionBlocks.CORAL_GENERATOR.get().asItem());
+        registerSectionItem(MAIN_SECTION, "hydropump", () -> PropulsionBlocks.HYDROPUMP.get().asItem());
+        registerSectionItem(MAIN_SECTION, "platinum_fluid_tank", () -> PropulsionBlocks.PLATINUM_FLUID_TANK.get().asItem());
+        registerSectionItem(MAIN_SECTION, "platinum_pipe", () -> PropulsionBlocks.PLATINUM_PIPE.get().asItem());
+        registerSectionItem(MAIN_SECTION, "platinum_fluid_vessel", () -> PropulsionBlocks.PLATINUM_FLUID_VESSEL.get().asItem());
+        registerSectionItem(MAIN_SECTION, "cable", () -> PropulsionBlocks.FE_CABLE.get().asItem());
+        registerSectionItem(MAIN_SECTION, "cable_relay", () -> PropulsionBlocks.CABLE_RELAY.get().asItem());
+        registerSectionItem(MAIN_SECTION, "symmetric_copycat_wing", () -> PropulsionBlocks.SYMMETRIC_COPYCAT_WING.get().asItem());
+        registerSectionItem(MAIN_SECTION, "copycat_wing", () -> PropulsionBlocks.COPYCAT_WING.get().asItem());
+
         registerSectionItem(MAIN_SECTION, "platinum_ore", () -> PropulsionBlocks.PLATINUM_ORE.get().asItem());
         registerSectionItem(MAIN_SECTION, "deepslate_platinum_ore", () -> PropulsionBlocks.DEEPSLATE_PLATINUM_ORE.get().asItem());
         registerSectionItem(MAIN_SECTION, "platinum_block", () -> PropulsionBlocks.PLATINUM_BLOCK.get().asItem());
@@ -83,21 +85,24 @@ public class PropulsionCreativeTab {
         registerSectionItem(MAIN_SECTION, "striped_platinum_casing", () -> PropulsionBlocks.STRIPED_PLATINUM_CASING.get().asItem());
         registerSectionItem(MAIN_SECTION, "barred_platinum_casing", () -> PropulsionBlocks.BARRED_PLATINUM_CASING.get().asItem());
         registerSectionItem(MAIN_SECTION, "reinforced_platinum_casing", () -> PropulsionBlocks.REINFORCED_PLATINUM_CASING.get().asItem());
-        registerSectionItem(MAIN_SECTION, "platinum_fluid_tank", () -> PropulsionBlocks.PLATINUM_FLUID_TANK.get().asItem());
-        registerSectionItem(MAIN_SECTION, "platinum_pipe", () -> PropulsionBlocks.PLATINUM_PIPE.get().asItem());
-        registerSectionItem(MAIN_SECTION, "platinum_fluid_vessel", () -> PropulsionBlocks.PLATINUM_FLUID_VESSEL.get().asItem());
-        registerSectionItem(MAIN_SECTION, "coral_generator", () -> PropulsionBlocks.CORAL_GENERATOR.get().asItem());
-        registerSectionItem(MAIN_SECTION, "hydropump", () -> PropulsionBlocks.HYDROPUMP.get().asItem());
+
         registerSectionItem(MAIN_SECTION, "platinum_ingot", () -> PropulsionItems.PLATINUM_INGOT.get());
         registerSectionItem(MAIN_SECTION, "platinum_nugget", () -> PropulsionItems.PLATINUM_NUGGET.get());
         registerSectionItem(MAIN_SECTION, "platinum_sheet", () -> PropulsionItems.PLATINUM_SHEET.get());
         registerSectionItem(MAIN_SECTION, "raw_platinum", () -> PropulsionItems.RAW_PLATINUM.get());
         registerSectionItem(MAIN_SECTION, "crushed_raw_platinum", () -> PropulsionItems.CRUSHED_RAW_PLATINUM.get());
+        registerSectionItem(MAIN_SECTION, "pine_resin", () -> PropulsionItems.PINE_RESIN.get());
+
+        registerSectionItem(MAIN_SECTION, "hush_kit", () -> PropulsionItems.HUSH_KIT.get());
+        registerSectionItem(MAIN_SECTION, "vector_core", () -> PropulsionItems.VECTOR_CORE.get());
+
+        registerSectionItem(MAIN_SECTION, "turpentine_bucket", () -> PropulsionItems.TURPENTINE_BUCKET.get());
         registerSectionItem(MAIN_SECTION, "coral_bucket", () -> PropulsionItems.CORAL_BUCKET.get());
         registerSectionItem(MAIN_SECTION, "hydrazine_bucket", () -> PropulsionItems.HYDRAZINE_BUCKET.get());
         registerSectionItem(MAIN_SECTION, "oxidizer_bucket", () -> PropulsionItems.OXIDIZER_BUCKET.get());
-        registerSectionItem(MAIN_SECTION, "cable", () -> PropulsionBlocks.FE_CABLE.get().asItem());
-        registerSectionItem(MAIN_SECTION, "cable_relay", () -> PropulsionBlocks.CABLE_RELAY.get().asItem());
+        //registerSectionItem(MAIN_SECTION, "wing", () -> PropulsionBlocks.WING_BLOCK.get().asItem());
+        //registerSectionItem(MAIN_SECTION, "symmetric_wing", () -> PropulsionBlocks.SYMMETRIC_WING_BLOCK.get().asItem());
+        //registerSectionItem(MAIN_SECTION, "tempered_wing", () -> PropulsionBlocks.TEMPERED_WING_BLOCK.get().asItem());
 
         registerSectionItem(TOOLS_SECTION, "assembler_stick", () -> ModItems.ASSEMBLER_STICK.get());
         registerSectionItem(TOOLS_SECTION, "auto_glue", () -> ModItems.AUTO_GLUE.get());
