@@ -54,22 +54,12 @@ public class SolidFuelThrusterPeripheral extends ThrusterPeripheralBase<SolidFue
 
     @LuaFunction
     public final double getCurrentThrustPN() {
-        return blockEntity.getCurrentThrust();
-    }
-
-    @LuaFunction
-    public final double getCurrentThrustKN() {
-        return getCurrentThrustPN() / PropulsionConfig.getThrustUnitsPerKnOrDefault();
+        return ThrusterComputerHelpers.toDisplayed(blockEntity.getCurrentThrust());
     }
 
     @LuaFunction
     public final double getDisplayedThrustPN() {
-        return blockEntity.getDisplayedThrustPnForTooltip();
-    }
-
-    @LuaFunction
-    public final double getDisplayedThrustKN() {
-        return getDisplayedThrustPN() / PropulsionConfig.getThrustUnitsPerKnOrDefault();
+        return ThrusterComputerHelpers.toDisplayed(blockEntity.getDisplayedThrustPnForTooltip());
     }
 
     @LuaFunction

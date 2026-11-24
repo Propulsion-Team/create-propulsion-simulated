@@ -222,7 +222,7 @@ See [KubeJS API — Solid Fuel Thruster](KubeJS-API.md#solid-fuel-thruster-solid
 With **CC: Tweaked**, peripheral type **`solid_fuel_thruster`**.
 
 - Throttle: `setPower` / `setPowerNormalized` / `getPower`; normalized values provide precise `0.0 … 1.0` control and override redstone
-- Thrust: `getCurrentThrustPN`, `getCurrentThrustKN`, `getDisplayedThrustPN`, `getDisplayedThrustKN`, `getAirflowMs`, `getObstruction`
+- Thrust: `getCurrentThrustPN`, `getDisplayedThrustPN`, `getAirflowMs`, `getObstruction`
 - Fuel: `getFuelItem`, `getBurnTimeRemaining`, `isBurning`
 - Items: `list`, `pushItems`, `pullItems` on the back-side fuel slot
 

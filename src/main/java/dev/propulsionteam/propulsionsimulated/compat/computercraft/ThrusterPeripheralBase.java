@@ -32,22 +32,12 @@ public abstract class ThrusterPeripheralBase<T extends AbstractThrusterBlockEnti
 
     @LuaFunction(mainThread = true)
     public final void setThrustPN(double thrustPn) {
-        ThrusterComputerHelpers.setThrustPn(blockEntity, thrustPn);
-    }
-
-    @LuaFunction(mainThread = true)
-    public final void setThrustKN(double thrustKn) {
-        ThrusterComputerHelpers.setThrustPn(blockEntity, thrustKn * PropulsionConfig.getThrustUnitsPerKnOrDefault());
+        ThrusterComputerHelpers.setThrustPn(blockEntity, thrustPn * PropulsionConfig.getThrustUnitsPerKnOrDefault());
     }
 
     @LuaFunction(mainThread = true)
     public final double getMaxThrustPN() {
-        return blockEntity.getMaxThrustPn();
-    }
-
-    @LuaFunction(mainThread = true)
-    public final double getMaxThrustKN() {
-        return blockEntity.getMaxThrustPn() / PropulsionConfig.getThrustUnitsPerKnOrDefault();
+        return ThrusterComputerHelpers.toDisplayed(blockEntity.getMaxThrustPn());
     }
 
     @LuaFunction(mainThread = true)

@@ -46,22 +46,12 @@ public class IonThrusterPeripheral extends ThrusterPeripheralBase<IonThrusterBlo
 
     @LuaFunction(mainThread = true)
     public final double getCurrentThrustPN() {
-        return blockEntity.getCurrentThrust();
-    }
-
-    @LuaFunction(mainThread = true)
-    public final double getCurrentThrustKN() {
-        return getCurrentThrustPN() / PropulsionConfig.getThrustUnitsPerKnOrDefault();
+        return ThrusterComputerHelpers.toDisplayed(blockEntity.getCurrentThrust());
     }
 
     @LuaFunction(mainThread = true)
     public final double getDisplayedThrustPN() {
-        return blockEntity.getDisplayedThrustPnForTooltip();
-    }
-
-    @LuaFunction(mainThread = true)
-    public final double getDisplayedThrustKN() {
-        return getDisplayedThrustPN() / PropulsionConfig.getThrustUnitsPerKnOrDefault();
+        return ThrusterComputerHelpers.toDisplayed(blockEntity.getDisplayedThrustPnForTooltip());
     }
 
     @LuaFunction(mainThread = true)

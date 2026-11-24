@@ -1,5 +1,6 @@
 package dev.propulsionteam.propulsionsimulated.compat.computercraft;
 
+import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
 import dev.propulsionteam.propulsionsimulated.content.thruster.AbstractThrusterBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterThrottleMath;
 import net.minecraft.util.Mth;
@@ -16,6 +17,10 @@ final class ThrusterComputerHelpers {
         int clamped = Mth.clamp(redstonePower, 0, 15);
         be.setControlMode(AbstractThrusterBlockEntity.ControlMode.PERIPHERAL);
         be.setDigitalInput(clamped / 15.0f);
+    }
+
+    static double toDisplayed(double thrust) {
+        return thrust / PropulsionConfig.getThrustUnitsPerKnOrDefault();
     }
 
     static void setThrustPn(AbstractThrusterBlockEntity be, double thrustPn) {

@@ -20,14 +20,14 @@ When the computer **detaches**, peripheral throttle is cleared and the thruster 
 
 ### Precise thrust and obstruction (all thrusters except RCS)
 
+All `…PN` methods use the same pN value shown in the goggles tooltip and on the creative thruster scroll. There are no kN methods.
+
 Every thruster peripheral also has:
 
 | Method | Returns | Notes |
 |--------|---------|--------|
-| `setThrustPN(thrust)` | — | Sets throttle to `thrust / getMaxThrustPN()` in pN. Clamped to `0 … max`. Overrides redstone like `setPower`; a later `setPower` or `setPowerNormalized` replaces it |
-| `setThrustKN(thrust)` | — | Same in kN |
+| `setThrustPN(thrust)` | — | Sets throttle to `thrust / getMaxThrustPN()`, in the same pN as the goggles tooltip and on-block scroll. Clamped to `0 … max`. Overrides redstone like `setPower`; a later `setPower` or `setPowerNormalized` replaces it |
 | `getMaxThrustPN()` | `number` | Nominal thrust at full throttle for the current fuel, before obstruction and atmosphere |
-| `getMaxThrustKN()` | `number` | Same in kN |
 | `getObstructionEfficiency()` | `number` | `0.0 … 1.0` thrust fraction left after obstruction. `getObstruction()` gives the unobstructed block count |
 
 The thrust is stored as a throttle fraction, so it changes if `getMaxThrustPN()` changes (for example after a fuel swap). Multiblock thrusters can be controlled through any block of the cube, and the values describe the whole cube.
@@ -47,9 +47,7 @@ Fluid thrusters, solid fuel thrusters, and ion thrusters use **different periphe
 | `setPowerNormalized(power)` | — | Precise normalized `power`: `0.0 … 1.0`; values are clamped but not quantized to redstone levels |
 | `getPower()` | `number` | Normalized throttle `0.0 … 1.0` |
 | `getCurrentThrustPN()` | `number` | |
-| `getCurrentThrustKN()` | `number` | |
 | `getDisplayedThrustPN()` | `number` | Tooltip-scale thrust |
-| `getDisplayedThrustKN()` | `number` | |
 | `getAirflowMs()` | `number` | |
 | `getFuelAmountMb()` | `number` | |
 | `getFuelCapacityMb()` | `number` | |
@@ -68,8 +66,8 @@ Fluid thrusters, solid fuel thrusters, and ion thrusters use **different periphe
 | `setPower` / `setPowerNormalized` | — | Same throttle semantics as [Throttle control](#throttle-control-all-thrusters) |
 | `getPower()` | `number` | |
 | `getObstruction()` | `number` | |
-| `getCurrentThrustPN()` / `getCurrentThrustKN()` | `number` | |
-| `getDisplayedThrustPN()` / `getDisplayedThrustKN()` | `number` | |
+| `getCurrentThrustPN()` | `number` | |
+| `getDisplayedThrustPN()` | `number` | |
 | `getAirflowMs()` | `number` | |
 | `getFuelItem()` | `table` or `nil` | `{name, count}` of the item in the fuel slot |
 | `getBurnTimeRemaining()` | `number` | Ticks left on current burn (only decreases while powered) |
@@ -91,8 +89,8 @@ FE-powered ion thrusters: same throttle and thrust readouts as [Thruster](#thrus
 | `setPower` / `setPowerNormalized` | — | Same throttle semantics as [Throttle control](#throttle-control-all-thrusters) |
 | `getPower()` | `number` | |
 | `getObstruction()` | `number` | Returns unobstructed-block count from the obstruction scan |
-| `getCurrentThrustPN()` / `getCurrentThrustKN()` | `number` | |
-| `getDisplayedThrustPN()` / `getDisplayedThrustKN()` | `number` | |
+| `getCurrentThrustPN()` | `number` | |
+| `getDisplayedThrustPN()` | `number` | |
 | `getAirflowMs()` | `number` | |
 | `getEnergyAmountFe()` | `number` | Stored FE |
 | `getEnergyCapacityFe()` | `number` | Buffer capacity |
@@ -110,11 +108,8 @@ Same throttle methods as the normal thruster, plus scroll-equivalent thrust conf
 | `setThrustConfig(percent)` | — | Scroll step `0 … 99` (matches on-block UI steps; capped internally) |
 | `getThrustConfig()` | `number` | Current step |
 | `getTargetThrustPN()` | `number` | Base thrust target from scroll / config (before throttle & atmosphere) |
-| `getTargetThrustKN()` | `number` | |
 | `getCurrentThrustPN()` | `number` | |
-| `getCurrentThrustKN()` | `number` | |
 | `getDisplayedThrustPN()` | `number` | |
-| `getDisplayedThrustKN()` | `number` | |
 | `getAirflowMs()` | `number` | |
 | `getObstruction()` | `number` | Returns unobstructed-block count from the obstruction scan |
 
@@ -210,7 +205,7 @@ Separate peripheral implementation (`CreativeVectorThrusterPeripheral`): directi
 
 | Method | Returns | Notes |
 |--------|---------|--------|
-| `setThrustOutput(thrustOutputPn)` | — | Base thrust in **pN**. Clamped to the same maximum as the on-block scroll: `creativeVectorThrusterMaxThrust` (kN from config) × `thrustUnitsPerKn` (physics config, default `1000`). Pass **`< 0`** (e.g. `-1`) to clear override and use scroll thrust again. |
+| `setThrustOutput(thrustOutputPn)` | — | Base thrust in goggles-tooltip **pN**. Clamped to the same maximum as the on-block scroll: `creativeVectorThrusterMaxThrust` from config. Pass **`< 0`** (e.g. `-1`) to clear override and use scroll thrust again. |
 | `clearThrustOutput()` | — | Same as `setThrustOutput(-1)` — removes Lua thrust override |
 | `getMaxThrustOutputPn()` | `number` | Max allowed `setThrustOutput` in pN from config |
 | `isCustomThrustOutputActive()` | `boolean` | `true` if a CC thrust override is active |
@@ -233,8 +228,8 @@ With hydrazine in the tank a nozzle is **boosted** (thrust multiplied by `hydraz
 | `setNozzleThrustPN(nozzle, thrust)` | — | Precise thrust in pN, clamped to `0 … getMaxThrustPN()`. Stored as a fraction of the current max, so it changes if boost turns on or off |
 | `getNozzlePower(nozzle)` | `number` | Normalized `0.0 … 1.0` |
 | `getNozzleThrustPN(nozzle)` | `number` | Current thrust of one nozzle |
-| `getCurrentThrustPN()` / `getCurrentThrustKN()` | `number` | All nozzles combined |
-| `getMaxThrustPN()` / `getMaxThrustKN()` | `number` | Per-nozzle full thrust; higher while boosted |
+| `getCurrentThrustPN()` | `number` | All nozzles combined |
+| `getMaxThrustPN()` | `number` | Per-nozzle full thrust; higher while boosted |
 | `isBoosted()` | `boolean` | `true` while the hydrazine boost is active |
 | `getFuelAmountMb()` | `number` | |
 | `getFuelCapacityMb()` | `number` | |

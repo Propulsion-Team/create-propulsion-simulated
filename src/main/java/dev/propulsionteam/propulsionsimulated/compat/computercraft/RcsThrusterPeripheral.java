@@ -5,7 +5,6 @@ import dan200.computercraft.api.lua.LuaFunction;
 import dan200.computercraft.api.peripheral.IComputerAccess;
 import dan200.computercraft.api.peripheral.IPeripheral;
 import dan200.computercraft.shared.peripheral.generic.methods.FluidMethods;
-import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
 import dev.propulsionteam.propulsionsimulated.content.thruster.rcs_thruster.RcsThrusterBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterThrottleMath;
 import net.minecraft.server.MinecraftServer;
@@ -71,18 +70,8 @@ public class RcsThrusterPeripheral implements IPeripheral {
     }
 
     @LuaFunction(mainThread = true)
-    public final double getCurrentThrustKN() {
-        return blockEntity.currentThrust() / PropulsionConfig.getThrustUnitsPerKnOrDefault();
-    }
-
-    @LuaFunction(mainThread = true)
     public final double getMaxThrustPN() {
         return blockEntity.thrust();
-    }
-
-    @LuaFunction(mainThread = true)
-    public final double getMaxThrustKN() {
-        return blockEntity.thrust() / PropulsionConfig.getThrustUnitsPerKnOrDefault();
     }
 
     @LuaFunction(mainThread = true)
