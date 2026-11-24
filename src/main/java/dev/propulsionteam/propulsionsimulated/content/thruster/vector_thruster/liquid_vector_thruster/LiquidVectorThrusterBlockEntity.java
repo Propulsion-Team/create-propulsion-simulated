@@ -484,6 +484,11 @@ public class LiquidVectorThrusterBlockEntity extends VectorThrusterBlockEntity {
     }
 
     @Override
+    public double getMaxThrustPn() {
+        return fluidMaxThrustPn();
+    }
+
+    @Override
     protected double getBaseThrust() {
         return PropulsionConfig.getLiquidVectorThrusterBaseThrustOrDefault();
     }

@@ -1,6 +1,9 @@
 package dev.propulsionteam.propulsionsimulated.content.thruster.rcs_thruster;
 
+import com.simibubi.create.compat.computercraft.AbstractComputerBehaviour;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
+import dev.propulsionteam.propulsionsimulated.compat.PropulsionCompatibility;
+import dev.propulsionteam.propulsionsimulated.compat.computercraft.ComputerBehaviour;
 import com.simibubi.create.foundation.blockEntity.behaviour.fluid.SmartFluidTankBehaviour;
 import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
 import com.simibubi.create.foundation.utility.CreateLang;
@@ -35,7 +38,11 @@ import java.util.Locale;
 public class RcsThrusterBlockEntity extends SmartBlockEntity implements BlockEntitySubLevelActor, BlockSubLevelAssemblyListener, IHaveGoggleInformation {
     public SmartFluidTankBehaviour tank;
     public VectorRedstoneLinkBehaviour[] links;
-    private int wirelessMask;
+    private final int[] wirelessPower = new int[4];
+    private final float[] overridePower = {-1, -1, -1, -1};
+    private final float[] nozzlePower = new float[4];
+    private double drainAccumulator;
+    public AbstractComputerBehaviour computerBehaviour;
     private volatile int activeMask;
     private volatile boolean hydrazineBoost;
 
@@ -54,7 +61,27 @@ public class RcsThrusterBlockEntity extends SmartBlockEntity implements BlockEnt
 
     public boolean isActive() { return activeMask != 0 && thrust() > 0; }
 
-    public double currentThrust() { return Integer.bitCount(activeMask) * thrust(); }
+    public double currentThrust() {
+        double sum = 0;
+        for (int i = 0; i < links.length; i++) sum += nozzlePower[i];
+        return sum * thrust();
+    }
+
+    public double nozzleThrust(int nozzle) { return nozzlePower[nozzle] * thrust(); }
+
+    public float getNozzlePower(int nozzle) { return nozzlePower[nozzle]; }
+
+    public boolean isBoosted() { return hydrazineBoost; }
+
+    public void setNozzleOverride(int nozzle, float power) {
+        overridePower[nozzle] = Math.max(0f, Math.min(1f, power));
+        refreshPower();
+    }
+
+    public void clearOverrides() {
+        java.util.Arrays.fill(overridePower, -1f);
+        refreshPower();
+    }
 
     @Override
     public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
@@ -79,6 +106,9 @@ public class RcsThrusterBlockEntity extends SmartBlockEntity implements BlockEnt
         behaviours.add(tank);
         behaviours.add(new SoundMufflerBehaviour(this));
         behaviours.add(new PropulsionCoreBehaviour(this));
+        if (PropulsionCompatibility.CC_ACTIVE) {
+            behaviours.add(computerBehaviour = new ComputerBehaviour(this));
+        }
         links = new VectorRedstoneLinkBehaviour[isSingle() ? 1 : 4];
         for (int i = 0; i < links.length; i++) {
             int nozzle = i;
@@ -86,8 +116,7 @@ public class RcsThrusterBlockEntity extends SmartBlockEntity implements BlockEnt
                     ValueBoxTransform.Dual.makeSlots(first -> new RcsLinkTransform(first, nozzle)),
                     VectorRedstoneLinkBehaviour.RCS_TYPES.get(i), "Rcs" + i,
                     power -> {
-                        if (power > 0) wirelessMask |= 1 << nozzle;
-                        else wirelessMask &= ~(1 << nozzle);
+                        wirelessPower[nozzle] = power;
                         refreshPower();
                     });
             behaviours.add(links[i]);
@@ -107,11 +136,12 @@ public class RcsThrusterBlockEntity extends SmartBlockEntity implements BlockEnt
         if (level.isClientSide) RcsThrusterSoundController.tick(this);
         else {
             refreshPower();
-            int drain = PropulsionConfig.RCS_HYDRAZINE_DRAIN_PER_TICK.get();
-            boolean boost = isActive() && !tank.getPrimaryHandler().isEmpty()
-                    && tank.getPrimaryHandler().getFluidAmount() >= drain;
-            if (boost && drain > 0) {
-                tank.getPrimaryHandler().drain(drain, IFluidHandler.FluidAction.EXECUTE);
+            boolean active = isActive();
+            boolean boost = active && !tank.getPrimaryHandler().isEmpty();
+            drainAccumulator = boost ? drainAccumulator + PropulsionConfig.RCS_HYDRAZINE_DRAIN_PER_TICK.get() * currentThrust() / (thrust() * links.length) : 0;
+            int drain = (int) drainAccumulator;
+            if (drain > 0) {
+                drainAccumulator -= tank.getPrimaryHandler().drain(drain, IFluidHandler.FluidAction.EXECUTE).getAmount();
             }
             if (hydrazineBoost != boost) {
                 hydrazineBoost = boost;
@@ -122,33 +152,37 @@ public class RcsThrusterBlockEntity extends SmartBlockEntity implements BlockEnt
 
     public void refreshPower() {
         if (level == null || level.isClientSide) return;
-        int mask = wirelessMask;
+        int mask = 0;
+        float[] power = new float[4];
         for (int i = 0; i < links.length; i++) {
             Direction side = RcsOrientation.direction(RcsOrientation.exhaust(isSingle(), i), RcsThrusterBlock.normal(getBlockState()));
             int signal = isSingle() ? level.getBestNeighborSignal(worldPosition) : level.getSignal(worldPosition.relative(side), side);
-            if (signal > 0) mask |= 1 << i;
+            float level = overridePower[i] >= 0 ? overridePower[i] : Math.max(signal, wirelessPower[i]) / 15f;
+            power[i] = level;
+            if (level > 0) mask |= 1 << i;
         }
-        if (mask == activeMask) return;
+        boolean changed = mask != activeMask || !java.util.Arrays.equals(power, nozzlePower);
+        System.arraycopy(power, 0, nozzlePower, 0, 4);
         activeMask = mask;
-        sendData();
+        if (changed) sendData();
     }
 
     @Override
     public void sable$physicsTick(ServerSubLevel subLevel, RigidBodyHandle handle, double timeStep) {
-        int mask = activeMask;
         Direction normal = RcsThrusterBlock.normal(getBlockState());
         for (int i = 0; i < links.length; i++) {
-            if ((mask & (1 << i)) == 0) continue;
+            float power = nozzlePower[i];
+            if (power <= 0) continue;
             Vector3d point = RcsOrientation.point(RcsOrientation.nozzle(isSingle(), i), normal)
                     .add(worldPosition.getX(), worldPosition.getY(), worldPosition.getZ());
-            Vector3d impulse = RcsOrientation.impulse(isSingle(), i, normal, thrust(), timeStep);
+            Vector3d impulse = RcsOrientation.impulse(isSingle(), i, normal, thrust() * power, timeStep);
             SimulatedThrustAdapter.applyImpulseAtPoint(subLevel, point, impulse, this);
         }
     }
 
     @Override
     public void afterMove(ServerLevel oldLevel, ServerLevel newLevel, BlockState state, BlockPos oldPos, BlockPos newPos) {
-        wirelessMask = 0;
+        java.util.Arrays.fill(wirelessPower, 0);
         for (VectorRedstoneLinkBehaviour link : links) {
             link.newPosition = true;
             link.notifySignalChange();
@@ -159,14 +193,20 @@ public class RcsThrusterBlockEntity extends SmartBlockEntity implements BlockEnt
     @Override
     protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.write(tag, registries, clientPacket);
-        if (clientPacket) tag.putInt("ActiveNozzles", activeMask);
+        if (clientPacket) {
+            tag.putInt("ActiveNozzles", activeMask);
+            for (int i = 0; i < 4; i++) tag.putFloat("NozzlePower" + i, nozzlePower[i]);
+        }
         if (clientPacket) tag.putBoolean("HydrazineBoost", hydrazineBoost);
     }
 
     @Override
     protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.read(tag, registries, clientPacket);
-        if (clientPacket) activeMask = tag.getInt("ActiveNozzles");
+        if (clientPacket) {
+            activeMask = tag.getInt("ActiveNozzles");
+            for (int i = 0; i < 4; i++) nozzlePower[i] = tag.getFloat("NozzlePower" + i);
+        }
         if (clientPacket) hydrazineBoost = tag.getBoolean("HydrazineBoost");
     }
 

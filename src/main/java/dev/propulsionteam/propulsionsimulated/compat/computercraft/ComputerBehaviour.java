@@ -17,6 +17,7 @@ import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.l
 import dev.propulsionteam.propulsionsimulated.content.thruster.thruster.ThrusterBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster.VectorThrusterBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.thruster.thruster.creative_thruster.CreativeThrusterBlockEntity;
+import dev.propulsionteam.propulsionsimulated.content.thruster.rcs_thruster.RcsThrusterBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.thruster.solid_fuel_thruster.SolidFuelThrusterBlockEntity;
 import com.simibubi.create.compat.computercraft.AbstractComputerBehaviour;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
@@ -36,6 +37,7 @@ public class ComputerBehaviour extends AbstractComputerBehaviour {
 
     static {
         register(IonThrusterBlockEntity.class, IonThrusterPeripheral::new);
+        register(RcsThrusterBlockEntity.class, RcsThrusterPeripheral::new);
         register(ThrusterBlockEntity.class, ThrusterPeripheral::new);
         register(SolidFuelThrusterBlockEntity.class, SolidFuelThrusterPeripheral::new);
         register(CreativeVectorThrusterBlockEntity.class, CreativeVectorThrusterPeripheral::new);

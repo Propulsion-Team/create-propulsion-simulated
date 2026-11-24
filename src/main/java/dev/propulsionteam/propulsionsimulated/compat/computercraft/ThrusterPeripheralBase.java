@@ -1,7 +1,9 @@
 package dev.propulsionteam.propulsionsimulated.compat.computercraft;
 
+import dan200.computercraft.api.lua.LuaFunction;
 import dan200.computercraft.api.peripheral.IComputerAccess;
 import dan200.computercraft.api.peripheral.IPeripheral;
+import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
 import dev.propulsionteam.propulsionsimulated.content.thruster.AbstractThrusterBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.thruster.AbstractThrusterBlockEntity.ControlMode;
 import net.minecraft.server.MinecraftServer;
@@ -26,6 +28,31 @@ public abstract class ThrusterPeripheralBase<T extends AbstractThrusterBlockEnti
 
     protected ThrusterPeripheralBase(T blockEntity) {
         this.blockEntity = blockEntity;
+    }
+
+    @LuaFunction(mainThread = true)
+    public final void setThrustPN(double thrustPn) {
+        ThrusterComputerHelpers.setThrustPn(blockEntity, thrustPn);
+    }
+
+    @LuaFunction(mainThread = true)
+    public final void setThrustKN(double thrustKn) {
+        ThrusterComputerHelpers.setThrustPn(blockEntity, thrustKn * PropulsionConfig.getThrustUnitsPerKnOrDefault());
+    }
+
+    @LuaFunction(mainThread = true)
+    public final double getMaxThrustPN() {
+        return blockEntity.getMaxThrustPn();
+    }
+
+    @LuaFunction(mainThread = true)
+    public final double getMaxThrustKN() {
+        return blockEntity.getMaxThrustPn() / PropulsionConfig.getThrustUnitsPerKnOrDefault();
+    }
+
+    @LuaFunction(mainThread = true)
+    public final double getObstructionEfficiency() {
+        return blockEntity.getObstructionEfficiency();
     }
 
     @Override

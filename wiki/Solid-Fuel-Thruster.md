@@ -223,7 +223,7 @@ With **CC: Tweaked**, peripheral type **`solid_fuel_thruster`**.
 
 - Throttle: `setPower` / `setPowerNormalized` / `getPower`; normalized values provide precise `0.0 … 1.0` control and override redstone
 - Thrust: `getCurrentThrustPN`, `getCurrentThrustKN`, `getDisplayedThrustPN`, `getDisplayedThrustKN`, `getAirflowMs`, `getObstruction`
-- Fuel: `getFuelAmount` (`0` or `1`), `getFuelCapacity` (`1`), `getBurnTimeRemaining`, `isBurning`
+- Fuel: `getFuelItem`, `getBurnTimeRemaining`, `isBurning`
 - Items: `list`, `pushItems`, `pullItems` on the back-side fuel slot
 
 Full method list: [ComputerCraft peripherals — Solid fuel thruster](ComputerCraft-Peripherals.md#solid-fuel-thruster-solid_fuel_thruster).

@@ -9,7 +9,8 @@ import dan200.computercraft.shared.peripheral.generic.methods.InventoryMethods;
 import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
 import dev.propulsionteam.propulsionsimulated.content.thruster.AbstractThrusterBlockEntity.ControlMode;
 import dev.propulsionteam.propulsionsimulated.content.thruster.solid_fuel_thruster.SolidFuelThrusterBlockEntity;
-import net.minecraft.util.Mth;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.IItemHandler;
 import org.jetbrains.annotations.NotNull;
 
@@ -77,13 +78,10 @@ public class SolidFuelThrusterPeripheral extends ThrusterPeripheralBase<SolidFue
     }
 
     @LuaFunction(mainThread = true)
-    public final int getFuelAmount() {
-        return blockEntity.getFuelStack().isEmpty() ? 0 : 1;
-    }
-
-    @LuaFunction(mainThread = true)
-    public final int getFuelCapacity() {
-        return 1;
+    public final Map<String, Object> getFuelItem() {
+        ItemStack fuel = blockEntity.getFuelStack();
+        if (fuel.isEmpty()) return null;
+        return Map.of("name", BuiltInRegistries.ITEM.getKey(fuel.getItem()).toString(), "count", fuel.getCount());
     }
 
     @LuaFunction(mainThread = true)

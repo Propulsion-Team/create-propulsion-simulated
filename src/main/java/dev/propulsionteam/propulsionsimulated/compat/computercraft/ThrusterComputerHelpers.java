@@ -18,6 +18,11 @@ final class ThrusterComputerHelpers {
         be.setDigitalInput(clamped / 15.0f);
     }
 
+    static void setThrustPn(AbstractThrusterBlockEntity be, double thrustPn) {
+        double max = be.getMaxThrustPn();
+        setThrottleNormalized(be, max > 0.0d ? thrustPn / max : 0.0d);
+    }
+
     static void setThrottleNormalized(AbstractThrusterBlockEntity be, double normalized) {
         be.setControlMode(AbstractThrusterBlockEntity.ControlMode.PERIPHERAL);
         be.setDigitalInput(ThrusterThrottleMath.clampNormalized(normalized));

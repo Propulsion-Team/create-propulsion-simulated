@@ -18,6 +18,20 @@ While **any** computer is attached to a thruster peripheral:
 
 When the computer **detaches**, peripheral throttle is cleared and the thruster returns to **normal** redstone-controlled behavior.
 
+### Precise thrust and obstruction (all thrusters except RCS)
+
+Every thruster peripheral also has:
+
+| Method | Returns | Notes |
+|--------|---------|--------|
+| `setThrustPN(thrust)` | — | Sets throttle to `thrust / getMaxThrustPN()` in pN. Clamped to `0 … max`. Overrides redstone like `setPower`; a later `setPower` or `setPowerNormalized` replaces it |
+| `setThrustKN(thrust)` | — | Same in kN |
+| `getMaxThrustPN()` | `number` | Nominal thrust at full throttle for the current fuel, before obstruction and atmosphere |
+| `getMaxThrustKN()` | `number` | Same in kN |
+| `getObstructionEfficiency()` | `number` | `0.0 … 1.0` thrust fraction left after obstruction. `getObstruction()` gives the unobstructed block count |
+
+The thrust is stored as a throttle fraction, so it changes if `getMaxThrustPN()` changes (for example after a fuel swap). Multiblock thrusters can be controlled through any block of the cube, and the values describe the whole cube.
+
 Fluid thrusters, solid fuel thrusters, and ion thrusters use **different peripheral type strings** (`thruster`, `solid_fuel_thruster`, `ion_thruster`) so scripts can tell them apart.
 
 ---
@@ -57,8 +71,7 @@ Fluid thrusters, solid fuel thrusters, and ion thrusters use **different periphe
 | `getCurrentThrustPN()` / `getCurrentThrustKN()` | `number` | |
 | `getDisplayedThrustPN()` / `getDisplayedThrustKN()` | `number` | |
 | `getAirflowMs()` | `number` | |
-| `getFuelAmount()` | `number` | `0` or `1` |
-| `getFuelCapacity()` | `number` | Always `1` |
+| `getFuelItem()` | `table` or `nil` | `{name, count}` of the item in the fuel slot |
 | `getBurnTimeRemaining()` | `number` | Ticks left on current burn (only decreases while powered) |
 | `isBurning()` | `boolean` | `true` when powered and a burn is active |
 | `list()` | `table` | Fuel slot inventory |
@@ -201,6 +214,33 @@ Separate peripheral implementation (`CreativeVectorThrusterPeripheral`): directi
 | `clearThrustOutput()` | — | Same as `setThrustOutput(-1)` — removes Lua thrust override |
 | `getMaxThrustOutputPn()` | `number` | Max allowed `setThrustOutput` in pN from config |
 | `isCustomThrustOutputActive()` | `boolean` | `true` if a CC thrust override is active |
+
+---
+
+## RCS thruster (`rcs_thruster`)
+
+Single and quad RCS thrusters. Nozzles are numbered from `1`: the single RCS has `1`, the quad has `1 … 4` (exhaust south, north, west, east in the block's own orientation).
+
+While a computer is attached, nozzles you set are controlled by Lua instead of redstone or links. When the last computer detaches, all nozzles return to redstone control.
+
+With hydrazine in the tank a nozzle is **boosted** (thrust multiplied by `hydrazineThrustMultiplier`, default `2.5`). Hydrazine use scales with the average nozzle power.
+
+| Method | Returns | Notes |
+|--------|---------|--------|
+| `getNozzleCount()` | `number` | `1` or `4` |
+| `setNozzlePower(nozzle, power)` | — | `power`: `0 … 15` |
+| `setNozzlePowerNormalized(nozzle, power)` | — | `power`: `0.0 … 1.0` |
+| `setNozzleThrustPN(nozzle, thrust)` | — | Precise thrust in pN, clamped to `0 … getMaxThrustPN()`. Stored as a fraction of the current max, so it changes if boost turns on or off |
+| `getNozzlePower(nozzle)` | `number` | Normalized `0.0 … 1.0` |
+| `getNozzleThrustPN(nozzle)` | `number` | Current thrust of one nozzle |
+| `getCurrentThrustPN()` / `getCurrentThrustKN()` | `number` | All nozzles combined |
+| `getMaxThrustPN()` / `getMaxThrustKN()` | `number` | Per-nozzle full thrust; higher while boosted |
+| `isBoosted()` | `boolean` | `true` while the hydrazine boost is active |
+| `getFuelAmountMb()` | `number` | |
+| `getFuelCapacityMb()` | `number` | |
+| `tanks()` | `table` | |
+| `pushFluid(toName[, limit[, fluidName]])` | `number` | |
+| `pullFluid(fromName[, limit[, fluidName]])` | `number` | Only hydrazine is accepted |
 
 ---
 

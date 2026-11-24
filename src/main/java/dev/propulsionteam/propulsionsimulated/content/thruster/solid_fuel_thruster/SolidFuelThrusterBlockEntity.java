@@ -323,6 +323,20 @@ public class SolidFuelThrusterBlockEntity extends AbstractThrusterBlockEntity im
     }
 
     @Override
+    public double getMaxThrustPn() {
+        double max = super.getMaxThrustPn();
+        ItemStack fuel = getFuelStack();
+        ItemThrusterProperties properties = SolidThrusterFuelManager.getProperties(fuel);
+        if (properties != null) {
+            max *= properties.thrustMultiplier() * SolidThrusterFuelManager.getEfficiency(fuel.getItem());
+            if (superHeated) {
+                max *= SUPERHEATED_THRUST_MULTIPLIER;
+            }
+        }
+        return max;
+    }
+
+    @Override
     protected double getBaseThrust() {
         return PropulsionConfig.SOLID_FUEL_THRUSTER_BASE_THRUST.get();
     }

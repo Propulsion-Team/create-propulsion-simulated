@@ -836,6 +836,30 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
         return 1.0f;
     }
 
+    @Override
+    public double getMaxThrustPn() {
+        ThrusterBlockEntity ctrl = getControllerBE();
+        if (ctrl != null && ctrl != this) {
+            return ctrl.getMaxThrustPn();
+        }
+        return fluidMaxThrustPn();
+    }
+
+    protected double fluidMaxThrustPn() {
+        double max = super.getMaxThrustPn();
+        FluidThrusterProperties properties = getFuelProperties(fluidStack().getFluid());
+        if (properties != null) {
+            max *= properties.thrustMultiplier() * ThrusterFuelManager.getEfficiency(fluidStack().getFluid());
+        }
+        if (isMultiblock()) {
+            max *= width * width * width * getMultiblockThrustMultiplier(width);
+            if (validOxidizer()) {
+                max *= getMultiblockOxidizerThrustMultiplier(width);
+            }
+        }
+        return max;
+    }
+
     private static float getMultiblockThrustMultiplier(int cubeWidth) {
         if (cubeWidth == 2) return PropulsionConfig.MULTIBLOCK_2X_THRUST_MULTIPLIER.get().floatValue();
         if (cubeWidth == 3) return PropulsionConfig.MULTIBLOCK_3X_THRUST_MULTIPLIER.get().floatValue();

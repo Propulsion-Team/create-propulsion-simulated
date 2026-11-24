@@ -510,6 +510,14 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         return getPower();
     }
 
+    public double getMaxThrustPn() {
+        return getBaseThrust() * getThrustUnitsPerKn();
+    }
+
+    public float getObstructionEfficiency() {
+        return calculateObstructionEffect();
+    }
+
     public Vector3d getThrustDirectionLocal() {
         Direction facing = getFacing();
         return new Vector3d(facing.getStepX(), facing.getStepY(), facing.getStepZ()).normalize();

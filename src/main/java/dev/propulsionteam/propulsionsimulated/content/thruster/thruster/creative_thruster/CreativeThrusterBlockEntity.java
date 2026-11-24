@@ -199,6 +199,35 @@ public class CreativeThrusterBlockEntity extends AbstractThrusterBlockEntity {
     }
 
     @Override
+    public void setDigitalInput(float power) {
+        CreativeThrusterBlockEntity ctrl = getControllerBE();
+        if (ctrl != null && ctrl != this) {
+            ctrl.setDigitalInput(power);
+            return;
+        }
+        super.setDigitalInput(power);
+    }
+
+    @Override
+    public void setControlMode(ControlMode mode) {
+        CreativeThrusterBlockEntity ctrl = getControllerBE();
+        if (ctrl != null && ctrl != this) {
+            ctrl.setControlMode(mode);
+            return;
+        }
+        super.setControlMode(mode);
+    }
+
+    @Override
+    public double getMaxThrustPn() {
+        CreativeThrusterBlockEntity ctrl = getControllerBE();
+        if (ctrl != null && ctrl != this) {
+            return ctrl.getMaxThrustPn();
+        }
+        return super.getMaxThrustPn();
+    }
+
+    @Override
     public String getDyeId() {
         if (!isController() && isMultiblock()) {
             CreativeThrusterBlockEntity controller = getControllerBE();

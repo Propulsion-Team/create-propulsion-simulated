@@ -313,6 +313,19 @@ public class IonThrusterBlockEntity extends ThrusterBlockEntity {
     }
 
     @Override
+    public double getMaxThrustPn() {
+        ThrusterBlockEntity ctrl = getControllerBE();
+        if (ctrl != null && ctrl != this) {
+            return ctrl.getMaxThrustPn();
+        }
+        double max = getBaseThrust() * getThrustUnitsPerKn();
+        if (isMultiblock()) {
+            max *= width * width * width * getIonMultiblockThrustMultiplier(width);
+        }
+        return max;
+    }
+
+    @Override
     public FluidStack fluidStack() {
         return FluidStack.EMPTY;
     }
