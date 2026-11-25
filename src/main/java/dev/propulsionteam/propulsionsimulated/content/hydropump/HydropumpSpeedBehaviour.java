@@ -62,12 +62,12 @@ public class HydropumpSpeedBehaviour extends ScrollValueBehaviour {
     private static class OutletValueBox extends ValueBoxTransform.Sided {
         @Override
         protected Vec3 getSouthLocation() {
-            return VecHelper.voxelSpace(8, 8, 13.01);
+            return VecHelper.voxelSpace(8, 8, 13.51);
         }
 
         @Override
         public float getScale() {
-            return 0.375f;
+            return 0.4975f;
         }
 
         @Override

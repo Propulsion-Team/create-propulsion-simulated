@@ -7,6 +7,7 @@ import dev.propulsionteam.propulsionsimulated.registries.PropulsionBlockEntities
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -14,8 +15,25 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class HydropumpBlock extends PumpBlock {
+    private static final VoxelShape BODY = Block.box(2, 2, 2, 14, 14, 14);
+    private static final VoxelShape SHAPE_X = Shapes.or(BODY, Block.box(0, 3, 3, 16, 13, 13));
+    private static final VoxelShape SHAPE_Y = Shapes.or(BODY, Block.box(3, 0, 3, 13, 16, 13));
+    private static final VoxelShape SHAPE_Z = Shapes.or(BODY, Block.box(3, 3, 0, 13, 13, 16));
+
+    @Override
+    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return switch (state.getValue(FACING).getAxis()) {
+            case X -> SHAPE_X;
+            case Y -> SHAPE_Y;
+            case Z -> SHAPE_Z;
+        };
+    }
+
     public HydropumpBlock(Properties properties) {
         super(properties);
         BlockState state = defaultBlockState();
