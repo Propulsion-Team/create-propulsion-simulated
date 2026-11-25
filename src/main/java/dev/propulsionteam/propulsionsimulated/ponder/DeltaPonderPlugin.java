@@ -27,6 +27,18 @@ public class DeltaPonderPlugin implements PonderPlugin {
         HELPER.forComponents(PropulsionBlocks.REDSTONE_TRANSMISSION_BLOCK.get())
                 .addStoryBoard("redstone_transmission", TransmissionScenes::directControl)
                 .addStoryBoard("redstone_transmission", TransmissionScenes::incrementalControl);
+        //Cable Relay
+        HELPER.forComponents(PropulsionBlocks.CABLE_RELAY.get())
+                .addStoryBoard("cable_relay", CableRelayScenes::cableRelay);
+        //Hydropump
+        HELPER.forComponents(PropulsionBlocks.HYDROPUMP.get())
+                .addStoryBoard("hydropump", HydropumpScenes::hydropump);
+        //Full RCS Thruster
+        HELPER.forComponents(PropulsionBlocks.RCS_THRUSTER_BLOCK.get())
+                .addStoryBoard("rcs_thruster", RcsThrusterScenes::quadRcs);
+        //Single RCS Thruster
+        HELPER.forComponents(PropulsionBlocks.SINGLE_RCS_THRUSTER_BLOCK.get())
+                .addStoryBoard("single_rcs_thruster", RcsThrusterScenes::singleRcs);
         //Thruster
         HELPER.forComponents(PropulsionBlocks.THRUSTER_BLOCK.get())
                 .addStoryBoard("ponder_thruster_normal", ThrusterScenes::normal)
