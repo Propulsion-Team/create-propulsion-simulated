@@ -1,19 +1,22 @@
 {
   "type": "minecraft:crafting_shaped",
   "pattern": [
-    "NCN",
-    "CPC",
-    "NCN"
+    "ISI",
+    "PRP",
+    "ISI"
   ],
   "key": {
-    "N": {
-      "item": "createpropulsion:platinum_nugget"
+    "I": {
+      "item": "create:industrial_iron_block"
     },
-    "C": {
-      "item": "createpropulsion:cable"
+    "S": {
+      "item": "createpropulsion:platinum_sheet"
     },
     "P": {
       "item": "createpropulsion:platinum_pipe"
+    },
+    "R": {
+      "item": "create:propeller"
     }
   },
   "result": {
