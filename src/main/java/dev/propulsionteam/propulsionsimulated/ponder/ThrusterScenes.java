@@ -278,8 +278,21 @@ public class ThrusterScenes {
         scene.markAsFinished();
     }
 
-    private static void emitManualThrusterBurst(CreateSceneBuilder scene, SceneBuildingUtil util, int x, int y, int z,
+    static void emitManualThrusterBurst(CreateSceneBuilder scene, SceneBuildingUtil util, int x, int y, int z,
             double offsetX, double offsetY, double offsetZ, Direction exhaustDirection, int particlesPerTick) {
+        emitManualThrusterBurst(scene, util, x, y, z, offsetX, offsetY, offsetZ, exhaustDirection, particlesPerTick, 60);
+    }
+
+    static void emitManualThrusterBurst(CreateSceneBuilder scene, SceneBuildingUtil util, int x, int y, int z,
+            double offsetX, double offsetY, double offsetZ, Direction exhaustDirection, int particlesPerTick,
+            int durationTicks) {
+        emitManualThrusterBurst(scene, util, x, y, z, offsetX, offsetY, offsetZ, exhaustDirection, particlesPerTick,
+            durationTicks, 0.55);
+    }
+
+    static void emitManualThrusterBurst(CreateSceneBuilder scene, SceneBuildingUtil util, int x, int y, int z,
+            double offsetX, double offsetY, double offsetZ, Direction exhaustDirection, int particlesPerTick,
+            int durationTicks, double exhaustSpeed) {
         scene.effects().emitParticles(util.vector().centerOf(util.grid().at(x, y, z)).add(offsetX, offsetY, offsetZ), (world, px, py, pz) -> {
             for (int i = 0; i < particlesPerTick; i++) {
                 double lateral = 0.08;
@@ -291,12 +304,12 @@ public class ThrusterScenes {
                     case Y -> oy = 0.0;
                     case Z -> oz = 0.0;
                 }
-                double vx = exhaustDirection.getStepX() * 0.55 + (world.random.nextDouble() - 0.5) * 0.02;
-                double vy = exhaustDirection.getStepY() * 0.55 + (world.random.nextDouble() - 0.5) * 0.02;
-                double vz = exhaustDirection.getStepZ() * 0.55 + (world.random.nextDouble() - 0.5) * 0.02;
+                double vx = exhaustDirection.getStepX() * exhaustSpeed + (world.random.nextDouble() - 0.5) * 0.02;
+                double vy = exhaustDirection.getStepY() * exhaustSpeed + (world.random.nextDouble() - 0.5) * 0.02;
+                double vz = exhaustDirection.getStepZ() * exhaustSpeed + (world.random.nextDouble() - 0.5) * 0.02;
                 world.addParticle(ThrusterParticleType.PLUME.createParticleOptions(), px + ox, py + oy, pz + oz, vx, vy, vz);
             }
-        }, 1, 60);
+        }, 1, durationTicks);
     }
 }
 

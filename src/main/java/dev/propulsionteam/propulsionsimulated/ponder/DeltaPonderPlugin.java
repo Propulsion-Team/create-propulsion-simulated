@@ -4,6 +4,7 @@ import javax.annotation.Nonnull;
 
 import dev.propulsionteam.propulsionsimulated.CreatePropulsion;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionBlocks;
+import dev.propulsionteam.propulsionsimulated.registries.PropulsionItems;
 import com.simibubi.create.infrastructure.ponder.AllCreatePonderTags;
 
 import net.createmod.ponder.api.registration.PonderPlugin;
@@ -27,9 +28,18 @@ public class DeltaPonderPlugin implements PonderPlugin {
         HELPER.forComponents(PropulsionBlocks.REDSTONE_TRANSMISSION_BLOCK.get())
                 .addStoryBoard("redstone_transmission", TransmissionScenes::directControl)
                 .addStoryBoard("redstone_transmission", TransmissionScenes::incrementalControl);
+        //Solid Fuel Thruster
+        HELPER.forComponents(PropulsionBlocks.SOLID_FUEL_THRUSTER_BLOCK.get())
+                .addStoryBoard("solid_fuel_thruster", SolidFuelThrusterScenes::solidFuelThruster);
+        //Vector Core
+        helper.withKeyFunction(BuiltInRegistries.ITEM::getKey).forComponents(PropulsionItems.VECTOR_CORE.get())
+                .addStoryBoard("vector_core", VectorCoreScenes::vectorCore);
         //Cable Relay
         HELPER.forComponents(PropulsionBlocks.CABLE_RELAY.get())
                 .addStoryBoard("cable_relay", CableRelayScenes::cableRelay);
+        //Coral Generator
+        HELPER.forComponents(PropulsionBlocks.CORAL_GENERATOR.get())
+                .addStoryBoard("coral_generator", CoralGeneratorScenes::coralGenerator);
         //Hydropump
         HELPER.forComponents(PropulsionBlocks.HYDROPUMP.get())
                 .addStoryBoard("hydropump", HydropumpScenes::hydropump);
