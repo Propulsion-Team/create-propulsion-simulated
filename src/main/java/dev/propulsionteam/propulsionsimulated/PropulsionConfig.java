@@ -210,9 +210,9 @@ public class PropulsionConfig {
 
         COMMON_BUILDER.comment("RCS thrusters. Thrust is per nozzle.").push("rcsThruster");
         SINGLE_RCS_THRUST = COMMON_BUILDER.comment("Full thrust (pN) of the single RCS thruster.")
-                .defineInRange("singleThrust", 200.0d, 0.0d, 10000000.0d);
+                .defineInRange("singleThrust", 120.0d, 0.0d, 10000000.0d);
         RCS_THRUST = COMMON_BUILDER.comment("Full thrust (pN) of each nozzle on the quad RCS thruster.")
-                .defineInRange("fullThrustPerNozzle", 200.0d, 0.0d, 10000000.0d);
+                .defineInRange("fullThrustPerNozzle", 120.0d, 0.0d, 10000000.0d);
         RCS_HYDRAZINE_THRUST_MULTIPLIER = COMMON_BUILDER.comment("Thrust multiplier while the thruster is boosted with hydrazine.")
                 .defineInRange("hydrazineThrustMultiplier", 2.0d, 1.0d, 1000.0d);
         RCS_HYDRAZINE_DRAIN_PER_TICK = COMMON_BUILDER.comment("Hydrazine used in millibuckets per tick at full power on all nozzles. Scales with power.")
