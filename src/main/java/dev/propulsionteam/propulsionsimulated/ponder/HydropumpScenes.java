@@ -153,7 +153,7 @@ public final class HydropumpScenes {
         scene.markAsFinished();
     }
 
-    private static void setPumpPower(CreateSceneBuilder scene, Selection pump, int fe) {
+    static void setPumpPower(CreateSceneBuilder scene, Selection pump, int fe) {
         scene.world().modifyBlockEntityNBT(pump, HydropumpBlockEntity.class, nbt -> nbt.putInt("Energy", fe));
     }
 
@@ -162,11 +162,11 @@ public final class HydropumpScenes {
             nbt -> nbt.putInt("EnergyStored", fe));
     }
 
-    private static void setPumpSpeed(CreateSceneBuilder scene, BlockPos pumpPos, int speed) {
+    static void setPumpSpeed(CreateSceneBuilder scene, BlockPos pumpPos, int speed) {
         scene.world().modifyBlockEntity(pumpPos, HydropumpBlockEntity.class, be -> be.setPumpingSpeed(speed));
     }
 
-    private static void fillTank(CreateSceneBuilder scene, BlockPos tankPos, float fraction) {
+    static void fillTank(CreateSceneBuilder scene, BlockPos tankPos, float fraction) {
         scene.world().modifyBlockEntity(tankPos, FluidTankBlockEntity.class, be -> {
             FluidTankBlockEntity controller = be.getControllerBE();
             if (controller == null) {
