@@ -62,6 +62,7 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
     private static final int DISASSEMBLY_GRACE_TICKS = 5;
     private int disassemblyCooldown = 0;
     private boolean reconcileLoadedTopology = true;
+    private int schematicWidth = 0;
 
     public ThrusterBlockEntity(BlockEntityType<?> typeIn, BlockPos pos, BlockState state) {
         super(typeIn, pos, state);
@@ -206,7 +207,9 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
 
     protected void tryAssemble() {
         Direction facing = getBlockState().getValue(AbstractThrusterBlock.FACING);
-        for (int size = MAX_WIDTH; size >= 2; size--) {
+        int maxSize = schematicWidth > 1 ? Math.min(schematicWidth, MAX_WIDTH) : MAX_WIDTH;
+        schematicWidth = 0;
+        for (int size = maxSize; size >= 2; size--) {
             BlockPos origin = findCubeOrigin(size, facing);
             if (origin != null) {
                 formMulti(origin, size, facing);
@@ -1433,6 +1436,14 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
     }
 
     @Override
+    public void writeSafe(CompoundTag compound, net.minecraft.core.HolderLookup.Provider registries) {
+        super.writeSafe(compound, registries);
+        if (isMultiblock()) {
+            compound.putInt("SchematicWidth", width);
+        }
+    }
+
+    @Override
     protected void write(CompoundTag compound, net.minecraft.core.HolderLookup.Provider registries, boolean clientPacket) {
         super.write(compound, registries, clientPacket);
         compound.putInt("Width", width);
@@ -1464,6 +1475,9 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
     protected void read(CompoundTag compound, net.minecraft.core.HolderLookup.Provider registries, boolean clientPacket) {
         super.read(compound, registries, clientPacket);
         width = Math.max(1, compound.getInt("Width"));
+        if (!clientPacket && compound.contains("SchematicWidth")) {
+            schematicWidth = compound.getInt("SchematicWidth");
+        }
         multiblockObstructionEfficiency = compound.contains("MultiblockObstructionEfficiency")
             ? Math.clamp(compound.getFloat("MultiblockObstructionEfficiency"), 0.0f, 1.0f)
             : super.calculateObstructionEffect();

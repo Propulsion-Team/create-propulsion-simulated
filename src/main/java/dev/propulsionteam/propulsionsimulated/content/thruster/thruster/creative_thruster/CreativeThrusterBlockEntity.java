@@ -40,6 +40,7 @@ public class CreativeThrusterBlockEntity extends AbstractThrusterBlockEntity {
     protected boolean updateConnectivity = true;
     private static final int DISASSEMBLY_GRACE_TICKS = 5;
     private int disassemblyCooldown = 0;
+    private int schematicWidth = 0;
     private CreativeThrusterPowerScrollValueBehaviour powerBehaviour;
 
     public enum PlumeType {
@@ -284,7 +285,9 @@ public class CreativeThrusterBlockEntity extends AbstractThrusterBlockEntity {
             return;
         }
         Direction facing = getBlockState().getValue(AbstractThrusterBlock.FACING);
-        for (int size = MAX_WIDTH; size >= 2; size--) {
+        int maxSize = schematicWidth > 1 ? Math.min(schematicWidth, MAX_WIDTH) : MAX_WIDTH;
+        schematicWidth = 0;
+        for (int size = maxSize; size >= 2; size--) {
             BlockPos origin = findCubeOrigin(size, facing);
             if (origin != null) {
                 formMulti(origin, size, facing);
@@ -615,6 +618,15 @@ public class CreativeThrusterBlockEntity extends AbstractThrusterBlockEntity {
     // NBT
 
     @Override
+    public void writeSafe(CompoundTag compound, net.minecraft.core.HolderLookup.Provider registries) {
+        super.writeSafe(compound, registries);
+        compound.putInt("plumeType", plumeType.ordinal());
+        if (isMultiblock()) {
+            compound.putInt("SchematicWidth", width);
+        }
+    }
+
+    @Override
     protected void write(CompoundTag compound, net.minecraft.core.HolderLookup.Provider registries,
             boolean clientPacket) {
         super.write(compound, registries, clientPacket);
@@ -635,6 +647,9 @@ public class CreativeThrusterBlockEntity extends AbstractThrusterBlockEntity {
             boolean clientPacket) {
         super.read(compound, registries, clientPacket);
         width = Math.max(1, compound.getInt("Width"));
+        if (!clientPacket && compound.contains("SchematicWidth")) {
+            schematicWidth = compound.getInt("SchematicWidth");
+        }
         if (compound.contains("plumeType")) {
             int idx = compound.getInt("plumeType");
             plumeType = PlumeType.values()[Mth.clamp(idx, 0, PlumeType.values().length - 1)];

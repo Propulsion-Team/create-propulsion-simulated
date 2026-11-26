@@ -1024,6 +1024,14 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
 
 
     @Override
+    public void writeSafe(CompoundTag compound, net.minecraft.core.HolderLookup.Provider registries) {
+        super.writeSafe(compound, registries);
+        if (dyeId != null) {
+            compound.putString("DyeId", dyeId);
+        }
+    }
+
+    @Override
     protected void write(CompoundTag compound, net.minecraft.core.HolderLookup.Provider registries, boolean clientPacket) {
         super.write(compound, registries, clientPacket);
         compound.putInt("emptyBlocks", emptyBlocks);
