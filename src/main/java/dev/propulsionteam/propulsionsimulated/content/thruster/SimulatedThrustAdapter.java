@@ -33,7 +33,7 @@ public final class SimulatedThrustAdapter {
     public static void applyImpulseAtPoint(final ServerSubLevel subLevel, final Vector3d pointLocal,
                                            final Vector3d impulseLocal, final BlockEntity thruster) {
         Vector3d applicationPoint = pointLocal;
-        if (PropulsionCoreBehaviour.isInstalled(thruster)) {
+        if (PropulsionCoreBehaviour.isActive(thruster)) {
             var centerOfMass = subLevel.getMassTracker().getCenterOfMass();
             if (centerOfMass != null) applicationPoint = new Vector3d(centerOfMass);
         }

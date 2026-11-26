@@ -24,6 +24,7 @@ public class PropulsionConfig {
 
     // ── Common: thrusters ───────────────────────────────────────────────────
     public static final ModConfigSpec.DoubleValue THRUST_UNITS_PER_PN;
+    public static final ModConfigSpec.DoubleValue VECTOR_CORE_OUTPUT_PN;
     public static final ModConfigSpec.DoubleValue NOZZLE_OFFSET_FROM_CENTER;
     public static final ModConfigSpec.IntValue OBSTRUCTION_SCAN_LENGTH;
     public static final ModConfigSpec.BooleanValue OBSTRUCTION_IGNORE_OTHER_SUBLEVELS;
@@ -126,6 +127,8 @@ public class PropulsionConfig {
                 .push("thrusterGeneral");
         THRUST_UNITS_PER_PN = COMMON_BUILDER.comment("How many internal physics thrust units equal 1 pN of displayed thrust.")
                 .defineInRange("thrustUnitsPerPn", 1000.0d, 1.0d, 1000000.0d);
+        VECTOR_CORE_OUTPUT_PN = COMMON_BUILDER.comment("OutputPN in the Vector Core durability drain per tick: (thrustPN / OutputPN)^0.7 / 20.")
+                .defineInRange("vectorCoreOutputPn", 1000.0d, 1.0d, 1000000000.0d);
         NOZZLE_OFFSET_FROM_CENTER = COMMON_BUILDER.comment("Offset from the block center where force is applied.")
                 .defineInRange("nozzleOffsetFromCenter", 0.45d, 0.0d, 1.5d);
         OBSTRUCTION_SCAN_LENGTH = COMMON_BUILDER.comment("How many blocks behind the nozzle are checked for obstruction.")

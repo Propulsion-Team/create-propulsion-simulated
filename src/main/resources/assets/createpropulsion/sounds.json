@@ -55,5 +55,15 @@
     "sounds": [
       "createpropulsion:rcs_off"
     ]
+  },
+  "vector_core_enable": {
+    "sounds": [
+      "createpropulsion:vector_core_enable"
+    ]
+  },
+  "vector_core_disable": {
+    "sounds": [
+      "createpropulsion:vector_core_disable"
+    ]
   }
 }

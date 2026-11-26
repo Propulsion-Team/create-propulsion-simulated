@@ -93,7 +93,10 @@ public class VectorRedstoneLinkBehaviour extends BlockEntityBehaviour implements
     public void setReceivedStrength(int networkPower) {
         if (!isListening())
             return;
-        signalCallback.accept(networkPower);
+        // Links with no frequency share the (EMPTY, EMPTY) network, so an empty transmitter
+        // would reach every unset link. Unset links must ignore network power.
+        boolean unset = frequencyFirst.getStack().isEmpty() && frequencyLast.getStack().isEmpty();
+        signalCallback.accept(unset ? 0 : networkPower);
     }
 
     public void notifySignalChange() {

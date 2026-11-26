@@ -109,45 +109,28 @@ public final class ThrusterVisualEffects {
             default -> 0.985f + 0.010f * Mth.sin(time * 42.0f) + 0.006f * Mth.sin(time * 97.0f);
         };
 
-        boolean shader2 = PropulsionConfig.useShader2Plumes();
-
-        float length = shader2 && preset == Preset.ION
+        float length = preset == Preset.ION
                 ? Mth.lerp(power, 2.0f, 4.0f) * pulse
                 : getBaseLength(preset, power)
                 * Mth.lerp(thrustNorm, 0.92f, 1.22f)
                 * pulse
                 * getWidthLengthScale(width, preset);
 
-        float radius = shader2
-                ? nozzleRadius(be, preset, width)
-                : getBaseRadius(preset, power)
-                * Mth.lerp(thrustNorm, 0.92f, 1.08f)
-                * getWidthRadiusScale(width, preset);
+        float radius = nozzleRadius(be, preset, width);
 
         length *= 1.0f + 0.9f * flare;
 
         ms.pushPose();
 
-        if (shader2) {
-            localNozzle = localNozzle.add(exhaust.scale(exhaustLead(be, width)));
-            ms.translate(localNozzle.x, localNozzle.y, localNozzle.z);
-        } else if (preset == Preset.ION) {
-            Vec3 nudge = exhaust.scale(-0.28d);
-            ms.translate(
-                    localNozzle.x + nudge.x,
-                    localNozzle.y + nudge.y,
-                    localNozzle.z + nudge.z
-            );
-        } else {
-            ms.translate(localNozzle.x, localNozzle.y, localNozzle.z);
-        }
+        localNozzle = localNozzle.add(exhaust.scale(exhaustLead(be, width)));
+        ms.translate(localNozzle.x, localNozzle.y, localNozzle.z);
 
-        float capRadius = shader2 ? Math.min(radius, openingVoxels(be, width) / 32.0f) : 0.0f;
+        float capRadius = Math.min(radius, openingVoxels(be, width) / 32.0f);
         PlumeRenderParams params = paramsFor(preset, fallbackDirection, power, length, radius);
         params = new PlumeRenderParams(params.direction(), params.power(), params.length(), params.radius(),
                 params.alpha(), params.red(), params.green(), params.blue(),
-                shader2 ? boxShape(preset) : params.shape(), be.getDyeColor(), capRadius, flare, settle);
-        if (shader2 && PropulsionConfig.useVeilLight()) {
+                boxShape(preset), be.getDyeColor(), capRadius, flare, settle);
+        if (PropulsionConfig.useVeilLight()) {
             keepGlow(be, partialTicks, localNozzle, exhaust, params, time);
         }
         Quaternionf orientation = be instanceof VectorThrusterBlockEntity vector
@@ -363,18 +346,6 @@ public final class ThrusterVisualEffects {
         };
     }
 
-    private static float getBaseRadius(Preset preset, float power) {
-        return switch (preset) {
-            case FIRE -> Mth.lerp(power, 0.075f, 0.245f);
-            case SOLID -> Mth.lerp(power, 0.120f, 0.36f);
-            case ION -> Mth.lerp(power, 0.34f, 0.46f);
-            case PLASMA -> Mth.lerp(power, 0.045f, 0.150f);
-            case CREATIVE -> Mth.lerp(power, 0.060f, 0.18f);
-            case VECTOR -> Mth.lerp(power, 0.040f, 0.135f);
-            case SUPERHEATED_SOLID -> Mth.lerp(power, 0.070f, 0.185f);
-        };
-    }
-
     private static float getWidthLengthScale(int width, Preset preset) {
         if (preset == Preset.ION) {
             return switch (width) {
@@ -396,30 +367,6 @@ public final class ThrusterVisualEffects {
             case 1 -> 1.0f;
             case 2 -> 1.42f;
             default -> 1.85f;
-        };
-    }
-
-    private static float getWidthRadiusScale(int width, Preset preset) {
-        if (preset == Preset.ION) {
-            return switch (width) {
-                case 1 -> 1.0f;
-                case 2 -> 1.08f;
-                default -> 1.16f;
-            };
-        }
-
-        if (preset == Preset.VECTOR) {
-            return switch (width) {
-                case 1 -> 1.45f;
-                case 2 -> 1.95f;
-                default -> 2.55f;
-            };
-        }
-
-        return switch (width) {
-            case 1 -> 1.0f;
-            case 2 -> 2.25f;
-            default -> 3.55f;
         };
     }
 

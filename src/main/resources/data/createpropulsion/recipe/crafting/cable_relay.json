@@ -1,14 +1,11 @@
 {
   "type": "minecraft:crafting_shaped",
   "pattern": [
-    "NCN",
+    " C ",
     "CDC",
-    "NCN"
+    " C "
   ],
   "key": {
-    "N": {
-      "item": "createpropulsion:platinum_nugget"
-    },
     "C": {
       "item": "createpropulsion:cable"
     },

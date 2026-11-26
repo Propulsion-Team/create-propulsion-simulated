@@ -1,6 +1,7 @@
 package dev.propulsionteam.propulsionsimulated.registries;
 
 import dev.propulsionteam.propulsionsimulated.CreatePropulsion;
+import dev.propulsionteam.propulsionsimulated.content.propulsion_core.VectorCoreState;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
 import net.neoforged.bus.api.IEventBus;
@@ -16,6 +17,12 @@ public class PropulsionDataComponents {
             COMPONENTS.register("super_bucket_fluid", () -> DataComponentType.<FluidStack>builder()
                     .persistent(FluidStack.CODEC)
                     .networkSynchronized(FluidStack.STREAM_CODEC)
+                    .build());
+
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<VectorCoreState>> VECTOR_CORE_STATE =
+            COMPONENTS.register("vector_core_state", () -> DataComponentType.<VectorCoreState>builder()
+                    .persistent(VectorCoreState.CODEC)
+                    .networkSynchronized(VectorCoreState.STREAM_CODEC)
                     .build());
 
     public static void register(IEventBus modBus) {

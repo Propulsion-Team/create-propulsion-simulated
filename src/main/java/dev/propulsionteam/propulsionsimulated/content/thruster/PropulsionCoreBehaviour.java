@@ -3,6 +3,10 @@ package dev.propulsionteam.propulsionsimulated.content.thruster;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BehaviourType;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
+import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
+import dev.propulsionteam.propulsionsimulated.content.propulsion_core.VectorCoreState;
+import dev.propulsionteam.propulsionsimulated.content.thruster.rcs_thruster.RcsThrusterBlockEntity;
+import net.minecraft.server.level.ServerLevel;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -40,8 +44,42 @@ public class PropulsionCoreBehaviour extends BlockEntityBehaviour {
         }
     };
 
+    private double wear;
+
     public PropulsionCoreBehaviour(SmartBlockEntity blockEntity) {
         super(blockEntity);
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        if (!(getWorld() instanceof ServerLevel level)) return;
+        ItemStack core = inventory.getStackInSlot(0);
+        if (core.isEmpty()) return;
+        if (VectorCoreState.syncDepleted(core, level.getGameTime())) blockEntity.notifyUpdate();
+        if (!VectorCoreState.isWorking(core)) return;
+        BlockEntity source = blockEntity;
+        if (blockEntity instanceof AbstractThrusterBlockEntity thruster && thruster.isMultiblock()) {
+            source = thruster.getControllerBE();
+        }
+        if (source == null || findInstalled(source) != this) return;
+        double thrustPn = producedThrustPn(source);
+        if (thrustPn <= 0.0d) return;
+        wear += Math.pow(thrustPn / PropulsionConfig.VECTOR_CORE_OUTPUT_PN.get(), 0.7d) / 20.0d;
+        int damage = (int) wear;
+        blockEntity.setChanged();
+        if (damage <= 0) return;
+        wear -= damage;
+        core.hurtAndBreak(damage, level, null, item -> {
+        });
+    }
+
+    private static double producedThrustPn(BlockEntity source) {
+        if (source instanceof RcsThrusterBlockEntity rcs) return rcs.currentThrust();
+        if (source instanceof AbstractThrusterBlockEntity thruster && thruster.canApplyThrust()) {
+            return thruster.getCurrentThrust() / thruster.getThrustUnitsPerPn();
+        }
+        return 0.0d;
     }
 
     public IItemHandlerModifiable getItemHandler() {
@@ -50,6 +88,24 @@ public class PropulsionCoreBehaviour extends BlockEntityBehaviour {
 
     public static boolean isInstalled(BlockEntity blockEntity) {
         return findInstalled(blockEntity) != null;
+    }
+
+    public static boolean isActive(BlockEntity blockEntity) {
+        PropulsionCoreBehaviour installed = findInstalled(blockEntity);
+        return installed != null && VectorCoreState.isWorking(installed.inventory.getStackInSlot(0));
+    }
+
+    public static boolean setEnabled(BlockEntity blockEntity, boolean enabled) {
+        PropulsionCoreBehaviour installed = findInstalled(blockEntity);
+        if (installed == null || VectorCoreState.isDepleted(installed.inventory.getStackInSlot(0))) return false;
+        VectorCoreState.setEnabled(installed.inventory.getStackInSlot(0), enabled, installed.getWorld().getGameTime());
+        installed.blockEntity.notifyUpdate();
+        return true;
+    }
+
+    public static boolean toggle(BlockEntity blockEntity) {
+        setEnabled(blockEntity, !isActive(blockEntity));
+        return isActive(blockEntity);
     }
 
     private static PropulsionCoreBehaviour findInstalled(BlockEntity blockEntity) {
@@ -98,12 +154,14 @@ public class PropulsionCoreBehaviour extends BlockEntityBehaviour {
     public void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         ItemStack core = inventory.getStackInSlot(0);
         if (!core.isEmpty()) tag.put("PropulsionCore", core.save(registries));
+        tag.putDouble("PropulsionCoreWear", wear);
     }
 
     @Override
     public void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         inventory.setStackInSlot(0, tag.contains("PropulsionCore")
             ? ItemStack.parseOptional(registries, tag.getCompound("PropulsionCore")) : ItemStack.EMPTY);
+        wear = tag.getDouble("PropulsionCoreWear");
     }
 
     @Override
