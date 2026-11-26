@@ -377,9 +377,15 @@ public final class VectorThrusterFeScenes {
         return Math.clamp(Math.round(from + (to - from) * progress), 0, 15);
     }
 
-    private static void emitIonBurst(CreateSceneBuilder scene, SceneBuildingUtil util, int x, int y, int z,
+    static void emitIonBurst(CreateSceneBuilder scene, SceneBuildingUtil util, int x, int y, int z,
         Direction exhaustDirection, int particlesPerTick) {
-        scene.effects().emitParticles(util.vector().centerOf(util.grid().at(x, y, z)).add(0, 0.4, 0), (world, px, py, pz) -> {
+        emitIonBurst(scene, util, x, y, z, exhaustDirection, particlesPerTick, 70);
+    }
+
+    static void emitIonBurst(CreateSceneBuilder scene, SceneBuildingUtil util, int x, int y, int z,
+        Direction exhaustDirection, int particlesPerTick, int durationTicks) {
+        scene.effects().emitParticles(util.vector().centerOf(util.grid().at(x, y, z)).add(exhaustDirection.getStepX() * 0.4, exhaustDirection.getStepY() * 0.4, exhaustDirection.getStepZ() * 0.4),
+            (world, px, py, pz) -> {
             for (int i = 0; i < particlesPerTick; i++) {
                 double lateral = 0.08;
                 double ox = (world.random.nextDouble() - 0.5) * lateral;
@@ -397,6 +403,6 @@ public final class VectorThrusterFeScenes {
                 double vz = exhaustDirection.getStepZ() * 0.55 + (world.random.nextDouble() - 0.5) * 0.02;
                 world.addParticle(new IonParticleData(List.of(), null, 0.55f), px + ox, py + oy, pz + oz, vx, vy, vz);
             }
-        }, 1, 70);
+        }, 1, durationTicks);
     }
 }

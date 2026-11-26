@@ -78,6 +78,20 @@ public class RcsThrusterBlockEntity extends SmartBlockEntity implements BlockEnt
         refreshPower();
     }
 
+    public void applyPowerForScene(float power) {
+        float clamped = Math.max(0f, Math.min(1f, power));
+        for (int i = 0; i < links.length; i++) nozzlePower[i] = clamped;
+        activeMask = clamped > 0 ? (1 << links.length) - 1 : 0;
+    }
+
+    public void applyNozzlePowerForScene(int nozzle, float power) {
+        if (nozzle < 0 || nozzle >= links.length) return;
+        float clamped = Math.max(0f, Math.min(1f, power));
+        nozzlePower[nozzle] = clamped;
+        if (clamped > 0) activeMask |= 1 << nozzle;
+        else activeMask &= ~(1 << nozzle);
+    }
+
     public void clearOverrides() {
         java.util.Arrays.fill(overridePower, -1f);
         refreshPower();
