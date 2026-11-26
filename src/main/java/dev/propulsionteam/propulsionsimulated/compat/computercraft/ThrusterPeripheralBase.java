@@ -6,6 +6,7 @@ import dan200.computercraft.api.peripheral.IPeripheral;
 import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
 import dev.propulsionteam.propulsionsimulated.content.thruster.AbstractThrusterBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.thruster.AbstractThrusterBlockEntity.ControlMode;
+import dev.propulsionteam.propulsionsimulated.content.thruster.PropulsionCoreBehaviour;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
@@ -33,6 +34,21 @@ public abstract class ThrusterPeripheralBase<T extends AbstractThrusterBlockEnti
     @LuaFunction(mainThread = true)
     public final void setThrustPN(double thrustPn) {
         ThrusterComputerHelpers.setThrustPn(blockEntity, thrustPn * PropulsionConfig.getThrustUnitsPerPnOrDefault());
+    }
+
+    @LuaFunction(mainThread = true)
+    public final boolean toggleVectorCore() {
+        return PropulsionCoreBehaviour.toggle(blockEntity);
+    }
+
+    @LuaFunction(mainThread = true)
+    public final boolean setVectorCoreEnabled(boolean enabled) {
+        return PropulsionCoreBehaviour.setEnabled(blockEntity, enabled);
+    }
+
+    @LuaFunction(mainThread = true)
+    public final boolean isVectorCoreEnabled() {
+        return PropulsionCoreBehaviour.isActive(blockEntity);
     }
 
     @LuaFunction(mainThread = true)

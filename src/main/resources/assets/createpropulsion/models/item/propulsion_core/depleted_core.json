@@ -1,0 +1,7 @@
+{
+    "parent": "createpropulsion:item/vector_core",
+    "textures": {
+        "0": "createpropulsion:item/unfinished_vector_core",
+        "particle": "createpropulsion:item/unfinished_vector_core"
+    }
+}

@@ -6,6 +6,7 @@ import dan200.computercraft.api.peripheral.IComputerAccess;
 import dan200.computercraft.api.peripheral.IPeripheral;
 import dan200.computercraft.shared.peripheral.generic.methods.FluidMethods;
 import dev.propulsionteam.propulsionsimulated.content.thruster.rcs_thruster.RcsThrusterBlockEntity;
+import dev.propulsionteam.propulsionsimulated.content.thruster.PropulsionCoreBehaviour;
 import dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterThrottleMath;
 import net.minecraft.server.MinecraftServer;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
@@ -72,6 +73,21 @@ public class RcsThrusterPeripheral implements IPeripheral {
     @LuaFunction(mainThread = true)
     public final double getMaxThrustPN() {
         return blockEntity.thrust();
+    }
+
+    @LuaFunction(mainThread = true)
+    public final boolean toggleVectorCore() {
+        return PropulsionCoreBehaviour.toggle(blockEntity);
+    }
+
+    @LuaFunction(mainThread = true)
+    public final boolean setVectorCoreEnabled(boolean enabled) {
+        return PropulsionCoreBehaviour.setEnabled(blockEntity, enabled);
+    }
+
+    @LuaFunction(mainThread = true)
+    public final boolean isVectorCoreEnabled() {
+        return PropulsionCoreBehaviour.isActive(blockEntity);
     }
 
     @LuaFunction(mainThread = true)

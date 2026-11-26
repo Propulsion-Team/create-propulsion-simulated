@@ -23,6 +23,8 @@ public class PropulsionSoundEvents {
     public static final DeferredHolder<SoundEvent, SoundEvent> ION_THRUSTER_STARTUP = register("ion_thruster_startup");
     public static final DeferredHolder<SoundEvent, SoundEvent> ION_THRUSTER_LOOP = register("ion_thruster_loop");
     public static final DeferredHolder<SoundEvent, SoundEvent> ION_THRUSTER_OFF = register("ion_thruster_off");
+    public static final DeferredHolder<SoundEvent, SoundEvent> VECTOR_CORE_ENABLE = register("vector_core_enable");
+    public static final DeferredHolder<SoundEvent, SoundEvent> VECTOR_CORE_DISABLE = register("vector_core_disable");
 
     private static DeferredHolder<SoundEvent, SoundEvent> register(String name) {
         return SOUND_EVENTS.register(

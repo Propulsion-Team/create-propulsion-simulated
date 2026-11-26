@@ -129,13 +129,6 @@ public final class PlumeRenderer {
 
         if (isBoxes(params.shape())) {
             drawBoxes(ms, vc, params, time);
-        } else if (params.shape() == PlumeShape.ION_FULL) {
-            drawPlumeMesh(ms.last().pose(), vc, params, params.length(), params.radius(), 4, 12, params.alpha(), time, 0.0f);
-            drawPlumeMesh(ms.last().pose(), vc, params, params.length() * 0.88f, params.radius() * 0.68f, 4, 10, params.alpha() * 0.62f, time, 0.35f);
-        } else {
-            drawPlumeMesh(ms.last().pose(), vc, params, params.length(), params.radius(), 32, 18, params.alpha(), time, 0.0f);
-            drawPlumeMesh(ms.last().pose(), vc, params, params.length() * 0.86f, params.radius() * 0.54f, 28, 14, params.alpha() * 0.82f, time, 0.35f);
-            drawPlumeMesh(ms.last().pose(), vc, params, params.length() * 0.62f, params.radius() * 0.22f, 24, 10, params.alpha() * 0.74f, time, 0.7f);
         }
 
         ms.popPose();
@@ -235,52 +228,6 @@ public final class PlumeRenderer {
         ms.mulPose(q);
     }
 
-    private static void drawPlumeMesh(Matrix4f matrix, VertexConsumer vc, PlumeRenderParams params, float length, float radius, int segments, int rings, float alpha, float time, float phase) {
-        for (int j = 0; j < rings; j++) {
-            float t0 = (float) j / rings;
-            float t1 = (float) (j + 1) / rings;
-
-            float y0 = -length * t0;
-            float y1 = -length * t1;
-
-            float r0 = radiusAt(params.shape(), radius, t0, time, phase);
-            float r1 = radiusAt(params.shape(), radius, t1, time, phase);
-
-            int a0 = alphaAt(params.shape(), alpha, t0);
-            int a1 = alphaAt(params.shape(), alpha, t1);
-
-            for (int i = 0; i < segments; i++) {
-                float u0 = (float) i / segments;
-                float u1 = (float) (i + 1) / segments;
-
-                float[] p00 = point(params.shape(), r0, u0);
-                float[] p01 = point(params.shape(), r0, u1);
-                float[] p10 = point(params.shape(), r1, u0);
-                float[] p11 = point(params.shape(), r1, u1);
-
-                v(vc, matrix, p00[0], y0, p00[1], u0, t0, a0, params);
-                v(vc, matrix, p10[0], y1, p10[1], u0, t1, a1, params);
-                v(vc, matrix, p11[0], y1, p11[1], u1, t1, a1, params);
-                v(vc, matrix, p01[0], y0, p01[1], u1, t0, a0, params);
-            }
-        }
-    }
-
-    private static float[] point(PlumeShape shape, float radius, float u) {
-        if (shape == PlumeShape.SQUARE || shape == PlumeShape.ION_FULL) {
-            return squarePoint(radius, u);
-        }
-        return roundPoint(radius, u);
-    }
-
-    private static float[] roundPoint(float radius, float u) {
-        float angle = Mth.TWO_PI * u;
-        return new float[] {
-                Mth.cos(angle) * radius,
-                Mth.sin(angle) * radius
-        };
-    }
-
     private static float[] squarePoint(float radius, float u) {
         float p = (u - Mth.floor(u)) * 4.0f;
 
@@ -309,42 +256,6 @@ public final class PlumeRenderer {
                 radius,
                 Mth.lerp(p - 3.0f, radius, -radius)
         };
-    }
-
-    private static float radiusAt(PlumeShape shape, float baseRadius, float t, float time, float phase) {
-        if (shape == PlumeShape.ION_FULL) {
-            float startSmall = Mth.lerp(smoothstep(0.0f, 0.16f, t), 0.20f, 1.0f);
-            float bulge = 0.92f
-                    + (1.0f - smoothstep(0.0f, 0.28f, Math.abs(t - 0.34f))) * 0.14f;
-            float shrink = 1.0f - smoothstep(0.58f, 1.0f, t) * 0.62f;
-            float pulse = 1.0f + 0.003f * Mth.sin(time * 62.0f + phase * 13.0f + t * 14.0f);
-            return baseRadius * startSmall * bulge * shrink * pulse;
-        } else if (shape == PlumeShape.ROUND) {
-            float ionNeedle = 1.0f - smoothstep(0.18f, 1.0f, t) * 0.48f;
-            float ionPulse = 1.0f + 0.008f * Mth.sin(time * 48.0f + phase * 13.0f + t * 24.0f);
-            return baseRadius * ionNeedle * ionPulse;
-        }
-
-        float nearNozzle = Mth.lerp(smoothstep(0.0f, 0.12f, t), 0.58f, 1.0f);
-        float expansion = 1.0f + 0.42f * smoothstep(0.10f, 0.55f, t);
-        float compression = 1.0f - 0.18f * smoothstep(0.55f, 0.82f, t);
-        float tip = 1.0f - smoothstep(0.78f, 1.0f, t) * 0.82f;
-        float pulse = 1.0f + 0.012f * Mth.sin(time * 34.0f + phase * 11.0f + t * 18.0f);
-        return baseRadius * nearNozzle * expansion * compression * tip * pulse;
-    }
-
-    private static int alphaAt(PlumeShape shape, float alpha, float t) {
-        if (shape == PlumeShape.ION_FULL) {
-            float fadeIn = smoothstep(0.0f, 0.006f, t);
-            float fadeOut = 1.0f - smoothstep(0.72f, 1.0f, t);
-            float body = 1.0f - 0.10f * smoothstep(0.35f, 0.85f, t);
-            return Mth.clamp((int) (alpha * 255.0f * fadeIn * fadeOut * body), 0, 255);
-        }
-
-        float fadeIn = smoothstep(0.0f, 0.045f, t);
-        float fadeOut = 1.0f - smoothstep(0.80f, 1.0f, t);
-        float body = 1.0f - 0.22f * smoothstep(0.45f, 0.88f, t);
-        return Mth.clamp((int) (alpha * 255.0f * fadeIn * fadeOut * body), 0, 255);
     }
 
     private static float smoothstep(float edge0, float edge1, float x) {

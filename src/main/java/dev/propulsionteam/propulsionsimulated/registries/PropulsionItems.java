@@ -4,6 +4,7 @@ import com.simibubi.create.content.processing.sequenced.SequencedAssemblyItem;
 import dev.propulsionteam.propulsionsimulated.CreatePropulsion;
 import dev.propulsionteam.propulsionsimulated.assemblerstick.item.CreateStyleTooltipItem;
 import dev.propulsionteam.propulsionsimulated.content.toolgun.ToolgunItem;
+import dev.propulsionteam.propulsionsimulated.content.propulsion_core.VectorCoreItem;
 import dev.propulsionteam.propulsionsimulated.content.super_bucket.SuperBucketItem;
 //import dev.propulsionteam.propulsionsimulated.content.cable.CableSpoolItem;
 import dev.propulsionteam.propulsionsimulated.utility.BurnableItem;
@@ -31,7 +32,7 @@ public class PropulsionItems {
     public static final DeferredHolder<Item, Item> PLATINUM_INGOT =
         ITEMS.register("platinum_ingot", () -> new Item(new Item.Properties()));
     public static final DeferredHolder<Item, Item> VECTOR_CORE =
-        ITEMS.register("vector_core", () -> new Item(new Item.Properties().rarity(Rarity.EPIC)));
+        ITEMS.register("vector_core", () -> new VectorCoreItem(new Item.Properties().rarity(Rarity.EPIC).durability(1200)));
     public static final DeferredHolder<Item, SequencedAssemblyItem> UNFINISHED_VECTOR_CORE =
         ITEMS.register("unfinished_vector_core", () -> new SequencedAssemblyItem(new Item.Properties()));
     public static final DeferredHolder<Item, Item> PLATINUM_NUGGET =

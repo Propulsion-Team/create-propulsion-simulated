@@ -32,6 +32,16 @@ Every thruster peripheral also has:
 
 The thrust is stored as a throttle fraction, so it changes if `getMaxThrustPN()` changes (for example after a fuel swap). Multiblock thrusters can be controlled through any block of the cube, and the values describe the whole cube.
 
+### Vector core (all thrusters, including RCS)
+
+A disabled Vector Core stays installed, but thrust is no longer applied at the center of mass. A held Vector Core can also be toggled with Shift + Right-click. The state is kept when the core is installed or removed.
+
+| Method | Returns | Notes |
+|--------|---------|--------|
+| `toggleVectorCore()` | `boolean` | Toggles the installed core. Returns the new state, `false` if no core is installed or it is depleted |
+| `setVectorCoreEnabled(enabled)` | `boolean` | Returns `false` if no core is installed or it is depleted |
+| `isVectorCoreEnabled()` | `boolean` | `true` only if a core is installed, enabled and above 1 durability |
+
 Fluid thrusters, solid fuel thrusters, and ion thrusters use **different peripheral type strings** (`thruster`, `solid_fuel_thruster`, `ion_thruster`) so scripts can tell them apart.
 
 ---
