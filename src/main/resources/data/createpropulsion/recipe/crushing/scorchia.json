@@ -1,0 +1,19 @@
+{
+  "type": "create:crushing",
+  "ingredients": [
+    {
+      "item": "create:scorchia"
+    }
+  ],
+  "processing_time": 250,
+  "results": [
+    {
+      "chance": 0.15,
+      "id": "createpropulsion:crushed_raw_platinum"
+    },
+    {
+      "chance": 0.2,
+      "id": "createpropulsion:platinum_nugget"
+    }
+  ]
+}
