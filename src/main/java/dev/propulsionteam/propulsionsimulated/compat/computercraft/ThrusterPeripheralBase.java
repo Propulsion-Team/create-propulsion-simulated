@@ -7,9 +7,7 @@ import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
 import dev.propulsionteam.propulsionsimulated.content.thruster.AbstractThrusterBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.thruster.AbstractThrusterBlockEntity.ControlMode;
 import dev.propulsionteam.propulsionsimulated.content.thruster.PropulsionCoreBehaviour;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.Level;
-import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -91,11 +89,7 @@ public abstract class ThrusterPeripheralBase<T extends AbstractThrusterBlockEnti
     }
 
     private void scheduleAttachmentState(boolean attached) {
-        MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
-        if (server == null) {
-            return;
-        }
-        server.execute(() -> applyAttachmentState(attached));
+        ServerThreadTasks.queue(() -> applyAttachmentState(attached));
     }
 
     private void applyAttachmentState(boolean requestedAttached) {

@@ -164,6 +164,11 @@ public class PropulsionCoreBehaviour extends BlockEntityBehaviour {
         wear = tag.getDouble("PropulsionCoreWear");
     }
 
+    /** Empties the slot without dropping it, for moves that already copied the item to the new block entity. */
+    public void clearContent() {
+        inventory.setStackInSlot(0, ItemStack.EMPTY);
+    }
+
     @Override
     public void destroy() {
         if (getWorld() == null || getWorld().isClientSide) return;

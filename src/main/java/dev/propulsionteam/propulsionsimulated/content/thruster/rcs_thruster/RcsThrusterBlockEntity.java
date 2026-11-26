@@ -21,6 +21,7 @@ import dev.propulsionteam.propulsionsimulated.registries.PropulsionBlockEntities
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionFluids;
 import dev.ryanhcode.sable.api.block.BlockEntitySubLevelActor;
 import dev.ryanhcode.sable.api.block.BlockSubLevelAssemblyListener;
+import net.minecraft.world.Clearable;
 import dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import net.minecraft.core.BlockPos;
@@ -35,7 +36,7 @@ import org.joml.Vector3d;
 import java.util.List;
 import java.util.Locale;
 
-public class RcsThrusterBlockEntity extends SmartBlockEntity implements BlockEntitySubLevelActor, BlockSubLevelAssemblyListener, IHaveGoggleInformation {
+public class RcsThrusterBlockEntity extends SmartBlockEntity implements BlockEntitySubLevelActor, BlockSubLevelAssemblyListener, IHaveGoggleInformation, Clearable {
     public SmartFluidTankBehaviour tank;
     public VectorRedstoneLinkBehaviour[] links;
     private final int[] wirelessPower = new int[4];
@@ -192,6 +193,12 @@ public class RcsThrusterBlockEntity extends SmartBlockEntity implements BlockEnt
             Vector3d impulse = RcsOrientation.impulse(isSingle(), i, normal, thrust() * power, timeStep);
             SimulatedThrustAdapter.applyImpulseAtPoint(subLevel, point, impulse, this);
         }
+    }
+
+    @Override
+    public void clearContent() {
+        getBehaviour(SoundMufflerBehaviour.TYPE).clearContent();
+        getBehaviour(PropulsionCoreBehaviour.TYPE).clearContent();
     }
 
     @Override

@@ -12,7 +12,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.Clearable;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -29,7 +28,7 @@ import net.neoforged.neoforge.items.ItemHandlerHelper;
 
 import java.util.List;
 
-public class SolidFuelThrusterBlockEntity extends AbstractThrusterBlockEntity implements Clearable {
+public class SolidFuelThrusterBlockEntity extends AbstractThrusterBlockEntity {
     private static final float SUPERHEATED_THRUST_MULTIPLIER = 2.0f;
     private static final int BURN_SYNC_INTERVAL_TICKS = 20;
 
@@ -458,6 +457,7 @@ public class SolidFuelThrusterBlockEntity extends AbstractThrusterBlockEntity im
 
     @Override
     public void clearContent() {
+        super.clearContent();
         setFuelStack(ItemStack.EMPTY);
         burnTime = 0;
         totalBurnTicks = 0;

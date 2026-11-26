@@ -8,9 +8,7 @@ import dan200.computercraft.shared.peripheral.generic.methods.FluidMethods;
 import dev.propulsionteam.propulsionsimulated.content.thruster.rcs_thruster.RcsThrusterBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.thruster.PropulsionCoreBehaviour;
 import dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterThrottleMath;
-import net.minecraft.server.MinecraftServer;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
-import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -145,9 +143,10 @@ public class RcsThrusterPeripheral implements IPeripheral {
             attachedComputers.remove(computer);
             last = attachedComputers.isEmpty();
         }
-        MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
-        if (last && server != null) {
-            server.execute(blockEntity::clearOverrides);
+        if (last) {
+            ServerThreadTasks.queue(() -> {
+                if (!blockEntity.isRemoved()) blockEntity.clearOverrides();
+            });
         }
     }
 

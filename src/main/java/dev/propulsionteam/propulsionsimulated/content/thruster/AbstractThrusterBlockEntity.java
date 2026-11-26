@@ -16,6 +16,10 @@ import dev.propulsionteam.propulsionsimulated.utility.GoggleUtils;
 import dev.propulsionteam.propulsionsimulated.utility.math.MathUtility;
 import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.api.block.BlockSubLevelAssemblyListener;
+import net.minecraft.world.Clearable;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.registries.BuiltInRegistries;
 import dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle;
 import dev.ryanhcode.sable.mixinterface.clip_overwrite.ClipContextExtension;
 import dev.ryanhcode.sable.physics.config.dimension_physics.DimensionPhysicsData;
@@ -49,7 +53,7 @@ import java.util.List;
 import java.util.Locale;
 
 public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
-    implements IHaveGoggleInformation, dev.ryanhcode.sable.api.block.BlockEntitySubLevelActor, BlockSubLevelAssemblyListener {
+    implements IHaveGoggleInformation, dev.ryanhcode.sable.api.block.BlockEntitySubLevelActor, BlockSubLevelAssemblyListener, Clearable {
     // ThrusterData thrust is stored in pN-like units where `thrustUnitsPerPn` units == 1 displayed kN.
     // Sable impulse conversion must use the same basis so display/diagram and applied force match.
     protected static final double PARTICLE_BROADCAST_RANGE_BLOCKS = 150.0d;
@@ -728,6 +732,24 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
 
         Vector3d adjustedImpulse = new Vector3d(sample.impulseLocal()).div(getThrustUnitsPerPn());
         SimulatedThrustAdapter.applyImpulseAtPoint(subLevel, sample.pointLocal(), adjustedImpulse, this);
+    }
+
+    @Override
+    public void clearContent() {
+        getBehaviour(SoundMufflerBehaviour.TYPE).clearContent();
+        getBehaviour(PropulsionCoreBehaviour.TYPE).clearContent();
+        // Assign the field directly: setDyeId would forward to a multiblock controller.
+        dyeId = null;
+    }
+
+    @Override
+    public void destroy() {
+        super.destroy();
+        // Only this block's own field: a multiblock's dye stays with its controller until that is broken.
+        if (level == null || level.isClientSide || dyeId == null) return;
+        ItemStack dye = new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.parse(dyeId)));
+        dyeId = null;
+        Block.popResource(level, worldPosition, dye);
     }
 
     @Override
