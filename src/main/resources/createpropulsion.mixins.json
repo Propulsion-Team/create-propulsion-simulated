@@ -11,6 +11,9 @@
         "CreativeModeTabMixin",
         "FluidShellProjectileMixin",
         "FluidNetworkMixin",
+        "FluidPipeBlockMixin",
+        "FluidPropagatorMixin",
+        "PipeTransportBehaviourMixin",
         "SchematicPlacePacketMixin"
     ],
     "client": [

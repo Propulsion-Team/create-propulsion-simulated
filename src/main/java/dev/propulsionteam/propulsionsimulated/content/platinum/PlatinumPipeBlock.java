@@ -1,6 +1,9 @@
 package dev.propulsionteam.propulsionsimulated.content.platinum;
 
+import com.simibubi.create.content.fluids.FluidPropagator;
 import com.simibubi.create.content.fluids.FluidTransportBehaviour;
+import net.minecraft.core.Direction;
+import net.minecraft.world.phys.Vec3;
 import com.simibubi.create.content.fluids.pipes.FluidPipeBlock;
 import com.simibubi.create.content.fluids.pipes.FluidPipeBlockEntity;
 import com.simibubi.create.content.fluids.pipes.GlassFluidPipeBlock;
@@ -24,18 +27,42 @@ public class PlatinumPipeBlock extends FluidPipeBlock {
 
     @Override
     public InteractionResult onWrenched(BlockState state, UseOnContext context) {
-        InteractionResult result = super.onWrenched(state, context);
+        // Not delegating to super: it briefly places a copper glass pipe, which makes
+        // neighbouring platinum pipes disconnect.
+        if (tryRemoveBracket(context)) {
+            return InteractionResult.SUCCESS;
+        }
         var level = context.getLevel();
         var pos = context.getClickedPos();
-        BlockState updated = level.getBlockState(pos);
-        if (!level.isClientSide && updated.getBlock() instanceof GlassFluidPipeBlock
-            && !(updated.getBlock() instanceof GlassPlatinumPipeBlock)) {
+        Direction clickedFace = context.getClickedFace();
+
+        Direction.Axis axis = FluidPropagator.getStraightPipeAxis(state);
+        if (axis == null) {
+            Vec3 click = context.getClickLocation().subtract(Vec3.atLowerCornerOf(pos));
+            double closest = Double.MAX_VALUE;
+            axis = Direction.Axis.Y;
+            for (Direction direction : Direction.values()) {
+                if (clickedFace.getAxis() == direction.getAxis()) {
+                    continue;
+                }
+                double distance = Vec3.atCenterOf(direction.getNormal()).distanceToSqr(click);
+                if (distance < closest) {
+                    closest = distance;
+                    axis = direction.getAxis();
+                }
+            }
+        }
+
+        if (clickedFace.getAxis() == axis) {
+            return InteractionResult.PASS;
+        }
+        if (!level.isClientSide) {
             FluidTransportBehaviour.cacheFlows(level, pos);
             level.setBlockAndUpdate(pos, PropulsionBlocks.GLASS_PLATINUM_PIPE.get().defaultBlockState()
-                .setValue(GlassFluidPipeBlock.AXIS, updated.getValue(GlassFluidPipeBlock.AXIS))
-                .setValue(BlockStateProperties.WATERLOGGED, updated.getValue(BlockStateProperties.WATERLOGGED)));
+                .setValue(GlassFluidPipeBlock.AXIS, axis)
+                .setValue(BlockStateProperties.WATERLOGGED, state.getValue(BlockStateProperties.WATERLOGGED)));
             FluidTransportBehaviour.loadFlows(level, pos);
         }
-        return result;
+        return InteractionResult.SUCCESS;
     }
 }
