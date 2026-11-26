@@ -52,6 +52,10 @@ public class PropulsionItems {
     // public static final DeferredHolder<Item, CableSpoolItem> CABLE_SPOOL =
     //     ITEMS.register("cable_spool", () -> new CableSpoolItem(new Item.Properties().stacksTo(1)));
 
+    public static java.util.Collection<DeferredHolder<Item, ? extends Item>> getEntries() {
+        return ITEMS.getEntries();
+    }
+
     public static void register(IEventBus modBus) {
         ITEMS.register(modBus);
     }

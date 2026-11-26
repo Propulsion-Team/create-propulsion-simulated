@@ -1,6 +1,7 @@
 package dev.propulsionteam.propulsionsimulated;
 
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionDefaultStress;
+import dev.propulsionteam.propulsionsimulated.registries.PropulsionItemToggles;
 
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.common.ModConfigSpec;
@@ -94,6 +95,8 @@ public class PropulsionConfig {
     public static final ModConfigSpec.IntValue CONTRAPTION_REMOVER_MAX_BLOCKS;
 
     public static final ModConfigSpec.BooleanValue DISABLE_WORLDGEN;
+
+    public static final Map<String, ModConfigSpec.BooleanValue> ITEM_ENABLED = new LinkedHashMap<>();
 
     // ── Common: fuels ───────────────────────────────────────────────────────
     public static final Map<String, ModConfigSpec.IntValue> FUEL_EFFICIENCY_ENTRIES = new LinkedHashMap<>();
@@ -291,6 +294,15 @@ public class PropulsionConfig {
         COMMON_BUILDER.comment("Worldgen.").push("worldgen");
         DISABLE_WORLDGEN = COMMON_BUILDER.comment("If true, platinum ore does not generate. Applies to newly generated chunks after a world restart.")
                 .define("disableWorldgen", false);
+        COMMON_BUILDER.pop();
+
+        COMMON_BUILDER.comment(
+                        "Item toggles. Set an item to false to hide it from the creative tab and disable every recipe that produces it.",
+                        "Recipe changes apply on world load or /reload.")
+                .push("items");
+        for (String itemPath : PropulsionItemToggles.collectItemPaths()) {
+            ITEM_ENABLED.put(itemPath, COMMON_BUILDER.define(itemPath, true));
+        }
         COMMON_BUILDER.pop();
 
         COMMON_BUILDER.comment("Fuel tables.").push("fuels");
@@ -583,6 +595,14 @@ public class PropulsionConfig {
                 .replace('-', '_');
     }
 
+
+    public static boolean isItemEnabled(ResourceLocation itemId) {
+        if (itemId == null || !CreatePropulsion.ID.equals(itemId.getNamespace()) || !COMMON_SPEC.isLoaded()) {
+            return true;
+        }
+        ModConfigSpec.BooleanValue value = ITEM_ENABLED.get(itemId.getPath());
+        return value == null || value.get();
+    }
 
     public static Integer getDyeColor(String dyeId) {
         ModConfigSpec.ConfigValue<String> cv = THRUSTER_DYE_COLORS.get(dyeId);

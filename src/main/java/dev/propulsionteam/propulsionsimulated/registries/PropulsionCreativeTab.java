@@ -1,6 +1,7 @@
 package dev.propulsionteam.propulsionsimulated.registries;
 
 import dev.propulsionteam.propulsionsimulated.CreatePropulsion;
+import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
 import dev.propulsionteam.propulsionsimulated.assemblerstick.item.ModItems;
 import dev.simulated_team.simulated.client.sections.SimulatedSection;
 import dev.simulated_team.simulated.index.SimResourceManagers;
@@ -126,6 +127,9 @@ public class PropulsionCreativeTab {
         for (Supplier<Item> itemSupplier : TAB_ITEMS) {
             Item item = itemSupplier.get();
             ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(item);
+            if (!PropulsionConfig.isItemEnabled(itemId)) {
+                continue;
+            }
             ResourceLocation sectionId = SimulatedRegistrate.ITEM_TO_SECTION.get(itemId);
             if (sectionId == null || !SECTIONS.contains(sectionId)) {
                 continue;
