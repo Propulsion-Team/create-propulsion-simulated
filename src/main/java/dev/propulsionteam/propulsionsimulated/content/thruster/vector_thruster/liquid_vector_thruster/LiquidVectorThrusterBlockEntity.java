@@ -458,6 +458,11 @@ public class LiquidVectorThrusterBlockEntity extends VectorThrusterBlockEntity {
         return next;
     }
 
+    @Override
+    protected Vector3d gimbalRight(Vector3d forward) {
+        return computeRight(forward);
+    }
+
     private static Vector3d computeRight(Vector3d forward) {
         Vector3d reference = Math.abs(forward.y) > 0.999 ? new Vector3d(0, 0, 1) : new Vector3d(0, 1, 0);
         Vector3d right = new Vector3d(forward).cross(reference);

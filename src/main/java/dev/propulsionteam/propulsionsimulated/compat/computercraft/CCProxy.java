@@ -7,6 +7,8 @@ import com.simibubi.create.compat.computercraft.AbstractComputerBehaviour;
 import com.simibubi.create.compat.computercraft.FallbackComputerBehaviour;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 
+import dan200.computercraft.api.ComputerCraftAPI;
+
 public class CCProxy {
     public static void register() {
         secondaryFactory = FallbackComputerBehaviour::new;
@@ -15,6 +17,9 @@ public class CCProxy {
 
     private static void registerWithDependency() {
         primaryFactory = ComputerBehaviour::new;
+        ComputerCraftAPI.registerAPIFactory(ShipAPI::new);
+        ComputerCraftAPI.registerAPIFactory(ThrustersAPI::new);
+        ComputerCraftAPI.registerAPIFactory(LinksAPI::new);
     }
 
     private static Function<SmartBlockEntity, ? extends AbstractComputerBehaviour> secondaryFactory;

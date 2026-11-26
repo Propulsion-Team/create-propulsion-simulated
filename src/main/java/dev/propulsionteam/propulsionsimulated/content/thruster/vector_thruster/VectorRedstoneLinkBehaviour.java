@@ -2,7 +2,7 @@ package dev.propulsionteam.propulsionsimulated.content.thruster.vector_thruster;
 
 import com.simibubi.create.Create;
 import com.simibubi.create.content.redstone.link.IRedstoneLinkable;
-import com.simibubi.create.content.redstone.link.RedstoneLinkNetworkHandler;
+import dev.propulsionteam.propulsionsimulated.utility.redstone_link.ShipScopedLinks;
 import com.simibubi.create.content.redstone.link.RedstoneLinkNetworkHandler.Frequency;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BehaviourType;
@@ -106,12 +106,8 @@ public class VectorRedstoneLinkBehaviour extends BlockEntityBehaviour implements
 
     private void updateReceivedStrength() {
         if (!isListening()) return;
-        int power = 0;
-        for (IRedstoneLinkable link : Create.REDSTONE_LINK_NETWORK_HANDLER.getNetworkOf(getWorld(), this)) {
-            if (link != this && link.isAlive() && RedstoneLinkNetworkHandler.withinRange(this, link)) {
-                power = Math.max(power, link.getTransmittedStrength());
-            }
-        }
+        int power = ShipScopedLinks.powerAt(
+            getWorld(), Create.REDSTONE_LINK_NETWORK_HANDLER.getNetworkOf(getWorld(), this), this, link -> false);
         setReceivedStrength(power);
     }
 

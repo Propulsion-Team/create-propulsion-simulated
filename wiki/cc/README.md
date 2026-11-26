@@ -4,6 +4,8 @@ Create Propulsion registers block peripherals when **CC: Tweaked** (`computercra
 
 **Full API:** [ComputerCraft peripherals reference](../ComputerCraft-Peripherals.md) — method lists, throttle behavior, and creative-only APIs.
 
+**Ship APIs:** [ComputerCraft ship APIs](../ComputerCraft-Ship-API.md) — global `ship`, `thrusters` and `links` (redstone link) APIs plus the `propulsion.quaternion` / `propulsion.matrix` modules, available on any computer placed on a ship, with no peripheral needed.
+
 ### Quick facts
 
 - Peripheral methods marked `mainThread = true` run on the server thread (safe for world/block updates).

@@ -4,6 +4,8 @@ Create Propulsion registers these peripherals when **CC: Tweaked** is installed.
 
 **Entry point:** see also [ComputerCraft overview](cc/README.md).
 
+To control every thruster on a ship at once without modems, to read the ship's position, motion and orientation, or to use redstone links from Lua, see the [ComputerCraft ship APIs](ComputerCraft-Ship-API.md).
+
 ---
 
 ## Throttle control (all thrusters)

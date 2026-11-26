@@ -28,6 +28,14 @@ final class ThrusterComputerHelpers {
         setThrottleNormalized(be, max > 0.0d ? thrustPn / max : 0.0d);
     }
 
+    static void returnToRedstone(AbstractThrusterBlockEntity be) {
+        be.setDigitalInput(0.0f);
+        if (be.getLevel() != null) {
+            be.setRedstoneInput(be.getLevel().getBestNeighborSignal(be.getBlockPos()));
+        }
+        be.setControlMode(AbstractThrusterBlockEntity.ControlMode.NORMAL);
+    }
+
     static void setThrottleNormalized(AbstractThrusterBlockEntity be, double normalized) {
         be.setControlMode(AbstractThrusterBlockEntity.ControlMode.PERIPHERAL);
         be.setDigitalInput(ThrusterThrottleMath.clampNormalized(normalized));

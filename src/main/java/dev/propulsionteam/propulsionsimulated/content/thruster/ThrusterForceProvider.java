@@ -13,10 +13,21 @@ public final class ThrusterForceProvider {
 
     @Nullable
     public static ForceSample createSample(final AbstractThrusterBlockEntity blockEntity, final double timeStep) {
+        return createSample(blockEntity, blockEntity.getCurrentThrust(), timeStep);
+    }
+
+    @Nullable
+    public static ForceSample unitSample(final AbstractThrusterBlockEntity blockEntity) {
+        return createSample(blockEntity, 1.0d, 1.0d);
+    }
+
+    @Nullable
+    private static ForceSample createSample(final AbstractThrusterBlockEntity blockEntity, final double thrust,
+                                            final double timeStep) {
         final BlockPos controller = blockEntity.controllerPos;
         if (controller != null) return null;
-        final ForceSample sample = createSample(blockEntity.getBlockPos(), controller, blockEntity.width,
-            blockEntity.getThrustDirectionLocal(), blockEntity.getCurrentThrust(), timeStep,
+        final ForceSample sample = createSample(blockEntity.getBlockPos(), null, blockEntity.width,
+            blockEntity.getThrustDirectionLocal(), thrust, timeStep,
             PropulsionConfig.NOZZLE_OFFSET_FROM_CENTER.get());
         if (sample == null || !(blockEntity instanceof VectorThrusterBlockEntity)) return sample;
         final Vector3d point = VectorThrusterPhysics.applicationPoint(

@@ -182,6 +182,38 @@ public class VectorThrusterBlockEntity extends IonThrusterBlockEntity {
         onVectorSignalChanged();
     }
 
+    public VectorThrusterControlMath.Coordinates coordinatesForThrustDirection(org.joml.Vector3dc thrustDirection) {
+        double maxAngle = Math.toRadians(getMaxVectorAngle());
+        if (maxAngle <= 0.0d || thrustDirection.lengthSquared() < 1.0e-12) {
+            return new VectorThrusterControlMath.Coordinates(0.0f, 0.0f);
+        }
+        Vector3d forward = new Vector3d(getFacing().getStepX(), getFacing().getStepY(), getFacing().getStepZ()).normalize();
+        Vector3d right = gimbalRight(forward);
+        Vector3d up = new Vector3d(right).cross(forward).normalize();
+
+        Vector3d exhaust = new Vector3d(thrustDirection).normalize().negate();
+        double dx = exhaust.dot(right);
+        double dy = exhaust.dot(up);
+        double dz = -exhaust.dot(forward);
+        double sideways = Math.sqrt(dx * dx + dy * dy);
+        if (sideways < 1.0e-9) {
+            return new VectorThrusterControlMath.Coordinates(0.0f, 0.0f);
+        }
+        if (Math.atan2(sideways, dz) >= maxAngle) {
+            return new VectorThrusterControlMath.Coordinates(
+                VectorThrusterControlMath.clampCoordinate(dx / sideways),
+                VectorThrusterControlMath.clampCoordinate(dy / sideways));
+        }
+        double scale = 1.0d / (dz * Math.tan(maxAngle));
+        return new VectorThrusterControlMath.Coordinates(
+            VectorThrusterControlMath.clampCoordinate(dx * scale),
+            VectorThrusterControlMath.clampCoordinate(dy * scale));
+    }
+
+    public Vector3d thrustDirectionForCoordinates(float x, float y) {
+        return computeExhaustDirectionLocal(VectorThrusterControlMath.direction(x, y, getMaxVectorAngle())).negate();
+    }
+
     /**
      * Ponder (and similar): set redstone-derived targets while the scene advances animation manually.
      */
@@ -196,8 +228,6 @@ public class VectorThrusterBlockEntity extends IonThrusterBlockEntity {
         receivedVectorX = currentVectorX;
         receivedVectorY = currentVectorY;
     }
-
-    // -----------------------------------------------------------------------
 
     @Override
     public void tick() {
@@ -274,7 +304,7 @@ public class VectorThrusterBlockEntity extends IonThrusterBlockEntity {
 
     private Vector3d computeExhaustDirectionLocal(Vector3d direction) {
         Vector3d forward = new Vector3d(getFacing().getStepX(), getFacing().getStepY(), getFacing().getStepZ()).normalize();
-        Vector3d right = computeRight(forward);
+        Vector3d right = gimbalRight(forward);
         Vector3d up = new Vector3d(right).cross(forward).normalize();
         Vector3d exhaust = new Vector3d(forward).mul(-direction.z)
                 .fma(direction.x, right)
@@ -394,6 +424,10 @@ public class VectorThrusterBlockEntity extends IonThrusterBlockEntity {
         return next;
     }
 
+    protected Vector3d gimbalRight(Vector3d forward) {
+        return computeRight(forward);
+    }
+
     private static Vector3d computeRight(Vector3d forward) {
         Vector3d reference = Math.abs(forward.y) > 1.499 ? new Vector3d(0, 0, 1) : new Vector3d(0, 1, 0);
         Vector3d right = new Vector3d(forward).cross(reference);
@@ -470,18 +504,12 @@ public class VectorThrusterBlockEntity extends IonThrusterBlockEntity {
         return PropulsionConfig.VECTOR_THRUSTER_BASE_THRUST.get();
     }
 
-    /** Particle-mode nozzle narrows from 0.85 at idle to 0.35 at full redstone throttle. */
     public ParticleOptions createVectorPlumeParticleOptions() {
         float size = Mth.lerp(currentFlapProgress, 0.85f, 0.35f);
         return new IonParticleData(java.util.List.of(), getDyeColor(), size);
     }
 
-    // -----------------------------------------------------------------------
-
     protected static class VectorThrusterLinkTransform extends ValueBoxTransform.Dual {
-        /**
-         * Local side of the input block face this slot lives on (WEST/EAST/DOWN/UP).
-         */
         private final Direction localSide;
 
         public VectorThrusterLinkTransform(boolean first, Direction localSide) {
@@ -492,8 +520,6 @@ public class VectorThrusterBlockEntity extends IonThrusterBlockEntity {
         @Override
         public Vec3 getLocalOffset(LevelAccessor level, BlockPos pos, BlockState state) {
             Vec3 local = switch (localSide) {
-                // Outer face of each 1px-thick cube is at x=1 / x=15 / y=1 / y=15.
-                // Use 0.5 to sit just outside that face so the box is visible.
                 case WEST -> VecHelper.voxelSpace(1.49f, isFirst() ? 11f : 5f, 2f);
                 case EAST -> VecHelper.voxelSpace(14.51f, isFirst() ? 5f : 11f, 2f);
                 case DOWN -> VecHelper.voxelSpace(isFirst() ? 5f : 11f, 1.49f, 2f);

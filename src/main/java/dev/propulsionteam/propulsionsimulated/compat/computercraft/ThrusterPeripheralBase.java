@@ -5,9 +5,7 @@ import dan200.computercraft.api.peripheral.IComputerAccess;
 import dan200.computercraft.api.peripheral.IPeripheral;
 import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
 import dev.propulsionteam.propulsionsimulated.content.thruster.AbstractThrusterBlockEntity;
-import dev.propulsionteam.propulsionsimulated.content.thruster.AbstractThrusterBlockEntity.ControlMode;
 import dev.propulsionteam.propulsionsimulated.content.thruster.PropulsionCoreBehaviour;
-import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -103,15 +101,8 @@ public abstract class ThrusterPeripheralBase<T extends AbstractThrusterBlockEnti
         if (blockEntity.computerBehaviour != null) {
             blockEntity.computerBehaviour.setHasAttachedComputer(attached);
         }
-        if (attached) {
-            return;
+        if (!attached) {
+            ThrusterComputerHelpers.returnToRedstone(blockEntity);
         }
-
-        Level level = blockEntity.getLevel();
-        blockEntity.setDigitalInput(0.0f);
-        if (level != null) {
-            blockEntity.setRedstoneInput(level.getBestNeighborSignal(blockEntity.getBlockPos()));
-        }
-        blockEntity.setControlMode(ControlMode.NORMAL);
     }
 }
