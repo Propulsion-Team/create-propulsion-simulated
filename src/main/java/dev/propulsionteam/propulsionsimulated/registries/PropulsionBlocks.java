@@ -65,14 +65,15 @@ public class PropulsionBlocks {
         () -> new ThrusterBlock(Block.Properties.of().mapColor(MapColor.METAL).requiresCorrectToolForDrops()
             .sound(SoundType.METAL).strength(5.5f, 4.0f).noOcclusion()));
     public static final DeferredBlock<CreativeThrusterBlock> CREATIVE_THRUSTER_BLOCK = BLOCKS.register("creative_thruster",
+        // forceSolidOn: the hitbox is too small to count as solid, so fluids would wash the block away.
         () -> new CreativeThrusterBlock(Block.Properties.of().mapColor(MapColor.METAL)
-            .sound(SoundType.METAL).strength(5.5f, 4.0f).noOcclusion()));
+            .sound(SoundType.METAL).strength(5.5f, 4.0f).noOcclusion().forceSolidOn()));
     public static final DeferredBlock<IonThrusterBlock> ION_THRUSTER_BLOCK = BLOCKS.register("ion_thruster",
         () -> new IonThrusterBlock(Block.Properties.of().mapColor(MapColor.METAL)
             .sound(SoundType.METAL).strength(5.5f, 4.0f).noOcclusion()));
     public static final DeferredBlock<VectorThrusterBlock> VECTOR_THRUSTER_BLOCK = BLOCKS.register("vector_thruster",
         () -> new VectorThrusterBlock(Block.Properties.of().mapColor(MapColor.METAL).requiresCorrectToolForDrops()
-            .sound(SoundType.METAL).strength(5.5f, 4.0f).noOcclusion()));
+            .sound(SoundType.METAL).strength(5.5f, 4.0f).noOcclusion().forceSolidOn()));
     public static final DeferredBlock<RcsThrusterBlock> RCS_THRUSTER_BLOCK = BLOCKS.register("rcs_thruster",
         () -> new RcsThrusterBlock(Block.Properties.ofFullCopy(VECTOR_THRUSTER_BLOCK.get())));
     public static final DeferredBlock<SingleRcsThrusterBlock> SINGLE_RCS_THRUSTER_BLOCK = BLOCKS.register("single_rcs_thruster",
@@ -80,13 +81,13 @@ public class PropulsionBlocks {
 
     public static final DeferredBlock<LiquidVectorThrusterBlock> LIQUID_VECTOR_THRUSTER_BLOCK = BLOCKS.register("liquid_vector_thruster",
         () -> new LiquidVectorThrusterBlock(Block.Properties.of().mapColor(MapColor.METAL).requiresCorrectToolForDrops()
-            .sound(SoundType.METAL).strength(5.5f, 4.0f).noOcclusion()));
+            .sound(SoundType.METAL).strength(5.5f, 4.0f).noOcclusion().forceSolidOn()));
     public static final DeferredBlock<SolidFuelThrusterBlock> SOLID_FUEL_THRUSTER_BLOCK = BLOCKS.register("solid_fuel_thruster",
         () -> new SolidFuelThrusterBlock(Block.Properties.of().mapColor(MapColor.METAL).requiresCorrectToolForDrops()
             .sound(SoundType.METAL).strength(5.5f, 4.0f).noOcclusion()));
     public static final DeferredBlock<CreativeVectorThrusterBlock> CREATIVE_VECTOR_THRUSTER_BLOCK = BLOCKS.register("creative_vector_thruster",
         () -> new CreativeVectorThrusterBlock(Block.Properties.of().mapColor(MapColor.METAL)
-            .sound(SoundType.METAL).strength(5.5f, 4.0f).noOcclusion()));
+            .sound(SoundType.METAL).strength(5.5f, 4.0f).noOcclusion().forceSolidOn()));
     public static final DeferredBlock<RedstoneConverterBlock> REDSTONE_CONVERTER_BLOCK = BLOCKS.register("redstone_converter",
         () -> new RedstoneConverterBlock(Block.Properties.of().mapColor(MapColor.METAL)
             .sound(SoundType.METAL).instabreak()));
