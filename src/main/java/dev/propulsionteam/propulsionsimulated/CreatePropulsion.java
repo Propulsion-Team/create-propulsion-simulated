@@ -35,6 +35,7 @@ public class CreatePropulsion {
         ParticleTypes.register(modBus);
         PropulsionBlocks.register(modBus);
         PropulsionBlockEntities.register(modBus);
+        PropulsionMenuTypes.register(modBus);
         PropulsionDataComponents.register(modBus);
         PropulsionItems.register(modBus);
         ModItems.register(modBus);

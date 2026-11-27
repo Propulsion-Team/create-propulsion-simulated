@@ -8,6 +8,10 @@ import dev.propulsionteam.propulsionsimulated.registries.PropulsionBlockEntities
 import net.createmod.catnip.math.VoxelShaper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -77,6 +81,27 @@ public class LidarBlock extends DirectionalBlock implements IBE<LidarBlockEntity
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
         return type == getBlockEntityType() ? new SmartBlockEntityTicker<>() : null;
+    }
+
+    @Override
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
+        if (player.isShiftKeyDown()) return InteractionResult.PASS;
+        if (level.isClientSide) return InteractionResult.SUCCESS;
+        withBlockEntityDo(level, pos, lidar -> {
+            if (player instanceof ServerPlayer serverPlayer) serverPlayer.openMenu(lidar, pos);
+        });
+        return InteractionResult.SUCCESS;
+    }
+
+    @Override
+    protected boolean isSignalSource(BlockState state) {
+        return true;
+    }
+
+    @Override
+    protected int getSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+        if (direction == state.getValue(FACING).getOpposite()) return 0;
+        return level.getBlockEntity(pos) instanceof LidarBlockEntity lidar ? lidar.getSignal() : 0;
     }
 
     @Override

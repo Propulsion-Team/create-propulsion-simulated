@@ -293,6 +293,15 @@ With hydrazine in the tank a nozzle is **boosted** (thrust multiplied by `hydraz
 
 A 360° sensor dome: it sees the whole half-sphere above the surface it is mounted on (90° from its axis in every direction), and reports what rays from its sensor hit. Place it against a surface; its axis points away from that surface. Rays start at the sensor face and are measured in world space, so they work from ships, into ships, and between ships.
 
+The lidar also works without a computer. Every tick it casts one ray straight along its axis, up to 64 blocks, and outputs redstone on every side except its sensor face. Right-click it with an empty hand to open its screen:
+
+- **Detection toggles**: which targets the ray hits: blocks, fluids, non-solid blocks, see-through blocks, mobs, players, other ships, its own ship, and precise block shapes. They match the `raycast` options of the same names.
+- **Block filter**: up to 14 blocks, buckets or Create filters. **Include** hits only the listed blocks; **Exclude** ignores them. An empty filter matches every block.
+- **Analog / Binary**: analog outputs 15 for a hit right at the sensor, falling to 1 at 64 blocks; binary outputs 15 for any hit.
+- **Invert**: outputs `15 − signal`, so the output is strongest when nothing is hit.
+
+These settings only drive the redstone output. `raycast` and `scan` use the options the computer passes.
+
 | Method | Returns | Notes |
 |--------|---------|-------|
 | `raycast([options])` | hit table or `nil` | `nil` when nothing is hit within range. Runs on the server thread |
