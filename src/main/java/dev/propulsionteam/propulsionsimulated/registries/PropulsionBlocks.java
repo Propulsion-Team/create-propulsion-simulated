@@ -66,10 +66,10 @@ public class PropulsionBlocks {
             .sound(SoundType.METAL).strength(5.5f, 4.0f).noOcclusion()));
     public static final DeferredBlock<CreativeThrusterBlock> CREATIVE_THRUSTER_BLOCK = BLOCKS.register("creative_thruster",
         // forceSolidOn: the hitbox is too small to count as solid, so fluids would wash the block away.
-        () -> new CreativeThrusterBlock(Block.Properties.of().mapColor(MapColor.METAL)
+        () -> new CreativeThrusterBlock(Block.Properties.of().mapColor(MapColor.METAL).requiresCorrectToolForDrops()
             .sound(SoundType.METAL).strength(5.5f, 4.0f).noOcclusion().forceSolidOn()));
     public static final DeferredBlock<IonThrusterBlock> ION_THRUSTER_BLOCK = BLOCKS.register("ion_thruster",
-        () -> new IonThrusterBlock(Block.Properties.of().mapColor(MapColor.METAL)
+        () -> new IonThrusterBlock(Block.Properties.of().mapColor(MapColor.METAL).requiresCorrectToolForDrops()
             .sound(SoundType.METAL).strength(5.5f, 4.0f).noOcclusion()));
     public static final DeferredBlock<VectorThrusterBlock> VECTOR_THRUSTER_BLOCK = BLOCKS.register("vector_thruster",
         () -> new VectorThrusterBlock(Block.Properties.of().mapColor(MapColor.METAL).requiresCorrectToolForDrops()
@@ -86,13 +86,13 @@ public class PropulsionBlocks {
         () -> new SolidFuelThrusterBlock(Block.Properties.of().mapColor(MapColor.METAL).requiresCorrectToolForDrops()
             .sound(SoundType.METAL).strength(5.5f, 4.0f).noOcclusion()));
     public static final DeferredBlock<CreativeVectorThrusterBlock> CREATIVE_VECTOR_THRUSTER_BLOCK = BLOCKS.register("creative_vector_thruster",
-        () -> new CreativeVectorThrusterBlock(Block.Properties.of().mapColor(MapColor.METAL)
+        () -> new CreativeVectorThrusterBlock(Block.Properties.of().mapColor(MapColor.METAL).requiresCorrectToolForDrops()
             .sound(SoundType.METAL).strength(5.5f, 4.0f).noOcclusion().forceSolidOn()));
     public static final DeferredBlock<RedstoneConverterBlock> REDSTONE_CONVERTER_BLOCK = BLOCKS.register("redstone_converter",
         () -> new RedstoneConverterBlock(Block.Properties.of().mapColor(MapColor.METAL)
-            .sound(SoundType.METAL).instabreak()));
+            .sound(SoundType.METAL).instabreak().forceSolidOff()));
     public static final DeferredBlock<RedstoneTransmissionBlock> REDSTONE_TRANSMISSION_BLOCK = BLOCKS.register("redstone_transmission",
-        () -> new RedstoneTransmissionBlock(Block.Properties.of().mapColor(MapColor.PODZOL)
+        () -> new RedstoneTransmissionBlock(Block.Properties.of().mapColor(MapColor.PODZOL).requiresCorrectToolForDrops()
             .sound(SoundType.METAL).strength(2.5f, 2.0f).noOcclusion()));
     public static final DeferredBlock<SolidBurnerBlock> SOLID_BURNER = BLOCKS.register("solid_burner",
         () -> new SolidBurnerBlock(Block.Properties.of().mapColor(MapColor.STONE).sound(SoundType.COPPER)
