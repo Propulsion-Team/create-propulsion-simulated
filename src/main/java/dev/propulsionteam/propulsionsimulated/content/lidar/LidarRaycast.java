@@ -3,15 +3,21 @@ package dev.propulsionteam.propulsionsimulated.content.lidar;
 import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.companion.math.BoundingBox3d;
 import dev.ryanhcode.sable.companion.math.BoundingBox3dc;
+import dev.ryanhcode.sable.companion.math.Pose3d;
 import dev.ryanhcode.sable.companion.math.Pose3dc;
 import dev.ryanhcode.sable.sublevel.SubLevel;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.EmptyBlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
@@ -29,10 +35,15 @@ import org.joml.Vector3dc;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
 public final class LidarRaycast {
@@ -41,6 +52,20 @@ public final class LidarRaycast {
     public static final int MAX_SCAN_RAYS = 4096;
     private static final double SENSOR_FACE_OFFSET = 6.0 / 16.0 - 0.5 + 0.01;
     private static final double GOLDEN_ANGLE = Math.PI * (3.0 - Math.sqrt(5.0));
+    private static final BlockState AIR = Blocks.AIR.defaultBlockState();
+    private static final int RAYS_PER_TASK = 256;
+    private static final int MAX_PLOT_CHUNKS = 1024;
+    private static final int WORKERS = Math.max(1, Math.min(4, Runtime.getRuntime().availableProcessors() - 1));
+    private static final ExecutorService POOL = Executors.newFixedThreadPool(WORKERS, new java.util.concurrent.ThreadFactory() {
+        private final AtomicInteger count = new AtomicInteger();
+
+        @Override
+        public Thread newThread(Runnable task) {
+            Thread thread = new Thread(task, "Lidar Worker " + count.incrementAndGet());
+            thread.setDaemon(true);
+            return thread;
+        }
+    });
 
     private LidarRaycast() {}
 
@@ -58,15 +83,17 @@ public final class LidarRaycast {
     }
 
     public record Hit(double distance, Vec3 position, @Nullable BlockPos blockPos, @Nullable BlockState state,
-                      @Nullable Entity entity, @Nullable SubLevel subLevel, boolean ship) {
+                      @Nullable EntityInfo entity, @Nullable SubLevel subLevel, boolean ship) {
         Object key() {
-            return ship ? subLevel : entity != null ? entity : blockPos;
+            return ship ? subLevel : entity != null ? entity.id() : blockPos;
         }
 
         Hit asShip() {
             return new Hit(distance, position, blockPos, state, entity, subLevel, true);
         }
     }
+
+    public record EntityInfo(UUID id, String kind, String type, Vec3 position, @Nullable String name) {}
 
     public static Vector3d normal(Direction facing) {
         return new Vector3d(facing.getStepX(), facing.getStepY(), facing.getStepZ());
@@ -78,96 +105,51 @@ public final class LidarRaycast {
 
     @Nullable
     public static Hit cast(Level level, BlockPos pos, Direction facing, Options options, @Nullable LidarDebug.Trace trace) {
-        Scanner scanner = new Scanner(level, pos, facing, options, trace);
-        Vector3d direction = scanner.toWorld(scanner.center());
-        Hit best = options.blocks() ? scanner.blocks(direction, options.range()) : null;
+        Scene scene = new Scene(level, pos, facing, options, trace, false);
+        Vector3d direction = scene.toWorld(scene.center());
+        Hit best = options.blocks() ? scene.blocks(direction, options.range()) : null;
         if (options.anyEntities()) {
-            Vec3 start = scanner.startVec();
+            Vec3 start = scene.startVec();
             Vec3 end = start.add(direction.x * options.range(), direction.y * options.range(), direction.z * options.range());
             double limit = best != null ? best.distance() : options.range();
-            for (Entity entity : scanner.entities(new AABB(start, end).inflate(1.0))) {
-                Optional<Vec3> point = entity.getBoundingBox().inflate(entity.getPickRadius()).clip(start, end);
+            for (Target target : targets(level, new AABB(start, end).inflate(1.0), options)) {
+                Optional<Vec3> point = target.box().clip(start, end);
                 if (point.isEmpty()) continue;
                 double distance = start.distanceTo(point.get());
-                if (distance < limit && (options.blocks() || scanner.blocks(dirTo(start, point.get()), distance) == null)) {
+                if (distance < limit && (options.blocks() || scene.blocks(dirTo(start, point.get()), distance) == null)) {
                     limit = distance;
-                    best = new Hit(distance, point.get(), null, null, entity, null, false);
+                    best = new Hit(distance, point.get(), null, null, target.info(), null, false);
                 }
             }
-            if (best != null && best.entity() != null) scanner.log(best.position(), LidarDebug.ENTITY);
+            if (best != null && best.entity() != null) scene.log(best.position(), LidarDebug.ENTITY);
         }
         return best;
     }
 
-    private static Vector3d dirTo(Vec3 from, Vec3 to) {
-        return new Vector3d(to.x - from.x, to.y - from.y, to.z - from.z).normalize();
+    public static CompletableFuture<List<Hit>> scan(Level level, BlockPos pos, Direction facing, Options options,
+                                                    double spreadRadians, int rays, @Nullable LidarDebug.Trace trace) {
+        Scene scene = new Scene(level, pos, facing, options, trace, true);
+        List<CompletableFuture<Map<Object, Hit>>> parts = new ArrayList<>();
+        if (options.blocks()) {
+            for (int from = 0; from < rays; from += RAYS_PER_TASK) {
+                int first = from, last = Math.min(rays, from + RAYS_PER_TASK);
+                parts.add(CompletableFuture.supplyAsync(() -> scene.sample(spreadRadians, rays, first, last), POOL));
+            }
+        }
+        parts.add(CompletableFuture.supplyAsync(() -> scene.targets(spreadRadians), POOL));
+        return CompletableFuture.allOf(parts.toArray(CompletableFuture[]::new)).thenApply(done -> {
+            Map<Object, Hit> nearest = new HashMap<>();
+            for (CompletableFuture<Map<Object, Hit>> part : parts) {
+                for (Hit hit : part.join().values()) keepNearest(nearest, hit);
+            }
+            List<Hit> hits = new ArrayList<>(nearest.values());
+            hits.sort(Comparator.comparingDouble(Hit::distance));
+            return hits;
+        });
     }
 
-    public static List<Hit> scan(Level level, BlockPos pos, Direction facing, Options options,
-                                 double spreadRadians, int rays, @Nullable LidarDebug.Trace trace) {
-        Scanner scanner = new Scanner(level, pos, facing, options, trace);
-        Vector3d center = scanner.center();
-        Vector3d helper = Math.abs(center.y) < 0.9 ? new Vector3d(0, 1, 0) : new Vector3d(1, 0, 0);
-        Vector3d side1 = center.cross(helper, new Vector3d()).normalize();
-        Vector3d side2 = center.cross(side1, new Vector3d()).normalize();
-
-        Map<Object, Hit> nearest = new HashMap<>();
-        if (options.blocks()) {
-            double capHeight = 1.0 - Math.cos(spreadRadians);
-            for (int i = 0; i < rays; i++) {
-                double cos = 1.0 - (i + 0.5) / rays * capHeight;
-                double sin = Math.sqrt(Math.max(0.0, 1.0 - cos * cos));
-                double azimuth = i * GOLDEN_ANGLE;
-                Vector3d local = new Vector3d(center).mul(cos)
-                    .fma(sin * Math.cos(azimuth), side1)
-                    .fma(sin * Math.sin(azimuth), side2);
-                keepNearest(nearest, scanner.blocks(scanner.toWorld(local), options.range()));
-            }
-        }
-
-        Vector3d axis = scanner.toWorld(center);
-        double cosSpread = Math.cos(spreadRadians);
-        Vec3 start = scanner.startVec();
-        if (options.anyEntities()) {
-            for (Entity entity : scanner.entities(new AABB(start, start).inflate(options.range()))) {
-                AABB box = entity.getBoundingBox().inflate(entity.getPickRadius());
-                Vec3 middle = box.getCenter();
-                for (Vec3 sample : List.of(middle, new Vec3(middle.x, box.maxY - 0.1, middle.z),
-                    new Vec3(middle.x, box.minY + 0.1, middle.z))) {
-                    Vector3d direction = aimAt(start, sample, axis, cosSpread, options.range());
-                    if (direction == null) continue;
-                    Vec3 point = box.contains(start) ? start : box.clip(start, sample).orElse(sample);
-                    double distance = start.distanceTo(point);
-                    if (scanner.blocks(direction, distance) == null) {
-                        scanner.log(point, LidarDebug.ENTITY);
-                        keepNearest(nearest, new Hit(distance, point, null, null, entity, null, false));
-                        break;
-                    }
-                }
-            }
-        }
-
-        if (!options.blocks() && options.subLevels()) {
-            for (SubLevel ship : scanner.ships) {
-                if (ship == scanner.own) continue;
-                BoundingBox3dc box = ship.boundingBox();
-                double reach = Math.sqrt(Math.pow(box.maxX() - box.minX(), 2) + Math.pow(box.maxY() - box.minY(), 2)
-                    + Math.pow(box.maxZ() - box.minZ(), 2));
-                for (Vec3 sample : shipSamples(box)) {
-                    Vector3d direction = aimAt(start, sample, axis, cosSpread, options.range());
-                    if (direction == null) continue;
-                    Hit hit = scanner.blocks(direction, Math.min(options.range(), start.distanceTo(sample) + reach));
-                    if (hit != null && hit.subLevel() == ship) {
-                        keepNearest(nearest, hit.asShip());
-                        break;
-                    }
-                }
-            }
-        }
-
-        List<Hit> hits = new ArrayList<>(nearest.values());
-        hits.sort(Comparator.comparingDouble(Hit::distance));
-        return hits;
+    private static Vector3d dirTo(Vec3 from, Vec3 to) {
+        return new Vector3d(to.x - from.x, to.y - from.y, to.z - from.z).normalize();
     }
 
     @Nullable
@@ -194,39 +176,100 @@ public final class LidarRaycast {
         if (hit != null) nearest.merge(hit.key(), hit, (a, b) -> a.distance() <= b.distance() ? a : b);
     }
 
-    private static final class Scanner {
-        final Level level;
+    private record Target(EntityInfo info, AABB box) {}
+
+    private static List<Target> targets(Level level, AABB area, Options options) {
+        List<Target> targets = new ArrayList<>();
+        for (Entity entity : level.getEntities((Entity) null, area, e -> !e.isSpectator() && e.isPickable()
+            && (e instanceof Player ? options.players() : options.entities()))) {
+            String name = entity instanceof Player player ? player.getGameProfile().getName()
+                : entity.hasCustomName() ? entity.getCustomName().getString() : null;
+            String kind = entity instanceof Player ? "player" : entity instanceof LivingEntity ? "mob" : "entity";
+            EntityInfo info = new EntityInfo(entity.getUUID(), kind, BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString(),
+                entity.position(), name);
+            targets.add(new Target(info, entity.getBoundingBox().inflate(entity.getPickRadius())));
+        }
+        return targets;
+    }
+
+    private record Ship(SubLevel subLevel, Pose3dc pose, BoundingBox3dc box, Long2ObjectOpenHashMap<LevelChunk> chunks) {}
+
+    private static final class Scene {
         final BlockPos self;
         final Options options;
         final Vector3d normal;
         @Nullable
-        final SubLevel own;
+        final Pose3dc ownPose;
+        @Nullable
+        final Ship own;
         final Vector3d start;
-        final List<SubLevel> ships = new ArrayList<>();
-        final Map<BlockState, VoxelShape> shapes = new IdentityHashMap<>();
-        final BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        final Long2ObjectOpenHashMap<LevelChunk> worldChunks = new Long2ObjectOpenHashMap<>();
+        final List<Ship> ships = new ArrayList<>();
+        final List<Target> entities;
+        final Map<BlockState, VoxelShape> shapes = new ConcurrentHashMap<>();
         final int minY;
         final int maxY;
         @Nullable
         final LidarDebug.Trace trace;
 
-        Scanner(Level level, BlockPos pos, Direction facing, Options options, @Nullable LidarDebug.Trace trace) {
-            this.level = level;
-            this.trace = trace;
+        Scene(Level level, BlockPos pos, Direction facing, Options options, @Nullable LidarDebug.Trace trace, boolean collectEntities) {
             this.self = pos;
             this.options = options;
+            this.trace = trace;
             this.normal = normal(facing);
-            this.own = Sable.HELPER.getContaining(level, pos);
-            Vector3d origin = new Vector3d(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5).fma(SENSOR_FACE_OFFSET, normal);
-            this.start = own != null ? own.logicalPose().transformPosition(origin, new Vector3d()) : origin;
             this.minY = level.getMinBuildHeight();
             this.maxY = level.getMaxBuildHeight();
 
+            SubLevel ownLevel = Sable.HELPER.getContaining(level, pos);
+            this.ownPose = ownLevel != null ? new Pose3d(ownLevel.logicalPose()) : null;
+            Vector3d origin = new Vector3d(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5).fma(SENSOR_FACE_OFFSET, normal);
+            this.start = ownPose != null ? ownPose.transformPosition(origin, new Vector3d()) : origin;
+
             double r = options.range();
             BoundingBox3d area = new BoundingBox3d(start.x - r, start.y - r, start.z - r, start.x + r, start.y + r, start.z + r);
+            addChunks(level, worldChunks, area, false, 0);
+            int budget = MAX_PLOT_CHUNKS;
+
+            Ship ownShip = null;
             for (SubLevel ship : Sable.HELPER.getAllIntersecting(level, area)) {
-                if (!ship.isRemoved() && (ship == own ? options.ownShip() : options.subLevels())) ships.add(ship);
+                boolean mine = ship == ownLevel;
+                if (ship.isRemoved() || !(mine ? options.ownShip() : options.subLevels())) continue;
+                Pose3dc pose = mine ? ownPose : new Pose3d(ship.logicalPose());
+                BoundingBox3d box = new BoundingBox3d(ship.boundingBox());
+                Long2ObjectOpenHashMap<LevelChunk> chunks = new Long2ObjectOpenHashMap<>();
+                BoundingBox3d near = new BoundingBox3d(Math.max(box.minX(), area.minX()), Math.max(box.minY(), area.minY()),
+                    Math.max(box.minZ(), area.minZ()), Math.min(box.maxX(), area.maxX()), Math.min(box.maxY(), area.maxY()),
+                    Math.min(box.maxZ(), area.maxZ()));
+                if (near.minX() <= near.maxX() && near.minY() <= near.maxY() && near.minZ() <= near.maxZ() && budget > 0) {
+                    budget -= addChunks(level, chunks, near.transformInverse(pose), true, budget);
+                }
+                Ship snapshot = new Ship(ship, pose, box, chunks);
+                ships.add(snapshot);
+                if (mine) ownShip = snapshot;
             }
+            this.own = ownShip;
+
+            this.entities = collectEntities && options.anyEntities()
+                ? LidarRaycast.targets(level, new AABB(start.x - r, start.y - r, start.z - r, start.x + r, start.y + r, start.z + r), options)
+                : List.of();
+        }
+
+        private static int addChunks(Level level, Long2ObjectOpenHashMap<LevelChunk> chunks, BoundingBox3dc box, boolean load, int limit) {
+            int added = 0;
+            int minX = (int) Math.floor(box.minX()) >> 4, maxX = (int) Math.floor(box.maxX()) >> 4;
+            int minZ = (int) Math.floor(box.minZ()) >> 4, maxZ = (int) Math.floor(box.maxZ()) >> 4;
+            for (int x = minX; x <= maxX; x++) {
+                for (int z = minZ; z <= maxZ; z++) {
+                    if (load && added >= limit) return added;
+                    LevelChunk chunk = level.getChunkSource().getChunkNow(x, z);
+                    if (chunk == null && load) chunk = level.getChunk(x, z);
+                    if (chunk != null) {
+                        chunks.put(ChunkPos.asLong(x, z), chunk);
+                        added++;
+                    }
+                }
+            }
+            return added;
         }
 
         Vector3d center() {
@@ -234,7 +277,7 @@ public final class LidarRaycast {
         }
 
         Vector3d toWorld(Vector3dc local) {
-            Vector3d world = own != null ? own.logicalPose().transformNormal(local, new Vector3d()) : new Vector3d(local);
+            Vector3d world = ownPose != null ? ownPose.transformNormal(local, new Vector3d()) : new Vector3d(local);
             return world.normalize();
         }
 
@@ -242,19 +285,75 @@ public final class LidarRaycast {
             return new Vec3(start.x, start.y, start.z);
         }
 
-        List<Entity> entities(AABB area) {
-            return level.getEntities((Entity) null, area, e -> !e.isSpectator() && e.isPickable()
-                && (e instanceof Player ? options.players() : options.entities()));
+        Map<Object, Hit> sample(double spreadRadians, int rays, int first, int last) {
+            Vector3d center = center();
+            Vector3d helper = Math.abs(center.y) < 0.9 ? new Vector3d(0, 1, 0) : new Vector3d(1, 0, 0);
+            Vector3d side1 = center.cross(helper, new Vector3d()).normalize();
+            Vector3d side2 = center.cross(side1, new Vector3d()).normalize();
+            double capHeight = 1.0 - Math.cos(spreadRadians);
+            Map<Object, Hit> nearest = new HashMap<>();
+            for (int i = first; i < last; i++) {
+                double cos = 1.0 - (i + 0.5) / rays * capHeight;
+                double sin = Math.sqrt(Math.max(0.0, 1.0 - cos * cos));
+                double azimuth = i * GOLDEN_ANGLE;
+                Vector3d local = new Vector3d(center).mul(cos)
+                    .fma(sin * Math.cos(azimuth), side1)
+                    .fma(sin * Math.sin(azimuth), side2);
+                keepNearest(nearest, blocks(toWorld(local), options.range()));
+            }
+            return nearest;
+        }
+
+        Map<Object, Hit> targets(double spreadRadians) {
+            Map<Object, Hit> nearest = new HashMap<>();
+            Vector3d axis = toWorld(center());
+            double cosSpread = Math.cos(spreadRadians);
+            Vec3 start = startVec();
+            for (Target target : entities) {
+                AABB box = target.box();
+                Vec3 middle = box.getCenter();
+                for (Vec3 sample : List.of(middle, new Vec3(middle.x, box.maxY - 0.1, middle.z),
+                    new Vec3(middle.x, box.minY + 0.1, middle.z))) {
+                    Vector3d direction = aimAt(start, sample, axis, cosSpread, options.range());
+                    if (direction == null) continue;
+                    Vec3 point = box.contains(start) ? start : box.clip(start, sample).orElse(sample);
+                    double distance = start.distanceTo(point);
+                    if (blocks(direction, distance) == null) {
+                        log(point, LidarDebug.ENTITY);
+                        keepNearest(nearest, new Hit(distance, point, null, null, target.info(), null, false));
+                        break;
+                    }
+                }
+            }
+
+            if (!options.blocks() && options.subLevels()) {
+                for (Ship ship : ships) {
+                    if (ship == own) continue;
+                    BoundingBox3dc box = ship.box();
+                    double reach = Math.sqrt(Math.pow(box.maxX() - box.minX(), 2) + Math.pow(box.maxY() - box.minY(), 2)
+                        + Math.pow(box.maxZ() - box.minZ(), 2));
+                    for (Vec3 sample : shipSamples(box)) {
+                        Vector3d direction = aimAt(start, sample, axis, cosSpread, options.range());
+                        if (direction == null) continue;
+                        Hit hit = blocks(direction, Math.min(options.range(), start.distanceTo(sample) + reach));
+                        if (hit != null && hit.subLevel() == ship.subLevel()) {
+                            keepNearest(nearest, hit.asShip());
+                            break;
+                        }
+                    }
+                }
+            }
+            return nearest;
         }
 
         @Nullable
         Hit blocks(Vector3d direction, double range) {
             Hit best = walk(null, start, direction, 1.0, 0.0, range);
-            for (SubLevel ship : ships) {
+            for (Ship ship : ships) {
                 double limit = best != null ? best.distance() : range;
-                double[] span = slab(ship.boundingBox(), start, direction, limit);
+                double[] span = slab(ship.box(), start, direction, limit);
                 if (span == null) continue;
-                Pose3dc pose = ship.logicalPose();
+                Pose3dc pose = ship.pose();
                 Vector3d entry = new Vector3d(direction).mul(span[0]).add(start);
                 Vector3d origin = pose.transformPositionInverse(entry, new Vector3d());
                 Vector3d localDirection = pose.transformNormalInverse(direction, new Vector3d());
@@ -277,7 +376,7 @@ public final class LidarRaycast {
         }
 
         @Nullable
-        private Hit walk(@Nullable SubLevel space, Vector3d o, Vector3d d, double scale, double offset, double tMax) {
+        private Hit walk(@Nullable Ship space, Vector3d o, Vector3d d, double scale, double offset, double tMax) {
             int x = (int) Math.floor(o.x), y = (int) Math.floor(o.y), z = (int) Math.floor(o.z);
             int sx = (int) Math.signum(d.x), sy = (int) Math.signum(d.y), sz = (int) Math.signum(d.z);
             double dx = sx == 0 ? Double.POSITIVE_INFINITY : Math.abs(1.0 / d.x);
@@ -287,6 +386,7 @@ public final class LidarRaycast {
             double ny = sy == 0 ? Double.POSITIVE_INFINITY : ((sy > 0 ? y + 1 : y) - o.y) / d.y;
             double nz = sz == 0 ? Double.POSITIVE_INFINITY : ((sz > 0 ? z + 1 : z) - o.z) / d.z;
             boolean ownSpace = space == own;
+            Long2ObjectOpenHashMap<LevelChunk> chunks = space != null ? space.chunks() : worldChunks;
 
             LevelChunk chunk = null;
             int chunkX = Integer.MIN_VALUE, chunkZ = Integer.MIN_VALUE;
@@ -298,22 +398,19 @@ public final class LidarRaycast {
                     if ((x >> 4) != chunkX || (z >> 4) != chunkZ) {
                         chunkX = x >> 4;
                         chunkZ = z >> 4;
-                        chunk = chunk(space, chunkX, chunkZ);
+                        chunk = chunks.get(ChunkPos.asLong(chunkX, chunkZ));
                         if (chunk == null) return null;
                     }
-                    LevelChunkSection section = chunk.getSection(chunk.getSectionIndex(y));
-                    if (!section.hasOnlyAir()) {
-                        BlockState state = section.getBlockState(x & 15, y & 15, z & 15);
-                        if (!state.isAir() && !(ownSpace && x == self.getX() && y == self.getY() && z == self.getZ())) {
-                            VoxelShape shape = shape(state);
-                            if (!shape.isEmpty()) {
-                                cursor.set(x, y, z);
-                                Vec3 from = new Vec3(o.x + d.x * t, o.y + d.y * t, o.z + d.z * t);
-                                if (!options.precise()) return hit(space, o, scale, offset, from, state);
-                                Vec3 to = new Vec3(o.x + d.x * tMax, o.y + d.y * tMax, o.z + d.z * tMax);
-                                BlockHitResult result = shape.clip(from, to, cursor);
-                                if (result != null) return hit(space, o, scale, offset, result.getLocation(), state);
-                            }
+                    BlockState state = read(chunk, x, y, z);
+                    if (!state.isAir() && !(ownSpace && x == self.getX() && y == self.getY() && z == self.getZ())) {
+                        VoxelShape shape = shape(state);
+                        if (!shape.isEmpty()) {
+                            BlockPos pos = new BlockPos(x, y, z);
+                            Vec3 from = new Vec3(o.x + d.x * t, o.y + d.y * t, o.z + d.z * t);
+                            if (!options.precise()) return hit(space, o, scale, offset, from, pos, state);
+                            Vec3 to = new Vec3(o.x + d.x * tMax, o.y + d.y * tMax, o.z + d.z * tMax);
+                            BlockHitResult result = shape.clip(from, to, pos);
+                            if (result != null) return hit(space, o, scale, offset, result.getLocation(), pos, state);
                         }
                     }
                 }
@@ -334,20 +431,23 @@ public final class LidarRaycast {
             return null;
         }
 
-        private Hit hit(@Nullable SubLevel space, Vector3d o, double scale, double offset, Vec3 local, BlockState state) {
+        private static BlockState read(LevelChunk chunk, int x, int y, int z) {
+            try {
+                LevelChunkSection section = chunk.getSection(chunk.getSectionIndex(y));
+                return section.hasOnlyAir() ? AIR : section.getBlockState(x & 15, y & 15, z & 15);
+            } catch (RuntimeException e) {
+                return AIR;
+            }
+        }
+
+        private Hit hit(@Nullable Ship space, Vector3d o, double scale, double offset, Vec3 local, BlockPos pos, BlockState state) {
             double distance = offset + local.distanceTo(new Vec3(o.x, o.y, o.z)) / scale;
             Vec3 position = local;
             if (space != null) {
-                Vector3d world = space.logicalPose().transformPosition(new Vector3d(local.x, local.y, local.z), new Vector3d());
+                Vector3d world = space.pose().transformPosition(new Vector3d(local.x, local.y, local.z), new Vector3d());
                 position = new Vec3(world.x, world.y, world.z);
             }
-            return new Hit(distance, position, cursor.immutable(), state, null, space, false);
-        }
-
-        @Nullable
-        private LevelChunk chunk(@Nullable SubLevel space, int chunkX, int chunkZ) {
-            LevelChunk chunk = level.getChunkSource().getChunkNow(chunkX, chunkZ);
-            return chunk == null && space != null ? level.getChunk(chunkX, chunkZ) : chunk;
+            return new Hit(distance, position, pos, state, null, space != null ? space.subLevel() : null, false);
         }
 
         private VoxelShape shape(BlockState state) {

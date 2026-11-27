@@ -11,8 +11,8 @@ import net.minecraft.world.level.LevelAccessor;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
-// Create pushes one power value to every receiver in a network. When a ship-scoped computer link is in
-// the network, recompute the value per receiver so links off that ship don't hear it.
+// Create pushes one power value to every receiver in a network. When a ship-scoped computer link is
+// transmitting in the network, recompute the value per receiver so links off that ship don't hear it.
 // Wraps setReceivedStrength rather than the range check, which Sable already redirects.
 @Mixin(RedstoneLinkNetworkHandler.class)
 public abstract class RedstoneLinkNetworkHandlerMixin {

@@ -8,10 +8,12 @@ import dev.propulsionteam.propulsionsimulated.compat.computercraft.CCProxy;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class LidarBlockEntity extends SmartBlockEntity {
     public AbstractComputerBehaviour computerBehaviour;
@@ -40,11 +42,12 @@ public class LidarBlockEntity extends SmartBlockEntity {
         return hit;
     }
 
-    public List<LidarRaycast.Hit> scan(LidarRaycast.Options options, double spreadRadians, int rays) {
-        if (level == null) return List.of();
+    public CompletableFuture<List<LidarRaycast.Hit>> scan(LidarRaycast.Options options, double spreadRadians, int rays) {
+        if (level == null) return CompletableFuture.completedFuture(List.of());
+        Level level = this.level;
+        BlockPos pos = worldPosition;
         LidarDebug.Trace trace = LidarDebug.start(level);
-        List<LidarRaycast.Hit> hits = LidarRaycast.scan(level, worldPosition, getFacing(), options, spreadRadians, rays, trace);
-        LidarDebug.send(level, worldPosition, trace);
-        return hits;
+        return LidarRaycast.scan(level, pos, getFacing(), options, spreadRadians, rays, trace)
+            .whenComplete((hits, error) -> LidarDebug.send(level, pos, trace));
     }
 }

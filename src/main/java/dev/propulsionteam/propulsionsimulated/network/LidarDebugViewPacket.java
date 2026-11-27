@@ -18,7 +18,7 @@ public record LidarDebugViewPacket(boolean enabled) implements CustomPacketPaylo
 
     public void handle(IPayloadContext context) {
         context.enqueueWork(() -> {
-            if (context.player() instanceof ServerPlayer player) LidarDebug.setViewer(player, enabled);
+            if (context.player() instanceof ServerPlayer player && (!enabled || player.hasPermissions(2))) LidarDebug.setViewer(player, enabled);
         });
     }
 

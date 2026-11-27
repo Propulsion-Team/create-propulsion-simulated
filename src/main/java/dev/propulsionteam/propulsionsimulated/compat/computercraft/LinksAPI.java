@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -35,6 +36,9 @@ import java.util.function.Predicate;
 
 public class LinksAPI implements ILuaAPI {
     static final String EVENT = "redstone_link";
+    private static final int MAX_LINKS = 128;
+    private static final int MAX_SIGNALS_PER_CALL = 128;
+    private static final int MAX_SCAN_NETWORKS = 4096;
 
     private final IComputerSystem computer;
     private final Map<Couple<Frequency>, VirtualLink> transmitters = new LinkedHashMap<>();
@@ -229,11 +233,19 @@ public class LinksAPI implements ILuaAPI {
     @LuaFunction(mainThread = true)
     public final void sendLinkSignals(Map<?, ?> signals) throws LuaException {
         ServerLevel level = level();
-        for (int i = 1; i <= signals.size(); i++) {
+        int count = signals.size();
+        if (count > MAX_SIGNALS_PER_CALL) {
+            throw new LuaException("Too many signals in one call (max " + MAX_SIGNALS_PER_CALL + ")");
+        }
+        List<Couple<Frequency>> keys = new ArrayList<>(count);
+        int[] strengths = new int[count];
+        Scope[] scopes = new Scope[count];
+        Set<Couple<Frequency>> newKeys = new HashSet<>();
+        for (int i = 1; i <= count; i++) {
             if (!(signals.get((double) i) instanceof Map<?, ?> entry)) {
                 throw new LuaException("Signal #" + i + " must be a table {f1, f2, strength [, scope]}");
             }
-            Couple<Frequency> key = Couple.create(parseFrequency(entry.get(1.0), 1), parseFrequency(entry.get(2.0), 1));
+            Couple<Frequency> key = Couple.create(parseFrequency(entry.get(1.0), 1), parseFrequency(entry.get(2.0), 2));
             if (!(entry.get(3.0) instanceof Number strength)) {
                 throw new LuaException("Signal #" + i + " needs a strength number");
             }
@@ -241,8 +253,22 @@ public class LinksAPI implements ILuaAPI {
             if (scopeName != null && !(scopeName instanceof String)) {
                 throw new LuaException("Signal #" + i + " scope must be a string");
             }
-            send(level, key, strength.intValue(), scope(Optional.ofNullable((String) scopeName)));
+            Scope scope = scope(Optional.ofNullable((String) scopeName));
+            int clamped = Math.clamp(strength.intValue(), 0, 15);
+            if (clamped > 0) {
+                requireShip(level, scope);
+                if (!transmitters.containsKey(key)) newKeys.add(key);
+            }
+            keys.add(key);
+            strengths[i - 1] = clamped;
+            scopes[i - 1] = scope;
         }
+        if (transmitters.size() + newKeys.size() > MAX_LINKS) throw transmitterLimit();
+        for (int i = 0; i < count; i++) send(level, keys.get(i), strengths[i], scopes[i]);
+    }
+
+    private static LuaException transmitterLimit() {
+        return new LuaException("Too many transmitters on this computer (max " + MAX_LINKS + ")");
     }
 
     private void send(ServerLevel level, Couple<Frequency> key, int strength, Scope scope) throws LuaException {
@@ -258,6 +284,7 @@ public class LinksAPI implements ILuaAPI {
             existing = null;
         }
         if (existing == null) {
+            if (transmitters.size() >= MAX_LINKS) throw transmitterLimit();
             VirtualLink link = new VirtualLink(key, scope, false);
             link.transmitted = strength;
             transmitters.put(key, link);
@@ -305,6 +332,9 @@ public class LinksAPI implements ILuaAPI {
             if (existing.scope == scope) return existing.received;
             remove(level, listeners, existing);
         }
+        if (listeners.size() >= MAX_LINKS) {
+            throw new LuaException("Too many listeners on this computer (max " + MAX_LINKS + ")");
+        }
         VirtualLink link = new VirtualLink(key, scope, true);
         link.received = signal(level, key, scope);
         listeners.put(key, link);
@@ -327,7 +357,9 @@ public class LinksAPI implements ILuaAPI {
         Scope scope = scope(scopeName);
         requireShip(level, scope);
         List<List<Object>> out = new ArrayList<>();
-        for (Couple<Frequency> key : List.copyOf(handler().networksIn(level).keySet())) {
+        int examined = 0;
+        for (Couple<Frequency> key : handler().networksIn(level).keySet()) {
+            if (++examined > MAX_SCAN_NETWORKS) break;
             int strength = signal(level, key, scope);
             if (strength > 0) {
                 out.add(List.of(frequencyToLua(key.getFirst()), frequencyToLua(key.getSecond()), strength));

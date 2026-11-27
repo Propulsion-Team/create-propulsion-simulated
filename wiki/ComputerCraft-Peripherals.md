@@ -296,7 +296,7 @@ A 360° sensor dome: it sees the whole half-sphere above the surface it is mount
 | Method | Returns | Notes |
 |--------|---------|-------|
 | `raycast([options])` | hit table or `nil` | `nil` when nothing is hit within range. Runs on the server thread |
-| `scan([options])` | list of hit tables | Pulse scan: many rays at once, see [Pulse scan](#pulse-scan). One tick for the whole pulse |
+| `scan([options])` | list of hit tables | Pulse scan: many rays at once, see [Pulse scan](#pulse-scan). Rays run on worker threads, not the server thread |
 | `getDirection([frame])` | vector | The sensor axis. Default `"local"` (ship axes); `"world"` for world space |
 | `getMaxRange()` | `number` | Longest allowed ray or scan, `64` blocks |
 | `getMaxAngle()` | `number` | Largest allowed angle between any ray and the sensor axis, `90` degrees (the full dome) |
@@ -319,8 +319,8 @@ A 360° sensor dome: it sees the whole half-sphere above the surface it is mount
 | `blocks` | `true` | Report block hits. `false` reports only entities, players and (in `scan`) whole ships; blocks still block line of sight |
 | `precise` | `true` | Use each block's exact shape. `false` treats every block that counts as a full cube: faster, but slabs, fences and plants report the hit at the edge of their block space |
 | `blockState` | `true` | Include `block.state` in results. `false` returns only `block.id`, which is much cheaper for large scans |
-| `include` | — | List of block ids or `#tags`; only these blocks count as hits |
-| `exclude` | — | List of block ids or `#tags`; the ray passes through these |
+| `include` | — | List of block ids or `#tags`; only these blocks count as hits. At most 256 entries |
+| `exclude` | — | List of block ids or `#tags`; the ray passes through these. At most 256 entries |
 
 **Hit table:**
 
@@ -356,6 +356,8 @@ The whole cone must stay within `getMaxAngle()` of the sensor axis, counting `di
 
 Blocks are found by sampling, so a block between two rays can be missed; raise `rays` for denser coverage. Entities are not sampled: every entity inside the cone and within range is checked once for line of sight from the sensor, so small or distant entities are found even when no ray would have hit them. An entity counts as visible when the line to its middle, head or feet is clear.
 
+**Threads.** On the server thread, `scan` only takes a snapshot of the area: nearby chunks, ships' positions and entities. The rays then run on up to 4 worker threads while the server keeps ticking. The result usually arrives in the same tick or the next one, from the world as it was when the scan started. While the computer waits, it receives a `lidar_scan` event that `scan` uses internally; your own event loops can ignore it. Each lidar runs one scan at a time: calling `scan` while it is still working throws `Lidar is busy`. If too many scans are running on the server, it throws `Lidar workers are busy, try again`.
+
 **Target mode.** With `blocks = false`, `scan` fires no sampling rays at all, so `rays` doesn't matter. It only checks targets: every entity and player in the cone (as above), and, with `subLevels = true`, every other ship whose bounding box is in the cone. A ship is aimed at from its centre and eight points around it; the first ray whose first hit is one of that ship's blocks makes it visible. It is reported once, as `type = "subLevel"`, with the block that was hit and the `subLevel` table. This is the cheapest way to look for players, mobs or other ships:
 
 ```lua
@@ -371,7 +373,7 @@ end
 
 ### Debug view
 
-Set `lidar = true` under `[debug]` in the client config (`createpropulsion-client.toml`) to see every ray the lidar casts, for 4 ticks after each call. Only players with the option on receive the rays, and only within 128 blocks of the lidar.
+Set `lidar = true` under `[debug]` in the client config (`createpropulsion-client.toml`) to see every ray the lidar casts, for 4 ticks after each call. Only players with the option on receive the rays, and only within 128 blocks of the lidar. The debug view is operator-only (permission level 2 or higher).
 
 | Colour | Meaning |
 |--------|---------|

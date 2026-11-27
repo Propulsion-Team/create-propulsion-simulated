@@ -125,7 +125,7 @@ Setting a thruster through this API works like attaching a peripheral: the thrus
 
 ### `thrusters.allocate(force, torque [, frame])`
 
-Finds thrust values whose combined force and torque best match `force` (pN) and `torque` (pN·blocks), then applies them. Either target may be `nil` for zero. The default frame is `"local"`. Each thruster stays within `0 … maxThrust`, and thrusters that would only cancel each other out stay off. The solve is least squares, so if the request is impossible you get the closest possible result. Vector thrusters keep their current direction. Aim them with `setVector` first.
+Finds thrust values whose combined force and torque best match `force` (pN) and `torque` (pN·blocks), then applies them. Either target may be `nil` for zero. The default frame is `"local"`. Each thruster stays within `0 … maxThrust`, and thrusters that would only cancel each other out stay off. The solve is least squares, so if the request is impossible you get the closest possible result. Vector thrusters keep their current direction. Aim them with `setVector` first. Each call starts from the previous solution, so calling it every tick stays smooth, and `force` or `torque` components above 1e12 are rejected with an error.
 
 It returns:
 
@@ -169,12 +169,12 @@ Functions with a `scope` argument accept:
 | Function | Returns | Notes |
 |----------|---------|-------|
 | `links.sendLinkSignal(f1, f2, strength [, scope])` | — | Starts transmitting, changes the strength, or stops with `0`. Clamped to `0 … 15` |
-| `links.sendLinkSignals({ {f1, f2, strength [, scope]}, ... })` | — | Many at once, in one tick |
+| `links.sendLinkSignals({ {f1, f2, strength [, scope]}, ... })` | — | Many at once, in one tick. At most 128 entries per call; invalid entries raise an error before anything is applied |
 | `links.getLinkSignal(f1, f2 [, scope])` | `0 … 15` | Strongest signal received. The computer's own transmissions don't count |
 | `links.getActiveSignals()` | `{ {f1, f2, strength, scope}, ... }` | What this computer is transmitting. Entries can be passed back to `sendLinkSignals` |
 | `links.listen(f1, f2 [, scope])` | `0 … 15` | Fires `redstone_link` events when the signal changes. Returns the current strength |
 | `links.unlisten(f1, f2)` | `boolean` | `false` if the computer wasn't listening |
-| `links.scan([scope])` | `{ {f1, f2, strength}, ... }` | Every frequency pair with a non-zero signal reaching this computer |
+| `links.scan([scope])` | `{ {f1, f2, strength}, ... }` | Every frequency pair with a non-zero signal reaching this computer. Examines at most 4096 networks per call |
 | `links.getRange()` | `number` | Create's `linkRange` server config |
 | `links.clearAll()` | — | Stops every transmission and listener of this computer |
 
@@ -189,6 +189,8 @@ while true do
   print(f1, f2, strength)
 end
 ```
+
+Each computer can have at most 128 transmitters and 128 listeners; creating more raises an error (changing or removing existing ones always works).
 
 Waiting for the event costs nothing. Calling `getLinkSignal` in a loop costs one tick per call.
 

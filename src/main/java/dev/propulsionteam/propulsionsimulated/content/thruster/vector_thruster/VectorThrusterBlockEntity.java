@@ -55,6 +55,10 @@ public class VectorThrusterBlockEntity extends IonThrusterBlockEntity {
     private float obstructionEfficiency = 1.0f;
     private boolean clientInitialized = false;
     protected boolean vectorObstructionDirty;
+    private boolean syncPending;
+    private long lastSyncTick = Long.MIN_VALUE / 2;
+    private float syncedVectorX;
+    private float syncedVectorY;
 
     // Flap animation: 0 = idle (wide), 1 = full throttle (narrow)
     private float targetFlapProgress;
@@ -175,10 +179,15 @@ public class VectorThrusterBlockEntity extends IonThrusterBlockEntity {
      * quantizing ComputerCraft coordinates to redstone levels.
      */
     public void setVectorCoordinates(float x, float y) {
-        westSignal = VectorThrusterControlMath.positiveSignal(x);
-        eastSignal = VectorThrusterControlMath.negativeSignal(x);
-        downSignal = VectorThrusterControlMath.positiveSignal(y);
-        upSignal = VectorThrusterControlMath.negativeSignal(y);
+        float west = VectorThrusterControlMath.positiveSignal(x);
+        float east = VectorThrusterControlMath.negativeSignal(x);
+        float down = VectorThrusterControlMath.positiveSignal(y);
+        float up = VectorThrusterControlMath.negativeSignal(y);
+        if (west == westSignal && east == eastSignal && down == downSignal && up == upSignal) return;
+        westSignal = west;
+        eastSignal = east;
+        downSignal = down;
+        upSignal = up;
         onVectorSignalChanged();
     }
 
@@ -232,6 +241,7 @@ public class VectorThrusterBlockEntity extends IonThrusterBlockEntity {
     @Override
     public void tick() {
         updateMappedTargets();
+        trySync();
         tickVector();
         if (level != null && !level.isClientSide && maxVectorAngle != getMaxVectorAngle()) {
             maxVectorAngle = getMaxVectorAngle();
@@ -407,8 +417,22 @@ public class VectorThrusterBlockEntity extends IonThrusterBlockEntity {
         updateMappedTargets();
         if (level != null && !level.isClientSide) {
             setChanged();
-            notifyUpdate();
+            syncPending = true;
+            trySync();
         }
+    }
+
+    private void trySync() {
+        if (!syncPending || level == null || level.isClientSide) return;
+        float delta = Math.max(Math.abs(targetVectorX - syncedVectorX), Math.abs(targetVectorY - syncedVectorY));
+        long minInterval = delta > 0.1f ? 2 : 10;
+        long now = level.getGameTime();
+        if (now - lastSyncTick < minInterval) return;
+        lastSyncTick = now;
+        syncedVectorX = targetVectorX;
+        syncedVectorY = targetVectorY;
+        syncPending = false;
+        notifyUpdate();
     }
 
     private void updateMappedTargets() {

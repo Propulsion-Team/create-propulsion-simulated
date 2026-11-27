@@ -131,8 +131,12 @@ public class RcsThrusterPeripheral implements IPeripheral {
 
     @Override
     public void attach(@NotNull IComputerAccess computer) {
+        boolean first;
         synchronized (attachedComputers) {
-            attachedComputers.add(computer);
+            first = attachedComputers.add(computer) && attachedComputers.size() == 1;
+        }
+        if (first) {
+            ServerThreadTasks.queue(() -> applyAttachment(true));
         }
     }
 
@@ -144,10 +148,20 @@ public class RcsThrusterPeripheral implements IPeripheral {
             last = attachedComputers.isEmpty();
         }
         if (last) {
-            ServerThreadTasks.queue(() -> {
-                if (!blockEntity.isRemoved()) blockEntity.clearOverrides();
-            });
+            ServerThreadTasks.queue(() -> applyAttachment(false));
         }
+    }
+
+    private void applyAttachment(boolean requested) {
+        boolean attached;
+        synchronized (attachedComputers) {
+            attached = !attachedComputers.isEmpty();
+        }
+        if (attached != requested || blockEntity.isRemoved()) return;
+        if (blockEntity.computerBehaviour != null) {
+            blockEntity.computerBehaviour.setHasAttachedComputer(attached);
+        }
+        if (!attached) blockEntity.clearOverrides();
     }
 
     @Override

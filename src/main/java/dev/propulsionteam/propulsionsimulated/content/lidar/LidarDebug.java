@@ -23,7 +23,7 @@ public final class LidarDebug {
     private LidarDebug() {}
 
     public static void setViewer(ServerPlayer player, boolean enabled) {
-        if (enabled) VIEWERS.add(player.getUUID());
+        if (enabled && player.hasPermissions(2)) VIEWERS.add(player.getUUID());
         else VIEWERS.remove(player.getUUID());
     }
 
@@ -42,9 +42,13 @@ public final class LidarDebug {
 
     public static void send(Level level, BlockPos lidar, @Nullable Trace trace) {
         if (trace == null || trace.origin == null || !(level instanceof ServerLevel server)) return;
+        if (!server.getServer().isSameThread()) {
+            server.getServer().execute(() -> send(level, lidar, trace));
+            return;
+        }
         LidarDebugPacket packet = null;
         for (ServerPlayer player : server.players()) {
-            if (!VIEWERS.contains(player.getUUID()) || player.position().distanceToSqr(trace.origin) > VIEW_DISTANCE * VIEW_DISTANCE) continue;
+            if (!VIEWERS.contains(player.getUUID()) || !player.hasPermissions(2) || player.position().distanceToSqr(trace.origin) > VIEW_DISTANCE * VIEW_DISTANCE) continue;
             if (packet == null) packet = new LidarDebugPacket(lidar.asLong(), trace.origin, trace.ends.toFloatArray(), trace.kinds.toByteArray());
             PacketDistributor.sendToPlayer(player, packet);
         }
@@ -56,7 +60,7 @@ public final class LidarDebug {
         final FloatArrayList ends = new FloatArrayList();
         final ByteArrayList kinds = new ByteArrayList();
 
-        void add(Vec3 start, double x, double y, double z, byte kind) {
+        synchronized void add(Vec3 start, double x, double y, double z, byte kind) {
             origin = start;
             ends.add((float) x);
             ends.add((float) y);

@@ -1,7 +1,10 @@
 package dev.propulsionteam.propulsionsimulated.compat.computercraft;
 
+import dan200.computercraft.api.lua.ILuaContext;
 import dan200.computercraft.api.lua.LuaException;
 import dan200.computercraft.api.lua.LuaFunction;
+import dan200.computercraft.api.lua.MethodResult;
+import dan200.computercraft.api.peripheral.IComputerAccess;
 import dan200.computercraft.api.peripheral.IPeripheral;
 import dev.propulsionteam.propulsionsimulated.compat.computercraft.LuaValues.Frame;
 import dev.propulsionteam.propulsionsimulated.content.lidar.LidarBlockEntity;
@@ -12,9 +15,6 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
@@ -24,14 +24,41 @@ import org.joml.Vector3d;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
 public class LidarPeripheral implements IPeripheral {
+    private static final String SCAN_EVENT = "lidar_scan";
+    private static final AtomicInteger NEXT_SCAN = new AtomicInteger();
+    private static final AtomicInteger ACTIVE_SCANS = new AtomicInteger();
+    private static final int MAX_ACTIVE_SCANS = 64;
+    private static final int MAX_FILTER_ENTRIES = 256;
+    private static final long RESULT_TTL_NANOS = 5_000_000_000L;
+    private final Map<Integer, ScanResult> results = new ConcurrentHashMap<>();
+    private final AtomicLong scanStarted = new AtomicLong();
     private final LidarBlockEntity lidar;
+
+    private record ScanResult(IComputerAccess computer, Object value, long expires) {}
+
+    private record BlockFilter(Set<Block> blocks, List<TagKey<Block>> tags) implements Predicate<BlockState> {
+        @Override
+        public boolean test(BlockState state) {
+            if (blocks.contains(state.getBlock())) return true;
+            for (TagKey<Block> tag : tags) {
+                if (state.is(tag)) return true;
+            }
+            return false;
+        }
+    }
 
     public LidarPeripheral(LidarBlockEntity lidar) {
         this.lidar = lidar;
@@ -75,9 +102,78 @@ public class LidarPeripheral implements IPeripheral {
         return hit == null ? null : describe(hit, flag(table, "blockState", true));
     }
 
-    @LuaFunction(mainThread = true)
-    public final List<Map<String, Object>> scan(Optional<Map<?, ?>> options) throws LuaException {
+    @LuaFunction
+    public final MethodResult scan(IComputerAccess computer, ILuaContext context, Optional<Map<?, ?>> options)
+        throws LuaException {
         Map<?, ?> table = options.orElse(Map.of());
+        purge();
+        long now = System.nanoTime();
+        long started = scanStarted.get();
+        if (started != 0 && now - started > RESULT_TTL_NANOS) release();
+        if (!scanStarted.compareAndSet(0, now)) throw new LuaException("Lidar is busy");
+        if (ACTIVE_SCANS.incrementAndGet() > MAX_ACTIVE_SCANS) {
+            release();
+            throw new LuaException("Lidar workers are busy, try again");
+        }
+        int id = NEXT_SCAN.incrementAndGet();
+        try {
+            context.issueMainThreadTask(() -> {
+                try {
+                    startScan(table).whenComplete((hits, error) -> {
+                        release();
+                        finish(computer, id, error != null ? new LuaException("Scan failed: " + error.getMessage()) : hits);
+                    });
+                } catch (LuaException e) {
+                    release();
+                    finish(computer, id, e);
+                } catch (RuntimeException e) {
+                    release();
+                    finish(computer, id, new LuaException("Scan failed: " + e.getMessage()));
+                }
+                return null;
+            });
+        } catch (RuntimeException | LuaException e) {
+            release();
+            throw e;
+        }
+        return awaitScan(computer, id);
+    }
+
+    private void release() {
+        if (scanStarted.getAndSet(0) != 0) ACTIVE_SCANS.decrementAndGet();
+    }
+
+    private void purge() {
+        long now = System.nanoTime();
+        results.values().removeIf(result -> now - result.expires() > 0);
+    }
+
+    @Override
+    public void detach(IComputerAccess computer) {
+        results.values().removeIf(result -> result.computer() == computer);
+    }
+
+    private void finish(IComputerAccess computer, int id, Object value) {
+        results.put(id, new ScanResult(computer, value, System.nanoTime() + RESULT_TTL_NANOS));
+        try {
+            computer.queueEvent(SCAN_EVENT, id);
+        } catch (RuntimeException e) {
+            results.remove(id);
+        }
+    }
+
+    private MethodResult awaitScan(IComputerAccess computer, int id) {
+        return MethodResult.pullEvent(SCAN_EVENT, event -> {
+            if (!(event.length > 1 && event[1] instanceof Number n && n.intValue() == id)) return awaitScan(computer, id);
+            ScanResult result = results.get(id);
+            if (result == null || result.computer() != computer) throw new LuaException("Scan result expired");
+            results.remove(id);
+            if (result.value() instanceof LuaException e) throw e;
+            return MethodResult.of(result.value());
+        });
+    }
+
+    private CompletableFuture<List<Map<String, Object>>> startScan(Map<?, ?> table) throws LuaException {
         double range = number(table, "range", LidarRaycast.MAX_RANGE);
         double spread;
         if (table.get("angle") != null) {
@@ -97,9 +193,11 @@ public class LidarPeripheral implements IPeripheral {
         }
         LidarRaycast.Options parsed = parse(table, spread);
         boolean blockState = flag(table, "blockState", true);
-        List<Map<String, Object>> out = new ArrayList<>();
-        for (LidarRaycast.Hit hit : lidar.scan(parsed, spread, rays)) out.add(describe(hit, blockState));
-        return out;
+        return lidar.scan(parsed, spread, rays).thenApply(hits -> {
+            List<Map<String, Object>> out = new ArrayList<>(hits.size());
+            for (LidarRaycast.Hit hit : hits) out.add(describe(hit, blockState));
+            return out;
+        });
     }
 
     private Quaterniond orientation() {
@@ -158,22 +256,26 @@ public class LidarPeripheral implements IPeripheral {
         Object value = table.get(key);
         if (value == null) return null;
         if (!(value instanceof Map<?, ?> list)) throw new LuaException(key + " must be a list of block ids or #tags");
-        Predicate<BlockState> any = state -> false;
-        for (Object entry : list.values()) {
-            if (!(entry instanceof String name)) throw new LuaException(key + " entries must be strings");
+        if (list.size() > MAX_FILTER_ENTRIES) throw new LuaException(key + " can have at most " + MAX_FILTER_ENTRIES + " entries");
+        Set<Block> blocks = new HashSet<>();
+        List<TagKey<Block>> tags = new ArrayList<>();
+        for (Map.Entry<?, ?> item : list.entrySet()) {
+            if (!(item.getKey() instanceof Number index && index.doubleValue() >= 1 && index.doubleValue() <= list.size()
+                && index.doubleValue() == Math.rint(index.doubleValue()))) {
+                throw new LuaException(key + " must be a list of block ids or #tags");
+            }
+            if (!(item.getValue() instanceof String name)) throw new LuaException(key + " entries must be strings");
             boolean tag = name.startsWith("#");
             ResourceLocation id = ResourceLocation.tryParse(tag ? name.substring(1) : name);
             if (id == null) throw new LuaException("Invalid id '" + name + "' in " + key);
             if (tag) {
-                TagKey<Block> tagKey = TagKey.create(Registries.BLOCK, id);
-                any = any.or(state -> state.is(tagKey));
+                tags.add(TagKey.create(Registries.BLOCK, id));
             } else {
-                Block block = BuiltInRegistries.BLOCK.getOptional(id)
-                    .orElseThrow(() -> new LuaException("Unknown block '" + name + "' in " + key));
-                any = any.or(state -> state.is(block));
+                blocks.add(BuiltInRegistries.BLOCK.getOptional(id)
+                    .orElseThrow(() -> new LuaException("Unknown block '" + name + "' in " + key)));
             }
         }
-        return any;
+        return new BlockFilter(blocks, tags);
     }
 
     private static Map<String, Object> describe(LidarRaycast.Hit hit, boolean blockState) {
@@ -193,13 +295,12 @@ public class LidarPeripheral implements IPeripheral {
             }
             out.put("block", block);
         } else if (hit.entity() != null) {
-            Entity entity = hit.entity();
-            out.put("type", entity instanceof Player ? "player" : entity instanceof LivingEntity ? "mob" : "entity");
+            LidarRaycast.EntityInfo entity = hit.entity();
+            out.put("type", entity.kind());
             Map<String, Object> info = new HashMap<>();
-            info.put("type", BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString());
-            info.put("position", LuaValues.vector(new Vector3d(entity.getX(), entity.getY(), entity.getZ())));
-            if (entity instanceof Player player) info.put("name", player.getGameProfile().getName());
-            else if (entity.hasCustomName()) info.put("name", entity.getCustomName().getString());
+            info.put("type", entity.type());
+            info.put("position", LuaValues.vector(new Vector3d(entity.position().x, entity.position().y, entity.position().z)));
+            if (entity.name() != null) info.put("name", entity.name());
             out.put("entity", info);
         }
         if (hit.subLevel() != null) {

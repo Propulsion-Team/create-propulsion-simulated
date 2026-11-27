@@ -36,9 +36,12 @@ import java.util.Set;
 
 public class ThrustersAPI implements ILuaAPI {
     private static final int ALLOCATION_SWEEPS = 200;
+    private static final long ALLOCATION_WORK = 200_000;
+    private static final double MAX_ALLOCATION_INPUT = 1.0e12;
 
     private final IComputerSystem computer;
     private final Set<BlockEntity> controlled = Collections.newSetFromMap(new IdentityHashMap<>());
+    private final Map<String, Double> warmStart = new HashMap<>();
 
     public ThrustersAPI(IComputerSystem computer) {
         this.computer = computer;
@@ -227,8 +230,9 @@ public class ThrustersAPI implements ILuaAPI {
             releaseAll();
             return;
         }
-        BlockEntity be = find(byId(ship()), id.get()).blockEntity();
-        if (controlled.remove(be)) release(be);
+        Entry entry = find(byId(ship()), id.get());
+        warmStart.remove(entry.id());
+        if (controlled.remove(entry.blockEntity())) release(entry.blockEntity());
     }
 
     @LuaFunction(mainThread = true)
@@ -241,9 +245,14 @@ public class ThrustersAPI implements ILuaAPI {
             force = ship.rotateToLocal(force);
             torque = ship.rotateToLocal(torque);
         }
+        if (!withinLimit(force) || !withinLimit(torque)) throw new LuaException("force/torque is too large");
 
         List<Entry> entries = scan(ship).stream().filter(e -> e.maxPn() > 0).toList();
         double[] solution = solve(ship, entries, force, torque);
+        for (double value : solution) {
+            if (!Double.isFinite(value)) throw new LuaException("Could not solve for a finite allocation");
+        }
+        warmStart.clear();
 
         Map<String, Object> thrusts = new HashMap<>();
         Vector3d achievedForce = new Vector3d();
@@ -252,6 +261,7 @@ public class ThrustersAPI implements ILuaAPI {
             Entry e = entries.get(i);
             applyThrottle(e, solution[i] / e.maxPn());
             thrusts.put(e.id(), solution[i]);
+            warmStart.put(e.id(), solution[i]);
             achievedForce.fma(solution[i], e.direction());
             achievedTorque.fma(solution[i], e.torquePerPn(ship));
         }
@@ -259,7 +269,12 @@ public class ThrustersAPI implements ILuaAPI {
             "torque", inFrame(ship, achievedTorque, frame));
     }
 
-    private static double[] solve(ShipContext ship, List<Entry> entries, Vector3d force, Vector3d torque) {
+    private static boolean withinLimit(Vector3d v) {
+        return Math.abs(v.x) <= MAX_ALLOCATION_INPUT && Math.abs(v.y) <= MAX_ALLOCATION_INPUT
+            && Math.abs(v.z) <= MAX_ALLOCATION_INPUT;
+    }
+
+    private double[] solve(ShipContext ship, List<Entry> entries, Vector3d force, Vector3d torque) {
         int n = entries.size();
         double[][] columns = new double[n][];
         double[] norms = new double[n];
@@ -275,7 +290,14 @@ public class ThrustersAPI implements ILuaAPI {
         double damping = 1.0e-6 * Math.max(maxNorm, 1.0);
 
         double[] residual = {-force.x, -force.y, -force.z, -torque.x, -torque.y, -torque.z};
-        for (int sweep = 0; sweep < ALLOCATION_SWEEPS; sweep++) {
+        for (int i = 0; i < n; i++) {
+            Double previous = warmStart.get(entries.get(i).id());
+            if (previous == null || !Double.isFinite(previous)) continue;
+            u[i] = Math.clamp(previous, 0.0, entries.get(i).maxPn());
+            for (int k = 0; k < 6; k++) residual[k] += columns[i][k] * u[i];
+        }
+        int sweeps = (int) Math.clamp(ALLOCATION_WORK / Math.max(n, 1), 1L, (long) ALLOCATION_SWEEPS);
+        for (int sweep = 0; sweep < sweeps; sweep++) {
             double change = 0;
             for (int i = 0; i < n; i++) {
                 double[] a = columns[i];
@@ -304,6 +326,7 @@ public class ThrustersAPI implements ILuaAPI {
     }
 
     private void releaseAll() {
+        warmStart.clear();
         for (BlockEntity be : controlled) release(be);
         controlled.clear();
     }
