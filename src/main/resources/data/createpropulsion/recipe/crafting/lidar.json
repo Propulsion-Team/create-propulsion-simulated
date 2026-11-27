@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "GSG",
+    "SMS",
+    "PRP"
+  ],
+  "key": {
+    "G": {
+      "item": "minecraft:tinted_glass"
+    },
+    "S": {
+      "item": "simulated:optical_sensor"
+    },
+    "M": {
+      "item": "create:precision_mechanism"
+    },
+    "P": {
+      "item": "createpropulsion:platinum_sheet"
+    },
+    "R": {
+      "item": "createpropulsion:cable_relay"
+    }
+  },
+  "result": {
+    "id": "createpropulsion:lidar",
+    "count": 1
+  }
+}
