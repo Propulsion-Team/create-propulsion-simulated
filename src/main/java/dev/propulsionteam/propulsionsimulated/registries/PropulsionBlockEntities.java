@@ -1,5 +1,7 @@
 package dev.propulsionteam.propulsionsimulated.registries;
 
+import dev.propulsionteam.propulsionsimulated.content.lidar.LidarBlockEntity;
+
 import dev.propulsionteam.propulsionsimulated.content.thruster.rcs_thruster.RcsThrusterBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.heat.burners.liquid.LiquidBurnerBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.heat.burners.solid.SolidBurnerBlockEntity;
@@ -121,6 +123,9 @@ public class PropulsionBlockEntities {
                 PropulsionBlocks.SYMMETRIC_COPYCAT_WING_8.get(),
                 PropulsionBlocks.SYMMETRIC_COPYCAT_WING_12.get()
             ).build(null));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<LidarBlockEntity>> LIDAR_BLOCK_ENTITY =
+        BLOCK_ENTITY_TYPES.register("lidar_block_entity",
+            () -> BlockEntityType.Builder.of(LidarBlockEntity::new, PropulsionBlocks.LIDAR.get()).build(null));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CoralGeneratorBlockEntity>> CORAL_GENERATOR_BLOCK_ENTITY =
         BLOCK_ENTITY_TYPES.register("coral_generator_block_entity",
             () -> BlockEntityType.Builder.of((pos, state) -> new CoralGeneratorBlockEntity(pos, state), PropulsionBlocks.CORAL_GENERATOR.get()).build(null));

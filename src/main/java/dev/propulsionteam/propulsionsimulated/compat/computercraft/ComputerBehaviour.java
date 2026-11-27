@@ -9,6 +9,7 @@ import java.util.function.Function;
 import javax.annotation.Nullable;
 
 import dev.propulsionteam.propulsionsimulated.content.heat.engine.StirlingEngineBlockEntity;
+import dev.propulsionteam.propulsionsimulated.content.lidar.LidarBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.hydropump.HydropumpBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.platinum.CoralGeneratorBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.redstone_transmission.RedstoneTransmissionBlockEntity;
@@ -49,6 +50,7 @@ public class ComputerBehaviour extends AbstractComputerBehaviour {
         register(CoralGeneratorBlockEntity.class, CoralGeneratorPeripheral::new);
         register(StirlingEngineBlockEntity.class, StirlingEnginePeripheral::new);
         register(RedstoneTransmissionBlockEntity.class, RedstoneTransmissionPeripheral::new);
+        register(LidarBlockEntity.class, LidarPeripheral::new);
     }
 
     public ComputerBehaviour(SmartBlockEntity blockEntity) {

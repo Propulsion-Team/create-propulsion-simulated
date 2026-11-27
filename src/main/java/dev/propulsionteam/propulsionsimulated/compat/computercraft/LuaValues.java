@@ -40,14 +40,18 @@ final class LuaValues {
     }
 
     static Vector3d readVector(IArguments args, int index) throws LuaException {
-        Map<?, ?> table = args.getTable(index);
-        Vector3d v = new Vector3d(number(table, "x", index), number(table, "y", index), number(table, "z", index));
-        if (!v.isFinite()) throw new LuaException("bad argument #" + (index + 1) + " (vector must be finite)");
+        return toVector(args.getTable(index), "argument #" + (index + 1));
+    }
+
+    static Vector3d toVector(Object value, String name) throws LuaException {
+        if (!(value instanceof Map<?, ?> table)) throw new LuaException(name + " must be a vector");
+        Vector3d v = new Vector3d(number(table, "x", name), number(table, "y", name), number(table, "z", name));
+        if (!v.isFinite()) throw new LuaException(name + " must be finite");
         return v;
     }
 
-    private static double number(Map<?, ?> table, String key, int index) throws LuaException {
+    private static double number(Map<?, ?> table, String key, String name) throws LuaException {
         if (table.get(key) instanceof Number n) return n.doubleValue();
-        throw new LuaException("bad argument #" + (index + 1) + " (field '" + key + "' must be a number)");
+        throw new LuaException(name + " field '" + key + "' must be a number");
     }
 }

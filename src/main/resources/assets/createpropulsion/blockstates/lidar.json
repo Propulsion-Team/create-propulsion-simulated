@@ -1,0 +1,30 @@
+{
+  "variants": {
+    "facing=up": {
+      "model": "createpropulsion:block/lidar"
+    },
+    "facing=down": {
+      "model": "createpropulsion:block/lidar",
+      "x": 180
+    },
+    "facing=north": {
+      "model": "createpropulsion:block/lidar",
+      "x": 90
+    },
+    "facing=east": {
+      "model": "createpropulsion:block/lidar",
+      "x": 90,
+      "y": 90
+    },
+    "facing=south": {
+      "model": "createpropulsion:block/lidar",
+      "x": 90,
+      "y": 180
+    },
+    "facing=west": {
+      "model": "createpropulsion:block/lidar",
+      "x": 90,
+      "y": 270
+    }
+  }
+}

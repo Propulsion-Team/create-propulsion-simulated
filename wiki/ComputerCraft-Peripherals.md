@@ -287,3 +287,85 @@ With hydrazine in the tank a nozzle is **boosted** (thrust multiplied by `hydraz
 | `getEnergyAmountFe()` |
 | `getEnergyCapacityFe()` |
 
+---
+
+## Lidar (`lidar`)
+
+A 360° sensor dome: it sees the whole half-sphere above the surface it is mounted on (90° from its axis in every direction), and reports what rays from its sensor hit. Place it against a surface; its axis points away from that surface. Rays start at the sensor face and are measured in world space, so they work from ships, into ships, and between ships.
+
+| Method | Returns | Notes |
+|--------|---------|-------|
+| `raycast([options])` | hit table or `nil` | `nil` when nothing is hit within range. Runs on the server thread |
+| `scan([options])` | list of hit tables | Pulse scan: many rays at once, see [Pulse scan](#pulse-scan). One tick for the whole pulse |
+| `getDirection([frame])` | vector | The sensor axis. Default `"local"` (ship axes); `"world"` for world space |
+| `getMaxRange()` | `number` | Longest allowed ray, `128` blocks |
+| `getMaxAngle()` | `number` | Largest allowed angle between any ray and the sensor axis, `90` degrees (the full dome) |
+| `getMaxScanRays()` | `number` | Most rays one `scan` may fire, `4096` |
+| `getMaxScanRange()` | `number` | Longest `scan` range, `64` blocks (a single `raycast` reaches `128`) |
+
+**Options** (all optional):
+
+| Option | Default | Meaning |
+|--------|---------|---------|
+| `range` | `128` | Ray length in blocks, up to `getMaxRange()` |
+| `direction` | sensor axis | Vector to cast along. Must be within `getMaxAngle()` of the sensor axis |
+| `frame` | `"local"` | Frame of `direction`: `"local"` (ship axes) or `"world"` |
+| `fluids` | `false` | Hit water, lava and other fluids |
+| `nonSolid` | `false` | Hit blocks without collision (grass, flowers, signs) |
+| `seeThrough` | `true` | Hit blocks you can see through (glass, leaves, ice) |
+| `entities` | `true` | Hit mobs and other entities |
+| `players` | `true` | Hit players |
+| `subLevels` | `true` | Hit blocks on other ships |
+| `ownShip` | `false` | Hit blocks on the ship the lidar is mounted on |
+| `blocks` | `true` | Report block hits. `false` reports only entities, players and (in `scan`) whole ships; blocks still block line of sight |
+| `precise` | `true` | Use each block's exact shape. `false` treats every block that counts as a full cube: faster, but slabs, fences and plants report the hit at the edge of their block space |
+| `blockState` | `true` | Include `block.state` in results. `false` returns only `block.id`, which is much cheaper for large scans |
+| `include` | — | List of block ids or `#tags`; only these blocks count as hits |
+| `exclude` | — | List of block ids or `#tags`; the ray passes through these |
+
+**Hit table:**
+
+```lua
+{
+  distance = 12.4,                -- blocks from the sensor face
+  position = {x, y, z},           -- world position of the hit
+  type = "block",                 -- "block" | "subLevel" | "mob" | "player" | "entity"
+  block = { id = "minecraft:stone", state = { ... } },   -- block and subLevel hits; state values are strings
+  entity = { type = "minecraft:player", name = "...", position = {x, y, z} },  -- entity hits; name for players and name-tagged entities, position is the entity's feet
+  subLevel = { id = "...", name = "..." },               -- when the hit block is on a ship
+}
+```
+
+```lua
+local lidar = peripheral.find("lidar")
+local hit = lidar.raycast({ range = 64, entities = false, exclude = { "#minecraft:leaves" } })
+if hit then print(hit.type, ("%.1f"):format(hit.distance)) else print("clear") end
+```
+
+### Pulse scan
+
+`scan([options])` fires a cone of rays in one call and returns everything they hit, nearest first. A block or entity hit by several rays appears once, at its nearest distance. It takes every `raycast` option, plus:
+
+| Option | Default | Meaning |
+|--------|---------|---------|
+| `range` | `64` | How far the rays reach, up to `getMaxScanRange()` |
+| `angle` | `90` | Half-angle of the scanned cone in degrees, up to `getMaxAngle()`. `90` scans the whole dome |
+| `radius` | — | Alternative to `angle` for narrow cones: radius of the scanned circle at `range`, giving a half-angle of `atan(radius / range)`. Ignored when `angle` is set |
+| `rays` | `256` | Number of rays, `1 … 4096`, spread evenly over the circle |
+
+The whole cone must stay within `getMaxAngle()` of the sensor axis, counting `direction` if you aim it off-axis. Rays are spread evenly over the cone's part of the dome. Neighbouring rays end up about `range × √(2π × (1 − cos angle) / rays)` apart at the far end: for the full dome at range 64, that is about 2.5 blocks with 4096 rays.
+
+Blocks are found by sampling, so a block between two rays can be missed; raise `rays` for denser coverage. Entities are not sampled: every entity inside the cone and within range is checked once for line of sight from the sensor, so small or distant entities are found even when no ray would have hit them. An entity counts as visible when the line to its middle, head or feet is clear.
+
+**Target mode.** With `blocks = false`, `scan` fires no sampling rays at all, so `rays` doesn't matter. It only checks targets: every entity and player in the cone (as above), and, with `subLevels = true`, every other ship whose bounding box is in the cone. A ship is aimed at from its centre and eight points around it; the first ray whose first hit is one of that ship's blocks makes it visible. It is reported once, as `type = "subLevel"`, with the block that was hit and the `subLevel` table. This is the cheapest way to look for players, mobs or other ships:
+
+```lua
+local ships = lidar.scan({ range = 64, blocks = false, entities = false, players = false })
+```
+
+```lua
+local hits = lidar.scan({ range = 32, radius = 12, rays = 128, entities = true })
+for _, hit in ipairs(hits) do
+  if hit.type == "player" then print(hit.entity.name, ("%.1f"):format(hit.distance)) end
+end
+```

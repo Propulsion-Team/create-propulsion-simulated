@@ -75,6 +75,7 @@ public class PropulsionCreativeTab {
         registerSectionItem(MAIN_SECTION, "platinum_fluid_vessel", () -> PropulsionBlocks.PLATINUM_FLUID_VESSEL.get().asItem());
         registerSectionItem(MAIN_SECTION, "cable", () -> PropulsionBlocks.FE_CABLE.get().asItem());
         registerSectionItem(MAIN_SECTION, "cable_relay", () -> PropulsionBlocks.CABLE_RELAY.get().asItem());
+        registerSectionItem(MAIN_SECTION, "lidar", () -> PropulsionBlocks.LIDAR.get().asItem());
         registerSectionItem(MAIN_SECTION, "symmetric_copycat_wing", () -> PropulsionBlocks.SYMMETRIC_COPYCAT_WING.get().asItem());
         registerSectionItem(MAIN_SECTION, "copycat_wing", () -> PropulsionBlocks.COPYCAT_WING.get().asItem());
 

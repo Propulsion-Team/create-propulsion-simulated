@@ -1,5 +1,7 @@
 package dev.propulsionteam.propulsionsimulated.registries;
 
+import dev.propulsionteam.propulsionsimulated.content.lidar.LidarBlock;
+
 import dev.propulsionteam.propulsionsimulated.content.thruster.rcs_thruster.SingleRcsThrusterBlock;
 import dev.propulsionteam.propulsionsimulated.content.thruster.rcs_thruster.RcsThrusterBlock;
 import dev.propulsionteam.propulsionsimulated.CreatePropulsion;
@@ -166,6 +168,9 @@ public class PropulsionBlocks {
     public static final DeferredBlock<CableRelayBlock> CABLE_RELAY = BLOCKS.register("cable_relay",
         () -> new CableRelayBlock(Block.Properties.of().mapColor(MapColor.METAL).sound(SoundType.METAL)
             .requiresCorrectToolForDrops().strength(2.5f, 3.5f)));
+    public static final DeferredBlock<LidarBlock> LIDAR = BLOCKS.register("lidar",
+        () -> new LidarBlock(Block.Properties.of().mapColor(MapColor.METAL).sound(SoundType.METAL)
+            .requiresCorrectToolForDrops().strength(2.0f, 3.0f).noOcclusion()));
 
     static {
         registerDefaultBlockItem("platinum_pipe", PLATINUM_PIPE);
@@ -209,6 +214,7 @@ public class PropulsionBlocks {
         registerDefaultBlockItem("cable", FE_CABLE);
         registerDefaultBlockItem("cable_hub", CABLE_HUB);
         registerDefaultBlockItem("cable_relay", CABLE_RELAY);
+        registerDefaultBlockItem("lidar", LIDAR);
 
         PropulsionDefaultStress.setImpact(ResourceLocation.fromNamespaceAndPath(CreatePropulsion.ID, "redstone_transmission"), 0, false);
     }
