@@ -42,6 +42,9 @@ public class RcsThrusterBlockEntity extends SmartBlockEntity implements BlockEnt
     private final int[] wirelessPower = new int[4];
     private final float[] overridePower = {-1, -1, -1, -1};
     private final float[] nozzlePower = new float[4];
+    private final float[] syncedPower = new float[4];
+    private int syncedMask;
+    private long lastSync = Long.MIN_VALUE;
     private double drainAccumulator;
     public AbstractComputerBehaviour computerBehaviour;
     private volatile int activeMask;
@@ -176,10 +179,22 @@ public class RcsThrusterBlockEntity extends SmartBlockEntity implements BlockEnt
             power[i] = level;
             if (level > 0) mask |= 1 << i;
         }
-        boolean changed = mask != activeMask || !java.util.Arrays.equals(power, nozzlePower);
         System.arraycopy(power, 0, nozzlePower, 0, 4);
         activeMask = mask;
-        if (changed) sendData();
+        syncPower();
+    }
+
+    private void syncPower() {
+        long now = level.getGameTime();
+        if (now == lastSync || (activeMask == syncedMask && java.util.Arrays.equals(nozzlePower, syncedPower))) return;
+        float delta = 0;
+        for (int i = 0; i < 4; i++) delta = Math.max(delta, Math.abs(nozzlePower[i] - syncedPower[i]));
+        long wait = activeMask != syncedMask ? 0 : delta > 0.1f ? 2 : 10;
+        if (now - lastSync < wait) return;
+        System.arraycopy(nozzlePower, 0, syncedPower, 0, 4);
+        syncedMask = activeMask;
+        lastSync = now;
+        sendData();
     }
 
     @Override

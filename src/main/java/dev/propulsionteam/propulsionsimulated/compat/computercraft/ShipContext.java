@@ -17,16 +17,27 @@ import org.joml.Quaterniondc;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
 
+import java.util.Map;
+import java.util.WeakHashMap;
+
 final class ShipContext {
+    private static final Map<IComputerSystem, ShipContext> CACHE = new WeakHashMap<>();
+
     final ServerSubLevel subLevel;
     final Pose3dc pose;
     final Quaterniondc orientation;
     @Nullable
     final MassData mass;
     final Vector3dc centerOfMassPlot;
+    private final ServerLevel level;
+    private final BlockPos pos;
+    private final long tick;
 
-    private ShipContext(ServerSubLevel subLevel) {
+    private ShipContext(ServerSubLevel subLevel, ServerLevel level, BlockPos pos) {
         this.subLevel = subLevel;
+        this.level = level;
+        this.pos = pos.immutable();
+        this.tick = level.getGameTime();
         this.pose = subLevel.logicalPose();
         this.orientation = new Quaterniond(pose.orientation()).normalize();
         MassData mass = subLevel.getMassTracker();
@@ -39,8 +50,17 @@ final class ShipContext {
         ServerLevel level = computer.getLevel();
         BlockPos pos = computer.getPosition();
         if (level == null || pos == null) return null;
-        return Sable.HELPER.getContaining(level, pos) instanceof ServerSubLevel ship && !ship.isRemoved()
-            ? new ShipContext(ship) : null;
+        synchronized (CACHE) {
+            ShipContext cached = CACHE.get(computer);
+            if (cached != null && cached.tick == level.getGameTime() && cached.level == level
+                && cached.pos.equals(pos) && !cached.subLevel.isRemoved()) return cached;
+        }
+        if (!(Sable.HELPER.getContaining(level, pos) instanceof ServerSubLevel ship) || ship.isRemoved()) return null;
+        ShipContext context = new ShipContext(ship, level, pos);
+        synchronized (CACHE) {
+            CACHE.put(computer, context);
+        }
+        return context;
     }
 
     Vector3d rotateToWorld(Vector3dc local) {

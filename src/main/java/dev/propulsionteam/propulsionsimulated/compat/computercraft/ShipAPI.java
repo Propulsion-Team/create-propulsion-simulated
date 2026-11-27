@@ -19,6 +19,11 @@ import java.util.Optional;
 
 public class ShipAPI implements ILuaAPI {
     private final IComputerSystem computer;
+    @Nullable
+    private BlockPos facingPos;
+    @Nullable
+    private Direction facing;
+    private long facingTick;
 
     public ShipAPI(IComputerSystem computer) {
         this.computer = computer;
@@ -47,9 +52,8 @@ public class ShipAPI implements ILuaAPI {
 
     @Nullable
     private Map<String, Object> computerAxes(ShipContext ship, Frame frame) {
-        BlockState state = computer.getLevel().getBlockState(computer.getPosition());
-        if (!state.hasProperty(BlockStateProperties.HORIZONTAL_FACING)) return null;
-        Direction facing = state.getValue(BlockStateProperties.HORIZONTAL_FACING);
+        Direction facing = facing();
+        if (facing == null) return null;
         Vector3d forward = new Vector3d(facing.getStepX(), 0, facing.getStepZ());
         Vector3d up = new Vector3d(0, 1, 0);
         Vector3d right = forward.cross(up, new Vector3d());
@@ -59,6 +63,20 @@ public class ShipAPI implements ILuaAPI {
             right = ship.rotateToWorld(right);
         }
         return Map.of("right", LuaValues.vector(right), "up", LuaValues.vector(up), "forward", LuaValues.vector(forward));
+    }
+
+    @Nullable
+    private Direction facing() {
+        BlockPos pos = computer.getPosition();
+        long now = computer.getLevel().getGameTime();
+        if (!pos.equals(facingPos) || now - facingTick >= 20) {
+            BlockState state = computer.getLevel().getBlockState(pos);
+            facing = state.hasProperty(BlockStateProperties.HORIZONTAL_FACING)
+                ? state.getValue(BlockStateProperties.HORIZONTAL_FACING) : null;
+            facingPos = pos.immutable();
+            facingTick = now;
+        }
+        return facing;
     }
 
     @LuaFunction(mainThread = true)
