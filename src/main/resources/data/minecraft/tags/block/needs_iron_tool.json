@@ -19,6 +19,15 @@
     "createpropulsion:barred_platinum_casing",
     "createpropulsion:reinforced_platinum_casing",
     "createpropulsion:single_rcs_thruster",
-    "createpropulsion:rcs_thruster"
+    "createpropulsion:rcs_thruster",
+    "createpropulsion:creative_thruster",
+    "createpropulsion:ion_thruster",
+    "createpropulsion:redstone_transmission",
+    "createpropulsion:hydropump",
+    "createpropulsion:platinum_fluid_tank",
+    "createpropulsion:platinum_pipe",
+    "createpropulsion:glass_platinum_pipe",
+    "createpropulsion:platinum_fluid_vessel",
+    "createpropulsion:cable_relay"
   ]
 }
