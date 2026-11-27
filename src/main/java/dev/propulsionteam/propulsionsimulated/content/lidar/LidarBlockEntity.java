@@ -33,10 +33,18 @@ public class LidarBlockEntity extends SmartBlockEntity {
 
     @Nullable
     public LidarRaycast.Hit raycast(LidarRaycast.Options options) {
-        return level == null ? null : LidarRaycast.cast(level, worldPosition, getFacing(), options);
+        if (level == null) return null;
+        LidarDebug.Trace trace = LidarDebug.start(level);
+        LidarRaycast.Hit hit = LidarRaycast.cast(level, worldPosition, getFacing(), options, trace);
+        LidarDebug.send(level, worldPosition, trace);
+        return hit;
     }
 
     public List<LidarRaycast.Hit> scan(LidarRaycast.Options options, double spreadRadians, int rays) {
-        return level == null ? List.of() : LidarRaycast.scan(level, worldPosition, getFacing(), options, spreadRadians, rays);
+        if (level == null) return List.of();
+        LidarDebug.Trace trace = LidarDebug.start(level);
+        List<LidarRaycast.Hit> hits = LidarRaycast.scan(level, worldPosition, getFacing(), options, spreadRadians, rays, trace);
+        LidarDebug.send(level, worldPosition, trace);
+        return hits;
     }
 }

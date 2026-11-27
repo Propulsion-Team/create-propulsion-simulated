@@ -123,6 +123,7 @@ public class PropulsionConfig {
     public static final ModConfigSpec.DoubleValue STIRLING_CONROD_LENGTH;
 
     public static final ModConfigSpec.BooleanValue DEBUG_THRUSTER;
+    public static final ModConfigSpec.BooleanValue DEBUG_LIDAR;
 
     static {
         //#region Common (server)
@@ -418,6 +419,8 @@ public class PropulsionConfig {
         CLIENT_BUILDER.comment("Debug overlays.").push("debug");
         DEBUG_THRUSTER = CLIENT_BUILDER.comment("Render thruster debug overlays (plume ray, obstruction hits, damage zones).")
                 .define("thruster", false);
+        DEBUG_LIDAR = CLIENT_BUILDER.comment("Render lidar rays. Red: block, magenta: ship, yellow: entity, cyan: nothing hit.")
+                .define("lidar", false);
         CLIENT_BUILDER.pop();
 
         CLIENT_SPEC = CLIENT_BUILDER.build();

@@ -77,8 +77,8 @@ public final class LidarRaycast {
     }
 
     @Nullable
-    public static Hit cast(Level level, BlockPos pos, Direction facing, Options options) {
-        Scanner scanner = new Scanner(level, pos, facing, options);
+    public static Hit cast(Level level, BlockPos pos, Direction facing, Options options, @Nullable LidarDebug.Trace trace) {
+        Scanner scanner = new Scanner(level, pos, facing, options, trace);
         Vector3d direction = scanner.toWorld(scanner.center());
         Hit best = options.blocks() ? scanner.blocks(direction, options.range()) : null;
         if (options.anyEntities()) {
@@ -94,6 +94,7 @@ public final class LidarRaycast {
                     best = new Hit(distance, point.get(), null, null, entity, null, false);
                 }
             }
+            if (best != null && best.entity() != null) scanner.log(best.position(), LidarDebug.ENTITY);
         }
         return best;
     }
@@ -103,8 +104,8 @@ public final class LidarRaycast {
     }
 
     public static List<Hit> scan(Level level, BlockPos pos, Direction facing, Options options,
-                                 double spreadRadians, int rays) {
-        Scanner scanner = new Scanner(level, pos, facing, options);
+                                 double spreadRadians, int rays, @Nullable LidarDebug.Trace trace) {
+        Scanner scanner = new Scanner(level, pos, facing, options, trace);
         Vector3d center = scanner.center();
         Vector3d helper = Math.abs(center.y) < 0.9 ? new Vector3d(0, 1, 0) : new Vector3d(1, 0, 0);
         Vector3d side1 = center.cross(helper, new Vector3d()).normalize();
@@ -138,6 +139,7 @@ public final class LidarRaycast {
                     Vec3 point = box.contains(start) ? start : box.clip(start, sample).orElse(sample);
                     double distance = start.distanceTo(point);
                     if (scanner.blocks(direction, distance) == null) {
+                        scanner.log(point, LidarDebug.ENTITY);
                         keepNearest(nearest, new Hit(distance, point, null, null, entity, null, false));
                         break;
                     }
@@ -205,9 +207,12 @@ public final class LidarRaycast {
         final BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
         final int minY;
         final int maxY;
+        @Nullable
+        final LidarDebug.Trace trace;
 
-        Scanner(Level level, BlockPos pos, Direction facing, Options options) {
+        Scanner(Level level, BlockPos pos, Direction facing, Options options, @Nullable LidarDebug.Trace trace) {
             this.level = level;
+            this.trace = trace;
             this.self = pos;
             this.options = options;
             this.normal = normal(facing);
@@ -259,7 +264,16 @@ public final class LidarRaycast {
                 Hit hit = walk(ship, origin, localDirection, scale, span[0], (span[1] - span[0]) * scale);
                 if (hit != null && (best == null || hit.distance() < best.distance())) best = hit;
             }
+            if (trace != null) {
+                double length = best != null ? best.distance() : range;
+                trace.add(startVec(), start.x + direction.x * length, start.y + direction.y * length,
+                    start.z + direction.z * length, best == null ? LidarDebug.MISS : best.subLevel() != null ? LidarDebug.SHIP : LidarDebug.BLOCK);
+            }
             return best;
+        }
+
+        void log(Vec3 point, byte kind) {
+            if (trace != null) trace.add(startVec(), point.x, point.y, point.z, kind);
         }
 
         @Nullable

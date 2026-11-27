@@ -2,6 +2,7 @@ package dev.propulsionteam.propulsionsimulated.client;
 
 import dev.propulsionteam.propulsionsimulated.CreatePropulsion;
 import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
+import dev.propulsionteam.propulsionsimulated.network.LidarDebugViewPacket;
 import dev.propulsionteam.propulsionsimulated.network.PlumeRenderModePacket;
 
 import net.minecraft.client.Minecraft;
@@ -12,7 +13,7 @@ import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
-/** Tells the server this client's plume render mode on join and whenever the client config changes. */
+/** Tells the server this client's plume render mode and lidar debug setting on join and whenever the client config changes. */
 @EventBusSubscriber(modid = CreatePropulsion.ID, value = Dist.CLIENT)
 public final class PlumeRenderModeSync {
     private PlumeRenderModeSync() {}
@@ -34,5 +35,6 @@ public final class PlumeRenderModeSync {
             return;
         }
         PacketDistributor.sendToServer(new PlumeRenderModePacket(PropulsionConfig.useShaderPlumes()));
+        PacketDistributor.sendToServer(new LidarDebugViewPacket(PropulsionConfig.DEBUG_LIDAR.get()));
     }
 }

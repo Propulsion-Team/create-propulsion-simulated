@@ -8,7 +8,7 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 public class PropulsionPackets {
-    private static final String NETWORK_PROTOCOL_VERSION = "3";
+    private static final String NETWORK_PROTOCOL_VERSION = "4";
 
     public static void register(RegisterPayloadHandlersEvent event) {
         PayloadRegistrar registrar = event.registrar(NETWORK_PROTOCOL_VERSION);
@@ -26,6 +26,16 @@ public class PropulsionPackets {
             PlumeRenderModePacket.TYPE,
             PlumeRenderModePacket.STREAM_CODEC,
             PlumeRenderModePacket::handle
+        );
+        registrar.playToServer(
+            LidarDebugViewPacket.TYPE,
+            LidarDebugViewPacket.STREAM_CODEC,
+            LidarDebugViewPacket::handle
+        );
+        registrar.playToClient(
+            LidarDebugPacket.TYPE,
+            LidarDebugPacket.STREAM_CODEC,
+            LidarDebugPacket::handle
         );
     }
 

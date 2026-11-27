@@ -368,3 +368,16 @@ for _, hit in ipairs(hits) do
   if hit.type == "player" then print(hit.entity.name, ("%.1f"):format(hit.distance)) end
 end
 ```
+
+### Debug view
+
+Set `lidar = true` under `[debug]` in the client config (`createpropulsion-client.toml`) to see every ray the lidar casts, for 4 ticks after each call. Only players with the option on receive the rays, and only within 128 blocks of the lidar.
+
+| Colour | Meaning |
+|--------|---------|
+| Red | Hit a block |
+| Magenta | Hit a ship block |
+| Yellow | Hit an entity or player |
+| Cyan | Hit nothing within range |
+
+Hits also get a small cross at the hit point. In target mode you see only the line-of-sight checks, not a full cone.
