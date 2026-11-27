@@ -36,8 +36,7 @@ import java.util.Optional;
 import java.util.function.Predicate;
 
 public final class LidarRaycast {
-    public static final double MAX_RANGE = 128.0;
-    public static final double MAX_SCAN_RANGE = 64.0;
+    public static final double MAX_RANGE = 64.0;
     public static final double MAX_ANGLE_DEGREES = 90.0;
     public static final int MAX_SCAN_RAYS = 4096;
     private static final double SENSOR_FACE_OFFSET = 6.0 / 16.0 - 0.5 + 0.01;

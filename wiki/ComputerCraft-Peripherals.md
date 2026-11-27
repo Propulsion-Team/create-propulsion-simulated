@@ -298,16 +298,15 @@ A 360° sensor dome: it sees the whole half-sphere above the surface it is mount
 | `raycast([options])` | hit table or `nil` | `nil` when nothing is hit within range. Runs on the server thread |
 | `scan([options])` | list of hit tables | Pulse scan: many rays at once, see [Pulse scan](#pulse-scan). One tick for the whole pulse |
 | `getDirection([frame])` | vector | The sensor axis. Default `"local"` (ship axes); `"world"` for world space |
-| `getMaxRange()` | `number` | Longest allowed ray, `128` blocks |
+| `getMaxRange()` | `number` | Longest allowed ray or scan, `64` blocks |
 | `getMaxAngle()` | `number` | Largest allowed angle between any ray and the sensor axis, `90` degrees (the full dome) |
 | `getMaxScanRays()` | `number` | Most rays one `scan` may fire, `4096` |
-| `getMaxScanRange()` | `number` | Longest `scan` range, `64` blocks (a single `raycast` reaches `128`) |
 
 **Options** (all optional):
 
 | Option | Default | Meaning |
 |--------|---------|---------|
-| `range` | `128` | Ray length in blocks, up to `getMaxRange()` |
+| `range` | `64` | Ray length in blocks, up to `getMaxRange()` |
 | `direction` | sensor axis | Vector to cast along. Must be within `getMaxAngle()` of the sensor axis |
 | `frame` | `"local"` | Frame of `direction`: `"local"` (ship axes) or `"world"` |
 | `fluids` | `false` | Hit water, lava and other fluids |
@@ -348,7 +347,7 @@ if hit then print(hit.type, ("%.1f"):format(hit.distance)) else print("clear") e
 
 | Option | Default | Meaning |
 |--------|---------|---------|
-| `range` | `64` | How far the rays reach, up to `getMaxScanRange()` |
+| `range` | `64` | How far the rays reach, up to `getMaxRange()` |
 | `angle` | `90` | Half-angle of the scanned cone in degrees, up to `getMaxAngle()`. `90` scans the whole dome |
 | `radius` | — | Alternative to `angle` for narrow cones: radius of the scanned circle at `range`, giving a half-angle of `atan(radius / range)`. Ignored when `angle` is set |
 | `rays` | `256` | Number of rays, `1 … 4096`, spread evenly over the circle |

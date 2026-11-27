@@ -68,22 +68,17 @@ public class LidarPeripheral implements IPeripheral {
         return LidarRaycast.MAX_SCAN_RAYS;
     }
 
-    @LuaFunction
-    public final double getMaxScanRange() {
-        return LidarRaycast.MAX_SCAN_RANGE;
-    }
-
     @LuaFunction(mainThread = true)
     public final Object raycast(Optional<Map<?, ?>> options) throws LuaException {
         Map<?, ?> table = options.orElse(Map.of());
-        LidarRaycast.Hit hit = lidar.raycast(parse(table, 0.0, LidarRaycast.MAX_RANGE));
+        LidarRaycast.Hit hit = lidar.raycast(parse(table, 0.0));
         return hit == null ? null : describe(hit, flag(table, "blockState", true));
     }
 
     @LuaFunction(mainThread = true)
     public final List<Map<String, Object>> scan(Optional<Map<?, ?>> options) throws LuaException {
         Map<?, ?> table = options.orElse(Map.of());
-        double range = number(table, "range", LidarRaycast.MAX_SCAN_RANGE);
+        double range = number(table, "range", LidarRaycast.MAX_RANGE);
         double spread;
         if (table.get("angle") != null) {
             double angle = number(table, "angle", LidarRaycast.MAX_ANGLE_DEGREES);
@@ -100,7 +95,7 @@ public class LidarPeripheral implements IPeripheral {
         if (rays < 1 || rays > LidarRaycast.MAX_SCAN_RAYS) {
             throw new LuaException("rays must be between 1 and " + LidarRaycast.MAX_SCAN_RAYS);
         }
-        LidarRaycast.Options parsed = parse(table, spread, LidarRaycast.MAX_SCAN_RANGE);
+        LidarRaycast.Options parsed = parse(table, spread);
         boolean blockState = flag(table, "blockState", true);
         List<Map<String, Object>> out = new ArrayList<>();
         for (LidarRaycast.Hit hit : lidar.scan(parsed, spread, rays)) out.add(describe(hit, blockState));
@@ -112,11 +107,11 @@ public class LidarPeripheral implements IPeripheral {
         return ship != null ? new Quaterniond(ship.logicalPose().orientation()) : new Quaterniond();
     }
 
-    private LidarRaycast.Options parse(Map<?, ?> table, double spreadRadians, double maxRange) throws LuaException {
+    private LidarRaycast.Options parse(Map<?, ?> table, double spreadRadians) throws LuaException {
         LidarRaycast.Options d = LidarRaycast.Options.defaults();
-        double range = number(table, "range", maxRange);
-        if (!(range > 0 && range <= maxRange)) {
-            throw new LuaException("range must be between 0 and " + maxRange);
+        double range = number(table, "range", LidarRaycast.MAX_RANGE);
+        if (!(range > 0 && range <= LidarRaycast.MAX_RANGE)) {
+            throw new LuaException("range must be between 0 and " + LidarRaycast.MAX_RANGE);
         }
 
         Vector3d direction = null;
