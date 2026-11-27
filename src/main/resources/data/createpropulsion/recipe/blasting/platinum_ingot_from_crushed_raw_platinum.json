@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:blasting",
+  "ingredient": {
+    "item": "createpropulsion:crushed_raw_platinum"
+  },
+  "result": {
+    "id": "createpropulsion:platinum_ingot"
+  },
+  "experience": 0.7,
+  "cookingtime": 100
+}
