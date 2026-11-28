@@ -3,6 +3,7 @@ package dev.propulsionteam.propulsionsimulated.mixin;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.simibubi.create.content.contraptions.bearing.BearingContraption;
 import dev.propulsionteam.propulsionsimulated.content.wing.CopycatWingBlock;
+import dev.propulsionteam.propulsionsimulated.content.wing.SymCopycatWingBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -28,6 +29,7 @@ public class BearingContraptionMixin {
         Pair<StructureBlockInfo, BlockEntity> capture
     ) {
         BlockState capturedState = capture.getLeft().state();
-        return original || capturedState.getBlock() instanceof CopycatWingBlock;
+        return original || capturedState.getBlock() instanceof CopycatWingBlock
+            || capturedState.getBlock() instanceof SymCopycatWingBlock;
     }
 }
