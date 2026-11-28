@@ -36,7 +36,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
 public class LidarBlockEntity extends SmartBlockEntity implements MenuProvider {
-    public static final int FILTER_SLOTS = 14;
+    public static final int FILTER_SLOTS = 18;
+    public static final int MAX_RANGE = (int) LidarRaycast.MAX_RANGE;
+    public static final int DEFAULT_RANGE = 32;
 
     public AbstractComputerBehaviour computerBehaviour;
 
@@ -44,6 +46,7 @@ public class LidarBlockEntity extends SmartBlockEntity implements MenuProvider {
     private boolean exclude;
     private boolean binary;
     private boolean inverted;
+    private int range = DEFAULT_RANGE;
     private final ItemStackHandler filter = new ItemStackHandler(FILTER_SLOTS);
     private int signal;
 
@@ -94,17 +97,17 @@ public class LidarBlockEntity extends SmartBlockEntity implements MenuProvider {
     private int computeSignal() {
         boolean anything = LidarDetection.BLOCKS.in(detection) || LidarDetection.ENTITIES.in(detection)
             || LidarDetection.PLAYERS.in(detection);
-        LidarRaycast.Hit hit = anything ? raycast(redstoneOptions()) : null;
+        LidarRaycast.Hit hit = anything && range > 0 ? raycast(redstoneOptions()) : null;
         int strength;
         if (hit == null) strength = 0;
         else if (binary) strength = 15;
-        else strength = Mth.clamp(15 - (int) (15 * hit.distance() / LidarRaycast.MAX_RANGE), 1, 15);
+        else strength = Mth.clamp(15 - (int) (15 * hit.distance() / range), 1, 15);
         return inverted ? 15 - strength : strength;
     }
 
     private LidarRaycast.Options redstoneOptions() {
         Predicate<BlockState> matches = hasFilter() ? this::matchesFilter : null;
-        return new LidarRaycast.Options(LidarRaycast.MAX_RANGE, null,
+        return new LidarRaycast.Options(range, null,
             LidarDetection.FLUIDS.in(detection), LidarDetection.NON_SOLID.in(detection),
             LidarDetection.SEE_THROUGH.in(detection), LidarDetection.ENTITIES.in(detection),
             LidarDetection.PLAYERS.in(detection), LidarDetection.SHIPS.in(detection),
@@ -171,7 +174,12 @@ public class LidarBlockEntity extends SmartBlockEntity implements MenuProvider {
         return filter.getStackInSlot(slot);
     }
 
-    public void applySettings(int detection, boolean exclude, boolean binary, boolean inverted) {
+    public int getRange() {
+        return range;
+    }
+
+    public void applySettings(int detection, boolean exclude, boolean binary, boolean inverted, int range) {
+        this.range = Mth.clamp(range, 0, MAX_RANGE);
         this.detection = detection & LidarDetection.ALL;
         this.exclude = exclude;
         this.binary = binary;
@@ -194,6 +202,7 @@ public class LidarBlockEntity extends SmartBlockEntity implements MenuProvider {
         tag.putBoolean("Exclude", exclude);
         tag.putBoolean("Binary", binary);
         tag.putBoolean("Inverted", inverted);
+        tag.putInt("Range", range);
         tag.putInt("Signal", signal);
         tag.put("Filter", filter.serializeNBT(registries));
     }
@@ -205,6 +214,7 @@ public class LidarBlockEntity extends SmartBlockEntity implements MenuProvider {
         exclude = tag.getBoolean("Exclude");
         binary = tag.getBoolean("Binary");
         inverted = tag.getBoolean("Inverted");
+        range = tag.contains("Range") ? Mth.clamp(tag.getInt("Range"), 0, MAX_RANGE) : DEFAULT_RANGE;
         signal = Mth.clamp(tag.getInt("Signal"), 0, 15);
         if (tag.contains("Filter")) {
             ItemStackHandler loaded = new ItemStackHandler(FILTER_SLOTS);

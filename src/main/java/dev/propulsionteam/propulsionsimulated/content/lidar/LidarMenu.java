@@ -14,8 +14,8 @@ import net.neoforged.neoforge.items.ItemStackHandler;
 import net.neoforged.neoforge.items.SlotItemHandler;
 
 public class LidarMenu extends GhostItemMenu<LidarBlockEntity> {
-    public static final int FILTER_X = 77, FILTER_Y = 78, FILTER_COLUMNS = 7, FILTER_STEP_X = 18, FILTER_STEP_Y = 19;
-    public static final int INVENTORY_X = 33, INVENTORY_Y = 172;
+    public static final int FILTER_X = 12, FILTER_Y = 93, FILTER_COLUMNS = 9, FILTER_STEP_X = 18, FILTER_STEP_Y = 18;
+    public static final int INVENTORY_X = 33, INVENTORY_Y = 179;
 
     public LidarMenu(MenuType<?> type, int id, Inventory inv, RegistryFriendlyByteBuf extraData) {
         super(type, id, inv, extraData);

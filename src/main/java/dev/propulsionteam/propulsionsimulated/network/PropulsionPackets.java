@@ -8,7 +8,7 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 public class PropulsionPackets {
-    private static final String NETWORK_PROTOCOL_VERSION = "5";
+    private static final String NETWORK_PROTOCOL_VERSION = "6";
 
     public static void register(RegisterPayloadHandlersEvent event) {
         PayloadRegistrar registrar = event.registrar(NETWORK_PROTOCOL_VERSION);
