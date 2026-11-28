@@ -10,6 +10,7 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -107,16 +108,17 @@ public final class LidarRaycast {
     public static Hit cast(Level level, BlockPos pos, Direction facing, Options options, @Nullable LidarDebug.Trace trace) {
         Scene scene = new Scene(level, pos, facing, options, trace, false);
         Vector3d direction = scene.toWorld(scene.center());
-        Hit best = options.blocks() ? scene.blocks(direction, options.range()) : null;
+        Hit wall = scene.blocks(direction, options.range());
+        Hit best = scene.accept(wall);
         if (options.anyEntities()) {
             Vec3 start = scene.startVec();
             Vec3 end = start.add(direction.x * options.range(), direction.y * options.range(), direction.z * options.range());
-            double limit = best != null ? best.distance() : options.range();
+            double limit = wall != null ? wall.distance() : options.range();
             for (Target target : targets(level, new AABB(start, end).inflate(1.0), options)) {
                 Optional<Vec3> point = target.box().clip(start, end);
                 if (point.isEmpty()) continue;
                 double distance = start.distanceTo(point.get());
-                if (distance < limit && (options.blocks() || scene.blocks(dirTo(start, point.get()), distance) == null)) {
+                if (distance < limit) {
                     limit = distance;
                     best = new Hit(distance, point.get(), null, null, target.info(), null, false);
                 }
@@ -146,10 +148,6 @@ public final class LidarRaycast {
             hits.sort(Comparator.comparingDouble(Hit::distance));
             return hits;
         });
-    }
-
-    private static Vector3d dirTo(Vec3 from, Vec3 to) {
-        return new Vector3d(to.x - from.x, to.y - from.y, to.z - from.z).normalize();
     }
 
     @Nullable
@@ -233,7 +231,7 @@ public final class LidarRaycast {
             Ship ownShip = null;
             for (SubLevel ship : Sable.HELPER.getAllIntersecting(level, area)) {
                 boolean mine = ship == ownLevel;
-                if (ship.isRemoved() || !(mine ? options.ownShip() : options.subLevels())) continue;
+                if (ship.isRemoved() || mine && !options.ownShip()) continue;
                 Pose3dc pose = mine ? ownPose : new Pose3d(ship.logicalPose());
                 BoundingBox3d box = new BoundingBox3d(ship.boundingBox());
                 Long2ObjectOpenHashMap<LevelChunk> chunks = new Long2ObjectOpenHashMap<>();
@@ -299,7 +297,7 @@ public final class LidarRaycast {
                 Vector3d local = new Vector3d(center).mul(cos)
                     .fma(sin * Math.cos(azimuth), side1)
                     .fma(sin * Math.sin(azimuth), side2);
-                keepNearest(nearest, blocks(toWorld(local), options.range()));
+                keepNearest(nearest, accept(blocks(toWorld(local), options.range())));
             }
             return nearest;
         }
@@ -369,6 +367,18 @@ public final class LidarRaycast {
                     start.z + direction.z * length, best == null ? LidarDebug.MISS : best.subLevel() != null ? LidarDebug.SHIP : LidarDebug.BLOCK);
             }
             return best;
+        }
+
+        @Nullable
+        Hit accept(@Nullable Hit hit) {
+            if (hit == null || hit.state() == null) return hit;
+            boolean other = hit.subLevel() != null && (own == null || hit.subLevel() != own.subLevel());
+            if (other && !options.subLevels()) return null;
+            if (!options.blocks()) return other ? hit.asShip() : null;
+            if (!options.fluids() && hit.state().getBlock() instanceof LiquidBlock) return null;
+            if (options.exclude() != null && options.exclude().test(hit.state())) return null;
+            if (options.include() != null && !options.include().test(hit.state())) return null;
+            return hit;
         }
 
         void log(Vec3 point, byte kind) {
@@ -456,10 +466,8 @@ public final class LidarRaycast {
 
         private VoxelShape computeShape(BlockState state) {
             if (!options.seeThrough() && !state.canOcclude()) return Shapes.empty();
-            if (options.exclude() != null && options.exclude().test(state)) return Shapes.empty();
-            if (options.include() != null && !options.include().test(state)) return Shapes.empty();
             FluidState fluid = state.getFluidState();
-            VoxelShape fluidShape = options.fluids() && !fluid.isEmpty()
+            VoxelShape fluidShape = !fluid.isEmpty() && (options.fluids() || fluid.is(FluidTags.LAVA))
                 ? Block.box(0, 0, 0, 16, Math.max(1, fluid.getOwnHeight() * 16), 16) : Shapes.empty();
             if (state.getBlock() instanceof LiquidBlock) return fluidShape;
             VoxelShape shape = options.nonSolid()

@@ -96,7 +96,7 @@ public class LidarBlockEntity extends SmartBlockEntity implements MenuProvider {
 
     private int computeSignal() {
         boolean anything = LidarDetection.BLOCKS.in(detection) || LidarDetection.ENTITIES.in(detection)
-            || LidarDetection.PLAYERS.in(detection);
+            || LidarDetection.PLAYERS.in(detection) || LidarDetection.SHIPS.in(detection);
         LidarRaycast.Hit hit = anything && range > 0 ? raycast(redstoneOptions()) : null;
         int strength;
         if (hit == null) strength = 0;

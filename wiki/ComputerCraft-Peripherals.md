@@ -295,9 +295,9 @@ A 360° sensor dome: it sees the whole half-sphere above the surface it is mount
 
 The lidar also works without a computer. Every tick it casts one ray straight along its axis and outputs redstone on every side except its sensor face. Right-click it with an empty hand to open its screen:
 
-- **Detection toggles**: which targets the ray hits: blocks, fluids, non-solid blocks, see-through blocks, mobs, players, other ships, its own ship, and precise block shapes. They match the `raycast` options of the same names.
+- **Detection toggles**: which targets give a signal: blocks, fluids, non-solid blocks, see-through blocks, mobs, players, other ships, its own ship, and precise block shapes. They match the `raycast` options of the same names.
 - **Range slider**: how far the ray reaches, 0 to 64 blocks (default 32). Drag the knob or scroll over it; hold Shift to scroll 8 at a time.
-- **Block filter**: up to 18 blocks, buckets or Create filters. **Include** hits only the listed blocks; **Exclude** ignores them. An empty filter matches every block.
+- **Block filter**: up to 18 blocks, buckets or Create filters, checked against the first block the ray hits. **Include** signals only when that block is listed; **Exclude** signals only when it is not. An empty filter matches every block.
 - **Analog / Binary**: analog outputs 15 for a hit right at the sensor, falling to 1 at the set range; binary outputs 15 for any hit.
 - **Invert**: outputs `15 − signal`, so the output is strongest when nothing is hit.
 
@@ -319,18 +319,18 @@ These settings only drive the redstone output. `raycast` and `scan` use the opti
 | `range` | `64` | Ray length in blocks, up to `getMaxRange()` |
 | `direction` | sensor axis | Vector to cast along. Must be within `getMaxAngle()` of the sensor axis |
 | `frame` | `"local"` | Frame of `direction`: `"local"` (ship axes) or `"world"` |
-| `fluids` | `false` | Hit water, lava and other fluids |
+| `fluids` | `false` | Hit water and other fluids. When `false` the ray passes through them, except lava, which always stops it and then counts as no hit |
 | `nonSolid` | `false` | Hit blocks without collision (grass, flowers, signs) |
 | `seeThrough` | `true` | Hit blocks you can see through (glass, leaves, ice) |
 | `entities` | `true` | Hit mobs and other entities |
 | `players` | `true` | Hit players |
-| `subLevels` | `true` | Hit blocks on other ships |
+| `subLevels` | `true` | Hit blocks on other ships. When `false` other ships still stop the ray, and that counts as no hit |
 | `ownShip` | `false` | Hit blocks on the ship the lidar is mounted on |
-| `blocks` | `true` | Report block hits. `false` reports only entities, players and (in `scan`) whole ships; blocks still block line of sight |
+| `blocks` | `true` | Report block hits. `false` reports only entities, players and whole ships; blocks still block line of sight |
 | `precise` | `true` | Use each block's exact shape. `false` treats every block that counts as a full cube: faster, but slabs, fences and plants report the hit at the edge of their block space |
 | `blockState` | `true` | Include `block.state` in results. `false` returns only `block.id`, which is much cheaper for large scans |
-| `include` | — | List of block ids or `#tags`; only these blocks count as hits. At most 256 entries |
-| `exclude` | — | List of block ids or `#tags`; the ray passes through these. At most 256 entries |
+| `include` | — | List of block ids or `#tags`. A ray whose first block is not listed counts as no hit. At most 256 entries |
+| `exclude` | — | List of block ids or `#tags`. A ray whose first block is listed counts as no hit. At most 256 entries |
 
 **Hit table:**
 
@@ -347,7 +347,7 @@ These settings only drive the redstone output. `raycast` and `scan` use the opti
 
 ```lua
 local lidar = peripheral.find("lidar")
-local hit = lidar.raycast({ range = 64, entities = false, exclude = { "#minecraft:leaves" } })
+local hit = lidar.raycast({ range = 64, entities = false, exclude = { "#minecraft:logs" } })
 if hit then print(hit.type, ("%.1f"):format(hit.distance)) else print("clear") end
 ```
 
