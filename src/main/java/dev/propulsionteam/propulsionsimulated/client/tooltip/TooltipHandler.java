@@ -51,12 +51,20 @@ public final class TooltipHandler {
     }
 
     public static void wrapShiftHoldText(final List<Component> tooltipList, final String langKey, final Runnable addDetailedContent) {
-        final boolean isShiftDown = Screen.hasShiftDown();
-        final Component keyComponent = Component.translatable("create.tooltip.keyShift")
-                .withStyle(isShiftDown ? ChatFormatting.WHITE : ChatFormatting.GRAY);
+        wrapHoldText(tooltipList, langKey, "create.tooltip.keyShift", Screen.hasShiftDown(), addDetailedContent);
+    }
+
+    public static void wrapAltHoldText(final List<Component> tooltipList, final String langKey, final Runnable addDetailedContent) {
+        wrapHoldText(tooltipList, langKey, "createpropulsion.tooltip.keyAlt", Screen.hasAltDown(), addDetailedContent);
+    }
+
+    private static void wrapHoldText(final List<Component> tooltipList, final String langKey, final String keyLangKey,
+                                     final boolean isKeyDown, final Runnable addDetailedContent) {
+        final Component keyComponent = Component.translatable(keyLangKey)
+                .withStyle(isKeyDown ? ChatFormatting.WHITE : ChatFormatting.GRAY);
         tooltipList.add(Component.translatable(langKey, keyComponent).withStyle(ChatFormatting.DARK_GRAY));
 
-        if (isShiftDown) {
+        if (isKeyDown) {
             tooltipList.add(Component.empty());
             addDetailedContent.run();
         }

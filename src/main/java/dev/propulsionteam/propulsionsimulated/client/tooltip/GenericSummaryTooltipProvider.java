@@ -47,6 +47,7 @@ public final class GenericSummaryTooltipProvider implements ITooltipProvider {
                     Component.translatable(finalSummaryKey).getString(),
                     Palette.STANDARD_CREATE
             ));
+            tooltipList.add(Component.empty());
         });
     }
 }

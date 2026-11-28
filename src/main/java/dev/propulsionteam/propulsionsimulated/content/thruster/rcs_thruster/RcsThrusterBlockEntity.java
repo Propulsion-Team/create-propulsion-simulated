@@ -88,6 +88,10 @@ public class RcsThrusterBlockEntity extends SmartBlockEntity implements BlockEnt
         activeMask = clamped > 0 ? (1 << links.length) - 1 : 0;
     }
 
+    public void applyBoostForScene(boolean boost) {
+        hydrazineBoost = boost;
+    }
+
     public void applyNozzlePowerForScene(int nozzle, float power) {
         if (nozzle < 0 || nozzle >= links.length) return;
         float clamped = Math.max(0f, Math.min(1f, power));

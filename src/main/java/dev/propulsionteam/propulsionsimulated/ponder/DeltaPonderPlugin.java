@@ -43,12 +43,17 @@ public class DeltaPonderPlugin implements PonderPlugin {
         //Hydropump
         HELPER.forComponents(PropulsionBlocks.HYDROPUMP.get())
                 .addStoryBoard("hydropump", HydropumpScenes::hydropump);
+        //Lidar
+        HELPER.forComponents(PropulsionBlocks.LIDAR.get())
+                .addStoryBoard("lidar", LidarScenes::lidar);
         //Full RCS Thruster
         HELPER.forComponents(PropulsionBlocks.RCS_THRUSTER_BLOCK.get())
-                .addStoryBoard("rcs_thruster", RcsThrusterScenes::quadRcs);
+                .addStoryBoard("rcs_thruster", RcsThrusterScenes::quadRcs)
+                .addStoryBoard("rcs_thruster_hydrazine", RcsThrusterScenes::quadRcsHydrazine);
         //Single RCS Thruster
         HELPER.forComponents(PropulsionBlocks.SINGLE_RCS_THRUSTER_BLOCK.get())
-                .addStoryBoard("single_rcs_thruster", RcsThrusterScenes::singleRcs);
+                .addStoryBoard("single_rcs_thruster", RcsThrusterScenes::singleRcs)
+                .addStoryBoard("single_rcs_thruster_hydrazine", RcsThrusterScenes::singleRcsHydrazine);
         //Thruster
         HELPER.forComponents(PropulsionBlocks.THRUSTER_BLOCK.get())
                 .addStoryBoard("ponder_thruster_normal", ThrusterScenes::normal)

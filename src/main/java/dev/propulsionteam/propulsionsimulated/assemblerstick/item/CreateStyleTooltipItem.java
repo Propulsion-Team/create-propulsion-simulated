@@ -7,6 +7,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class CreateStyleTooltipItem extends Item {
@@ -26,6 +27,10 @@ public class CreateStyleTooltipItem extends Item {
         if (description == null) {
             return;
         }
-        tooltipComponents.addAll(Math.min(1, tooltipComponents.size()), description.getCurrentLines());
+        final List<Component> lines = new ArrayList<>(description.getCurrentLines());
+        if (description.getCurrentLines() == description.linesOnShift()) {
+            lines.add(Component.empty());
+        }
+        tooltipComponents.addAll(Math.min(1, tooltipComponents.size()), lines);
     }
 }

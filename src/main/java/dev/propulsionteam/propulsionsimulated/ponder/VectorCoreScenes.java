@@ -32,7 +32,7 @@ public final class VectorCoreScenes {
         scene.showBasePlate();
         scene.idle(5);
 
-        BlockPos glassPos = util.grid().at(2, 3, 2);
+        BlockPos casingPos = util.grid().at(2, 3, 2);
         BlockPos north = util.grid().at(2, 3, 1);
         BlockPos west = util.grid().at(1, 3, 2);
         BlockPos east = util.grid().at(3, 3, 2);
@@ -46,14 +46,14 @@ public final class VectorCoreScenes {
 
         ElementLink<WorldSectionElement> ship = scene.world()
             .showIndependentSection(util.select().fromTo(1, 3, 1, 3, 3, 3), Direction.DOWN);
-        scene.world().configureCenterOfRotation(ship, util.vector().centerOf(glassPos));
+        scene.world().configureCenterOfRotation(ship, util.vector().centerOf(casingPos));
         scene.addInstruction(new FollowTextInstruction(ship, 1800));
         scene.idle(15);
 
         scene.overlay().showText(90)
             .attachKeyFrame()
             .sharedText("vector_core.intro")
-            .pointAt(util.vector().centerOf(glassPos))
+            .pointAt(util.vector().centerOf(casingPos))
             .placeNearTarget();
         scene.idle(100);
 
@@ -92,10 +92,10 @@ public final class VectorCoreScenes {
         scene.overlay().showText(100)
             .attachKeyFrame()
             .sharedText("vector_core.center")
-            .pointAt(util.vector().centerOf(glassPos))
+            .pointAt(util.vector().centerOf(casingPos))
             .placeNearTarget();
         scene.overlay().chaseBoundingBoxOutline(PonderPalette.GREEN, "vector_core_center",
-            new AABB(util.vector().centerOf(glassPos), util.vector().centerOf(glassPos)).inflate(0.25), 100);
+            new AABB(util.vector().centerOf(casingPos), util.vector().centerOf(casingPos)).inflate(0.25), 100);
         scene.idle(110);
 
         scene.overlay().showText(80)

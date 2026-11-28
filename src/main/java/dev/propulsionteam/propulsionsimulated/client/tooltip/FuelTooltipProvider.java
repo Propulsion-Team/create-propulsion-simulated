@@ -32,7 +32,7 @@ public final class FuelTooltipProvider implements ITooltipProvider {
         if (properties == null) {
             return;
         }
-        TooltipHandler.wrapShiftHoldText(tooltipList, "createpropulsion.tooltip.holdForRocketFuelSummary", () -> {
+        TooltipHandler.wrapAltHoldText(tooltipList, "createpropulsion.tooltip.holdForRocketFuelSummary", () -> {
             final float effectiveThrustMultiplier = properties.thrustMultiplier()
                     * ThrusterFuelManager.getEfficiency(fluidStack.getFluid());
             final int thrustPercent = Math.round(effectiveThrustMultiplier * 100.0f);

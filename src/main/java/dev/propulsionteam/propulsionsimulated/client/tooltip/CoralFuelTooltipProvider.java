@@ -31,7 +31,7 @@ public final class CoralFuelTooltipProvider implements ITooltipProvider {
             return;
         }
 
-        TooltipHandler.wrapShiftHoldText(tooltipList, "createpropulsion.tooltip.holdForCoralConversionSummary", () -> {
+        TooltipHandler.wrapAltHoldText(tooltipList, "createpropulsion.tooltip.holdForCoralConversionSummary", () -> {
             final double fePerMb = properties.fePerMb();
             final String formatted = (fePerMb == Math.floor(fePerMb))
                     ? Integer.toString((int) fePerMb)

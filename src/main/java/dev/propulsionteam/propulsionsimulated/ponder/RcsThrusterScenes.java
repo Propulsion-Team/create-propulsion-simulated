@@ -7,6 +7,12 @@ import com.simibubi.create.content.redstone.link.RedstoneLinkBlock;
 import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
 import dev.propulsionteam.propulsionsimulated.content.thruster.rcs_thruster.RcsOrientation;
 import dev.propulsionteam.propulsionsimulated.content.thruster.rcs_thruster.RcsThrusterBlockEntity;
+import dev.propulsionteam.propulsionsimulated.registries.PropulsionFluids;
+import com.simibubi.create.content.fluids.pump.PumpBlock;
+import com.simibubi.create.content.fluids.tank.FluidTankBlockEntity;
+import dev.propulsionteam.propulsionsimulated.registries.PropulsionBlocks;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction;
 import dev.simulated_team.simulated.ponder.SmoothMovementUtils;
 import dev.simulated_team.simulated.ponder.instructions.CustomAnimateWorldSectionInstruction;
 import dev.propulsionteam.propulsionsimulated.ponder.instructions.FollowTextInstruction;
@@ -100,6 +106,169 @@ public final class RcsThrusterScenes {
         fallBack(scene, shipLink, 0.6);
         scene.idle(20);
         scene.markAsFinished();
+    }
+
+    public static void singleRcsHydrazine(SceneBuilder builder, SceneBuildingUtil util) {
+        CreateSceneBuilder scene = new CreateSceneBuilder(builder);
+        scene.title("single_rcs_thruster_hydrazine", "Boosting the Single RCS Thruster with Hydrazine");
+        scene.configureBasePlate(0, 0, 5);
+        scene.showBasePlate();
+        scene.idle(5);
+
+        BlockPos leverPos = util.grid().at(1, 1, 1);
+        BlockPos linkPos = util.grid().at(2, 1, 1);
+        BlockPos thrusterPos = util.grid().at(2, 2, 2);
+        BlockPos tankPos = util.grid().at(2, 4, 2);
+        Selection controls = util.select().fromTo(1, 1, 1, 2, 1, 1);
+        Selection ship = util.select().position(2, 2, 2).add(util.select().position(2, 3, 2));
+        Selection thruster = util.select().position(thrusterPos);
+        double thrust = PropulsionConfig.SINGLE_RCS_THRUST.get();
+
+        scene.world().setBlock(leverPos, BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath("create", "analog_lever")).defaultBlockState()
+            .setValue(BlockStateProperties.ATTACH_FACE, AttachFace.FLOOR)
+            .setValue(BlockStateProperties.HORIZONTAL_FACING, Direction.SOUTH), false);
+        setPower(scene, thruster, 0f);
+        setBoost(scene, thrusterPos, false);
+        setControlsSignal(scene, util, leverPos, linkPos, 0);
+        scene.world().modifyBlock(linkPos, state -> state.hasProperty(RedstoneLinkBlock.RECEIVER)
+            ? state.setValue(RedstoneLinkBlock.RECEIVER, false) : state, false);
+
+        ElementLink<WorldSectionElement> shipLink = scene.world().showIndependentSection(ship, Direction.DOWN);
+        scene.idle(5);
+        scene.world().showSection(controls, Direction.DOWN);
+        scene.addInstruction(new FollowTextInstruction(shipLink, 2000));
+        scene.idle(15);
+        scene.overlay().showText(90)
+            .attachKeyFrame()
+            .sharedText("rcs_hydrazine.intro")
+            .pointAt(util.vector().centerOf(thrusterPos))
+            .placeNearTarget();
+        scene.idle(100);
+
+        signalOn(scene, util, leverPos, linkPos, thrusterPos, thruster, 1f);
+        scene.addInstruction(CustomAnimateWorldSectionInstruction.move(shipLink, new Vec3(0, 1, 0), 60,
+            SmoothMovementUtils.quadraticRise()));
+        scene.overlay().showText(70)
+            .attachKeyFrame()
+            .sharedText("rcs_hydrazine.normal", Math.round(thrust))
+            .pointAt(util.vector().centerOf(thrusterPos))
+            .placeNearTarget();
+        scene.idle(65);
+        signalOff(scene, util, leverPos, linkPos, thruster);
+        fallBack(scene, shipLink, 1);
+
+        refuel(scene, util, thrusterPos, tankPos);
+
+        setBoost(scene, thrusterPos, true);
+        signalOn(scene, util, leverPos, linkPos, thrusterPos, thruster, 1f);
+        scene.addInstruction(CustomAnimateWorldSectionInstruction.move(shipLink, new Vec3(0, 2, 0), 60,
+            SmoothMovementUtils.quadraticRise()));
+        scene.overlay().showText(70)
+            .attachKeyFrame()
+            .sharedText("rcs_hydrazine.boosted", Math.round(thrust * PropulsionConfig.RCS_HYDRAZINE_THRUST_MULTIPLIER.get()))
+            .pointAt(util.vector().centerOf(thrusterPos))
+            .placeNearTarget();
+        scene.idle(65);
+        signalOff(scene, util, leverPos, linkPos, thruster);
+        setBoost(scene, thrusterPos, false);
+        fallBack(scene, shipLink, 2);
+
+        usage(scene, util, thrusterPos);
+    }
+
+    public static void quadRcsHydrazine(SceneBuilder builder, SceneBuildingUtil util) {
+        CreateSceneBuilder scene = new CreateSceneBuilder(builder);
+        scene.title("rcs_thruster_hydrazine", "Boosting the Full RCS Thruster with Hydrazine");
+        scene.configureBasePlate(0, 0, 5);
+        scene.showBasePlate();
+        scene.idle(5);
+
+        BlockPos thrusterPos = util.grid().at(2, 2, 2);
+        BlockPos tankPos = util.grid().at(2, 4, 2);
+        Selection ship = util.select().position(2, 2, 2).add(util.select().position(2, 3, 2));
+        double thrust = PropulsionConfig.RCS_THRUST.get();
+        resetNozzles(scene, thrusterPos);
+        setBoost(scene, thrusterPos, false);
+
+        ElementLink<WorldSectionElement> shipLink = scene.world().showIndependentSection(ship, Direction.DOWN);
+        scene.addInstruction(new FollowTextInstruction(shipLink, 2000));
+        scene.idle(15);
+        scene.overlay().showText(90)
+            .attachKeyFrame()
+            .sharedText("rcs_hydrazine.intro")
+            .pointAt(util.vector().centerOf(thrusterPos))
+            .placeNearTarget();
+        scene.idle(100);
+
+        scene.overlay().showText(90)
+            .attachKeyFrame()
+            .sharedText("rcs_hydrazine.normal_nozzle", Math.round(thrust))
+            .pointAt(util.vector().centerOf(thrusterPos))
+            .placeNearTarget();
+        scene.idle(10);
+        moveAndReturn(scene, thrusterPos, shipLink, new Vec3(MOVE_DISTANCE, 0, 0), new Direction[] {Direction.EAST});
+
+        refuel(scene, util, thrusterPos, tankPos);
+
+        setBoost(scene, thrusterPos, true);
+        scene.overlay().showText(90)
+            .attachKeyFrame()
+            .sharedText("rcs_hydrazine.boosted_nozzle", Math.round(thrust * PropulsionConfig.RCS_HYDRAZINE_THRUST_MULTIPLIER.get()))
+            .pointAt(util.vector().centerOf(thrusterPos))
+            .placeNearTarget();
+        scene.idle(10);
+        moveAndReturn(scene, thrusterPos, shipLink, new Vec3(MOVE_DISTANCE * 2, 0, 0), new Direction[] {Direction.EAST});
+        setBoost(scene, thrusterPos, false);
+
+        usage(scene, util, thrusterPos);
+    }
+
+    private static void refuel(CreateSceneBuilder scene, SceneBuildingUtil util, BlockPos thrusterPos, BlockPos tankPos) {
+        BlockPos pumpPos = util.grid().at(2, 3, 2);
+        Selection supply = util.select().fromTo(1, 3, 2, 1, 4, 2).add(util.select().position(tankPos));
+        Selection drive = util.select().fromTo(1, 3, 2, 1, 4, 2);
+        Selection pump = util.select().position(pumpPos);
+        scene.world().modifyBlockEntity(tankPos, FluidTankBlockEntity.class, be -> be.getTankInventory()
+            .fill(new FluidStack(PropulsionFluids.HYDRAZINE.get(), 4000), FluidAction.EXECUTE));
+        scene.world().setBlock(pumpPos, BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath("create", "mechanical_pump")).defaultBlockState()
+            .setValue(PumpBlock.FACING, Direction.DOWN), true);
+        scene.idle(5);
+        scene.world().showSection(supply, Direction.DOWN);
+        scene.idle(15);
+        scene.world().setKineticSpeed(drive, 32);
+        scene.world().setKineticSpeed(pump, -32);
+        scene.overlay().showText(90)
+            .attachKeyFrame()
+            .sharedText("rcs_hydrazine.fill")
+            .pointAt(util.vector().centerOf(tankPos))
+            .placeNearTarget();
+        scene.idle(40);
+        scene.world().modifyBlockEntity(tankPos, FluidTankBlockEntity.class, be -> be.getTankInventory()
+            .drain(1000, FluidAction.EXECUTE));
+        scene.world().modifyBlockEntity(thrusterPos, RcsThrusterBlockEntity.class, be -> be.tank.getPrimaryHandler()
+            .fill(new FluidStack(PropulsionFluids.HYDRAZINE.get(), 1000), FluidAction.EXECUTE));
+        scene.effects().indicateSuccess(thrusterPos);
+        scene.idle(60);
+        scene.world().setKineticSpeed(drive, 0);
+        scene.world().setKineticSpeed(pump, 0);
+        scene.world().hideSection(supply, Direction.UP);
+        scene.idle(15);
+        scene.world().setBlock(pumpPos, PropulsionBlocks.PLATINUM_CASING.get().defaultBlockState(), true);
+        scene.idle(15);
+    }
+
+    private static void usage(CreateSceneBuilder scene, SceneBuildingUtil util, BlockPos thrusterPos) {
+        scene.overlay().showText(110)
+            .attachKeyFrame()
+            .sharedText("rcs_hydrazine.usage")
+            .pointAt(util.vector().centerOf(thrusterPos))
+            .placeNearTarget();
+        scene.idle(120);
+        scene.markAsFinished();
+    }
+
+    private static void setBoost(CreateSceneBuilder scene, BlockPos thrusterPos, boolean boost) {
+        scene.world().modifyBlockEntity(thrusterPos, RcsThrusterBlockEntity.class, be -> be.applyBoostForScene(boost));
     }
 
     private static void signalOn(CreateSceneBuilder scene, SceneBuildingUtil util, BlockPos leverPos, BlockPos linkPos,
