@@ -15,6 +15,10 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 
 import javax.annotation.Nullable;
 import java.util.HashMap;
@@ -23,14 +27,31 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 /** Coordinates startup, loop, and shutdown audio for every client-side thruster. */
+@EventBusSubscriber(modid = "createpropulsion", value = Dist.CLIENT)
 public final class ThrusterLoopSoundController {
     private static final int TRANSITION_TICKS = 10;
     private static final int CROSSFADE_TICKS = 2;
     private static final float VOLUME_BOOST_MULTIPLIER = 1.5f;
     private static final int THRUSTER_SOUND_RANGE_BLOCKS = 100;
+    private static final float RANGE_HYSTERESIS_BLOCKS = 8.0f;
     private static final Map<String, ThrusterSoundState> ACTIVE_SOUNDS = new HashMap<>();
+    private static long lastCleanupGameTime = Long.MIN_VALUE;
 
     private ThrusterLoopSoundController() {
+    }
+
+    @SubscribeEvent
+    public static void onLoggingOut(final ClientPlayerNetworkEvent.LoggingOut event) {
+        stopAll();
+        RcsThrusterSoundController.stopAll();
+    }
+
+    public static void stopAll() {
+        for (final ThrusterSoundState state : ACTIVE_SOUNDS.values()) {
+            state.dispose();
+        }
+        ACTIVE_SOUNDS.clear();
+        lastCleanupGameTime = Long.MIN_VALUE;
     }
 
     /** Invalidates channels discarded by a sound-engine/device reload. */
@@ -45,15 +66,17 @@ public final class ThrusterLoopSoundController {
 
     public static void tick(final AbstractThrusterBlockEntity blockEntity) {
         final Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.player == null || minecraft.getSoundManager() == null) {
+        if (minecraft.player == null || minecraft.level == null || minecraft.getSoundManager() == null) {
             return;
         }
 
-        cleanupFinished();
+        final long gameTime = minecraft.level.getGameTime();
+        if (gameTime != lastCleanupGameTime) {
+            lastCleanupGameTime = gameTime;
+            cleanupFinished();
+        }
 
         final String key = soundKey(blockEntity);
-        final ThrusterPlumeSpec plume = ThrusterPlumeResolver.resolve(blockEntity);
-        final ThrusterSoundProfile profile = ThrusterSoundProfile.forStyle(plume.style());
         ThrusterSoundState state = ACTIVE_SOUNDS.get(key);
 
         if (state != null && !state.isFor(blockEntity)) {
@@ -62,11 +85,36 @@ public final class ThrusterLoopSoundController {
             state = null;
         }
 
+        final ThrusterPlumeSpec plume = ThrusterPlumeResolver.resolve(blockEntity);
+        if (state == null && !plume.active()) {
+            return;
+        }
+
+        final double distanceSqr = listenerDistanceSqr(minecraft, blockEntity);
+        final float audibleRange = THRUSTER_SOUND_RANGE_BLOCKS * MovingThrusterSound.multiblockSoundScale(blockEntity.width);
+        if (state != null) {
+            final float releaseRange = audibleRange + RANGE_HYSTERESIS_BLOCKS;
+            if (distanceSqr > (double) releaseRange * releaseRange) {
+                state.dispose();
+                ACTIVE_SOUNDS.remove(key);
+                return;
+            }
+        }
+
+        final ThrusterSoundProfile profile = ThrusterSoundProfile.forStyle(plume.style());
+
         if (plume.active()) {
             if (state == null) {
+                if (distanceSqr > (double) audibleRange * audibleRange) {
+                    return;
+                }
                 state = new ThrusterSoundState(key, blockEntity, profile);
                 ACTIVE_SOUNDS.put(key, state);
-                state.activate();
+                if (blockEntity.isStartingUp()) {
+                    state.activate();
+                } else {
+                    state.activateLooping();
+                }
             } else {
                 state.tickActive(profile);
             }
@@ -88,6 +136,12 @@ public final class ThrusterLoopSoundController {
                 iterator.remove();
             }
         }
+    }
+
+    private static double listenerDistanceSqr(final Minecraft minecraft, final AbstractThrusterBlockEntity blockEntity) {
+        final Vec3 worldCenter = Sable.HELPER.projectOutOfSubLevel(
+                blockEntity.getLevel(), Vec3.atCenterOf(blockEntity.getBlockPos()));
+        return minecraft.player.distanceToSqr(worldCenter);
     }
 
     private static String soundKey(final AbstractThrusterBlockEntity blockEntity) {
@@ -121,6 +175,11 @@ public final class ThrusterLoopSoundController {
         private void activate() {
             active = true;
             beginStartup();
+        }
+
+        private void activateLooping() {
+            active = true;
+            playLoop();
         }
 
         private void tickActive(ThrusterSoundProfile currentProfile) {

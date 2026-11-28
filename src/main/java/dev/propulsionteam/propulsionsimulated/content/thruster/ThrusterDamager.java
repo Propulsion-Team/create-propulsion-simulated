@@ -71,7 +71,9 @@ public class ThrusterDamager extends AbstractAreaDamagerBehaviour {
             return Optional.empty();
         }
 
-        Vec3 boxDimensions = new Vec3(1.4, 1.4, correctedPlumeLength);
+        int width = Math.max(1, thruster.width);
+        double crossSection = width + 0.4;
+        Vec3 boxDimensions = new Vec3(crossSection, crossSection, correctedPlumeLength);
         double plumeStartOffset = 0.8;
         double centerOffsetDistance = plumeStartOffset + (correctedPlumeLength / 2.0);
         Vec3 normalizedWorldDirection = worldPlumeDirection.lengthSqr() < 1.0e-8

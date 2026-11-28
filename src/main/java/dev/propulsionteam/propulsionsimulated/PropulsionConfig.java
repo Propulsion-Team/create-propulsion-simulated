@@ -615,7 +615,7 @@ public class PropulsionConfig {
         ModConfigSpec.ConfigValue<String> cv = THRUSTER_DYE_COLORS.get(dyeId);
         if (cv == null) return null;
         try {
-            return Integer.parseUnsignedInt(cv.get().trim(), 16);
+            return Integer.parseUnsignedInt(clientOrDefault(cv).trim(), 16);
         } catch (NumberFormatException | IllegalStateException ignored) {
             return null;
         }
@@ -708,6 +708,29 @@ public class PropulsionConfig {
         } catch (IllegalStateException ignored) {
             return value.getDefault();
         }
+    }
+
+    private static <T> T clientOrDefault(ModConfigSpec.ConfigValue<T> value) {
+        if (!CLIENT_SPEC.isLoaded()) {
+            return value.getDefault();
+        }
+        try {
+            return value.get();
+        } catch (IllegalStateException ignored) {
+            return value.getDefault();
+        }
+    }
+
+    public static int getClientParticlesPerTickOrDefault() {
+        return clientOrDefault(CLIENT_PARTICLES_PER_TICK);
+    }
+
+    public static double getSolidFuelThrusterParticleCountMultiplierOrDefault() {
+        return clientOrDefault(SOLID_FUEL_THRUSTER_PARTICLE_COUNT_MULTIPLIER);
+    }
+
+    public static double getSolidFuelThrusterParticleVelocityMultiplierOrDefault() {
+        return clientOrDefault(SOLID_FUEL_THRUSTER_PARTICLE_VELOCITY_MULTIPLIER);
     }
 
     public static boolean useVeilLight() {

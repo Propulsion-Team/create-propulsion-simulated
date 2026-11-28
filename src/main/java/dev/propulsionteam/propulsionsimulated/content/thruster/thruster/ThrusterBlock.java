@@ -8,6 +8,8 @@ import com.simibubi.create.foundation.blockEntity.SmartBlockEntityTicker;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -83,6 +85,21 @@ public class ThrusterBlock extends AbstractThrusterBlock {
             }
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
+    }
+
+    @Override
+    public InteractionResult onWrenched(BlockState state, UseOnContext context) {
+        Level level = context.getLevel();
+        BlockPos pos = context.getClickedPos();
+        if (!level.isClientSide && level.getBlockEntity(pos) instanceof ThrusterBlockEntity thruster
+            && thruster.isMultiblock()) {
+            ThrusterBlockEntity controller = thruster.isController() ? thruster : thruster.getControllerBE();
+            if (controller != null) {
+                controller.disassembleMulti();
+            }
+            state = level.getBlockState(pos);
+        }
+        return super.onWrenched(state, context);
     }
 
     @Nullable

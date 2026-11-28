@@ -52,6 +52,14 @@ public final class RcsThrusterSoundController {
         SOUNDS.clear();
     }
 
+    public static void stopAll() {
+        var manager = Minecraft.getInstance().getSoundManager();
+        for (RcsSound sound : SOUNDS.values()) {
+            manager.stop(sound);
+        }
+        SOUNDS.clear();
+    }
+
     private static boolean isUsable(RcsThrusterBlockEntity be) {
         var level = Minecraft.getInstance().level;
         return !be.isRemoved() && !be.isChunkUnloaded() && level != null && be.getLevel() != null

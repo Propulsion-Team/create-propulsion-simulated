@@ -352,12 +352,12 @@ public class SolidFuelThrusterBlockEntity extends AbstractThrusterBlockEntity {
 
     @Override
     protected double getParticleCountMultiplier() {
-        return PropulsionConfig.SOLID_FUEL_THRUSTER_PARTICLE_COUNT_MULTIPLIER.get();
+        return PropulsionConfig.getSolidFuelThrusterParticleCountMultiplierOrDefault();
     }
 
     @Override
     protected double getParticleVelocityMultiplier() {
-        return PropulsionConfig.SOLID_FUEL_THRUSTER_PARTICLE_VELOCITY_MULTIPLIER.get();
+        return PropulsionConfig.getSolidFuelThrusterParticleVelocityMultiplierOrDefault();
     }
 
     @Override

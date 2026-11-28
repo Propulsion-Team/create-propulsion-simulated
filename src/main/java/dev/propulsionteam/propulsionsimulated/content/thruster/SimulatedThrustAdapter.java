@@ -17,6 +17,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3d;
 
@@ -53,7 +54,7 @@ public final class SimulatedThrustAdapter {
             }
         }
         Vector3d applicationPoint = pointLocal;
-        if (PropulsionCoreBehaviour.isActive(thruster)) {
+        if (PropulsionCoreBehaviour.isActiveCached(thruster)) {
             var centerOfMass = subLevel.getMassTracker().getCenterOfMass();
             if (centerOfMass != null) applicationPoint = new Vector3d(centerOfMass);
         }
@@ -65,7 +66,22 @@ public final class SimulatedThrustAdapter {
 
     @SubscribeEvent
     public static void onPrePhysicsTick(final ForgeSablePrePhysicsTickEvent event) {
-        PROPULSION_IMPULSES.forEach((subLevel, thrustImpulse) -> applyPropulsionDrag(subLevel, thrustImpulse, event.getTimeStep()));
+        final Level level = event.getPhysicsSystem().getLevel();
+        final var iterator = PROPULSION_IMPULSES.entrySet().iterator();
+        while (iterator.hasNext()) {
+            final var entry = iterator.next();
+            final ServerSubLevel subLevel = entry.getKey();
+            if (subLevel.isRemoved()) {
+                iterator.remove();
+            } else if (subLevel.getLevel() == level) {
+                applyPropulsionDrag(subLevel, entry.getValue(), event.getTimeStep());
+                iterator.remove();
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onServerStopped(final ServerStoppedEvent event) {
         PROPULSION_IMPULSES.clear();
     }
 

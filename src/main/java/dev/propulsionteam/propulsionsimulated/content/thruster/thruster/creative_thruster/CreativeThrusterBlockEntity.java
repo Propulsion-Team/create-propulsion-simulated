@@ -41,6 +41,9 @@ public class CreativeThrusterBlockEntity extends AbstractThrusterBlockEntity {
     private static final int DISASSEMBLY_GRACE_TICKS = 5;
     private int disassemblyCooldown = 0;
     private int schematicWidth = 0;
+    private static final int FORMED_CUBE_VALIDATION_INTERVAL_TICKS = 20;
+    private int cachedAggregatedRedstone = 0;
+    private boolean aggregatedRedstoneDirty = true;
     private CreativeThrusterPowerScrollValueBehaviour powerBehaviour;
 
     public enum PlumeType {
@@ -129,20 +132,30 @@ public class CreativeThrusterBlockEntity extends AbstractThrusterBlockEntity {
     }
 
     private int getAggregatedRedstone() {
+        if (!aggregatedRedstoneDirty) return cachedAggregatedRedstone;
+        aggregatedRedstoneDirty = false;
         int max = redstoneInput;
-        if (level == null) return max;
+        if (level == null) {
+            aggregatedRedstoneDirty = true;
+            return max;
+        }
+        boolean complete = true;
         BlockPos origin = worldPosition;
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < width; y++) {
                 for (int z = 0; z < width; z++) {
                     if (x == 0 && y == 0 && z == 0) continue;
                     BlockEntity be = SimulatedThrustAdapter.getBlockEntitySafe(level, origin.offset(x, y, z));
-                    if (be instanceof CreativeThrusterBlockEntity t && t.redstoneInput > max) {
-                        max = t.redstoneInput;
+                    if (be instanceof CreativeThrusterBlockEntity t) {
+                        if (t.redstoneInput > max) max = t.redstoneInput;
+                    } else {
+                        complete = false;
                     }
                 }
             }
         }
+        cachedAggregatedRedstone = max;
+        if (!complete) aggregatedRedstoneDirty = true;
         return max;
     }
 
@@ -150,6 +163,7 @@ public class CreativeThrusterBlockEntity extends AbstractThrusterBlockEntity {
     public void setRedstoneInput(int power) {
         if (this.redstoneInput == power) return;
         this.redstoneInput = power;
+        aggregatedRedstoneDirty = true;
         if (controlMode == ControlMode.NORMAL) {
             dirtyThrust();
             notifyUpdate();
@@ -157,6 +171,7 @@ public class CreativeThrusterBlockEntity extends AbstractThrusterBlockEntity {
         if (isMultiblock() && !isController()) {
             CreativeThrusterBlockEntity ctrl = getControllerBE();
             if (ctrl != null) {
+                ctrl.aggregatedRedstoneDirty = true;
                 ctrl.dirtyThrust();
                 ctrl.notifyUpdate();
             }
@@ -179,7 +194,8 @@ public class CreativeThrusterBlockEntity extends AbstractThrusterBlockEntity {
         if (isController() && isMultiblock()) {
             if (disassemblyCooldown > 0) {
                 disassemblyCooldown--;
-            } else if (!SimulatedThrustAdapter.isOutsideWorldBuildHeight(level, worldPosition)) {
+            } else if (Math.floorMod(level.getGameTime() + worldPosition.hashCode(), FORMED_CUBE_VALIDATION_INTERVAL_TICKS) == 0
+                    && !SimulatedThrustAdapter.isOutsideWorldBuildHeight(level, worldPosition)) {
                 Direction facing = getFacing();
                 if (!isValidFormedCube(worldPosition, width, facing)) {
                     disassembleMulti();
@@ -366,6 +382,7 @@ public class CreativeThrusterBlockEntity extends AbstractThrusterBlockEntity {
                     t.controllerPos = t == controller ? null : origin;
                     t.width = size;
                     t.isThrustDirty = true;
+                    t.aggregatedRedstoneDirty = true;
                     BlockState liveState = SimulatedThrustAdapter.getBlockStateSafe(level, pos);
                     if (liveState.hasProperty(ThrusterBlock.MULTIBLOCK) && !liveState.getValue(ThrusterBlock.MULTIBLOCK)) {
                         level.setBlock(pos, liveState.setValue(ThrusterBlock.MULTIBLOCK, true), Block.UPDATE_CLIENTS);
@@ -388,10 +405,12 @@ public class CreativeThrusterBlockEntity extends AbstractThrusterBlockEntity {
                     BlockPos pos = origin.offset(x, y, z);
                     BlockEntity be = SimulatedThrustAdapter.getBlockEntitySafe(level, pos);
                     if (!(be instanceof CreativeThrusterBlockEntity t)) continue;
+                    if (t != this && !origin.equals(t.controllerPos)) continue;
                     t.controllerPos = null;
                     t.width = 1;
                     t.updateConnectivity = true;
                     t.isThrustDirty = true;
+                    t.aggregatedRedstoneDirty = true;
                     t.getThrusterData().setThrust(0);
                     BlockState liveState = SimulatedThrustAdapter.getBlockStateSafe(level, pos);
                     if (liveState.hasProperty(ThrusterBlock.MULTIBLOCK) && liveState.getValue(ThrusterBlock.MULTIBLOCK)) {
@@ -665,6 +684,11 @@ public class CreativeThrusterBlockEntity extends AbstractThrusterBlockEntity {
         // Always retry connectivity on load for standalone blocks so existing placements can unify.
         boolean savedConnectivity = compound.getBoolean("UpdateConnectivity");
         updateConnectivity = width <= 1 || !compound.contains("UpdateConnectivity") || savedConnectivity;
+        aggregatedRedstoneDirty = true;
+        if (level != null && isMultiblock() && !isController()) {
+            CreativeThrusterBlockEntity ctrl = getControllerBE();
+            if (ctrl != null) ctrl.aggregatedRedstoneDirty = true;
+        }
     }
 
     @Override
@@ -681,6 +705,7 @@ public class CreativeThrusterBlockEntity extends AbstractThrusterBlockEntity {
     @Override
     public void afterMove(ServerLevel oldLevel, ServerLevel newLevel, BlockState state, BlockPos oldPos, BlockPos newPos) {
         super.afterMove(oldLevel, newLevel, state, oldPos, newPos);
+        aggregatedRedstoneDirty = true;
         if (isMultiblock()) {
             width = 1;
             controllerPos = null;

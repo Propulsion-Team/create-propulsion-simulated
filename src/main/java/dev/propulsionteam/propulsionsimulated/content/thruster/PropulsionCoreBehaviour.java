@@ -19,6 +19,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.neoforge.items.IItemHandlerModifiable;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class PropulsionCoreBehaviour extends BlockEntityBehaviour {
     public static final BehaviourType<PropulsionCoreBehaviour> TYPE = new BehaviourType<>();
 
@@ -42,9 +44,19 @@ public class PropulsionCoreBehaviour extends BlockEntityBehaviour {
         public ItemStack extractItem(int slot, int amount, boolean simulate) {
             return ItemStack.EMPTY;
         }
+
+        @Override
+        protected void onContentsChanged(int slot) {
+            invalidateActiveCache();
+        }
     };
 
+    private static final AtomicInteger STATE_GENERATION = new AtomicInteger();
+
     private double wear;
+    private long activeCacheTime = Long.MIN_VALUE;
+    private int activeCacheGeneration;
+    private boolean activeCacheValue;
 
     public PropulsionCoreBehaviour(SmartBlockEntity blockEntity) {
         super(blockEntity);
@@ -56,7 +68,10 @@ public class PropulsionCoreBehaviour extends BlockEntityBehaviour {
         if (!(getWorld() instanceof ServerLevel level)) return;
         ItemStack core = inventory.getStackInSlot(0);
         if (core.isEmpty()) return;
-        if (VectorCoreState.syncDepleted(core, level.getGameTime())) blockEntity.notifyUpdate();
+        if (VectorCoreState.syncDepleted(core, level.getGameTime())) {
+            invalidateActiveCache();
+            blockEntity.notifyUpdate();
+        }
         if (!VectorCoreState.isWorking(core)) return;
         BlockEntity source = blockEntity;
         if (blockEntity instanceof AbstractThrusterBlockEntity thruster && thruster.isMultiblock()) {
@@ -72,6 +87,11 @@ public class PropulsionCoreBehaviour extends BlockEntityBehaviour {
         wear -= damage;
         core.hurtAndBreak(damage, level, null, item -> {
         });
+        invalidateActiveCache();
+    }
+
+    private static void invalidateActiveCache() {
+        STATE_GENERATION.incrementAndGet();
     }
 
     private static double producedThrustPn(BlockEntity source) {
@@ -95,10 +115,25 @@ public class PropulsionCoreBehaviour extends BlockEntityBehaviour {
         return installed != null && VectorCoreState.isWorking(installed.inventory.getStackInSlot(0));
     }
 
+    public static boolean isActiveCached(BlockEntity blockEntity) {
+        PropulsionCoreBehaviour behaviour = get(blockEntity, TYPE);
+        if (behaviour == null || !(blockEntity.getLevel() instanceof ServerLevel level)
+            || !level.getServer().isSameThread()) return isActive(blockEntity);
+        long time = level.getGameTime();
+        int generation = STATE_GENERATION.get();
+        if (behaviour.activeCacheTime != time || behaviour.activeCacheGeneration != generation) {
+            behaviour.activeCacheValue = isActive(blockEntity);
+            behaviour.activeCacheTime = time;
+            behaviour.activeCacheGeneration = generation;
+        }
+        return behaviour.activeCacheValue;
+    }
+
     public static boolean setEnabled(BlockEntity blockEntity, boolean enabled) {
         PropulsionCoreBehaviour installed = findInstalled(blockEntity);
         if (installed == null || VectorCoreState.isDepleted(installed.inventory.getStackInSlot(0))) return false;
         VectorCoreState.setEnabled(installed.inventory.getStackInSlot(0), enabled, installed.getWorld().getGameTime());
+        invalidateActiveCache();
         installed.blockEntity.notifyUpdate();
         return true;
     }

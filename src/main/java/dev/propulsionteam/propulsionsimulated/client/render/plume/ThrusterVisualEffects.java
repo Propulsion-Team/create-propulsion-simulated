@@ -65,7 +65,12 @@ public final class ThrusterVisualEffects {
     }
 
     private static void renderInternal(AbstractThrusterBlockEntity be, float partialTicks, PoseStack ms, MultiBufferSource buffer, Preset preset, float targetPower) {
-        VisualState state = VISUAL_STATES.computeIfAbsent(be, k -> new VisualState());
+        VisualState state = VISUAL_STATES.get(be);
+        if (state == null) {
+            if (targetPower <= 0.0f) return;
+            state = new VisualState();
+            VISUAL_STATES.put(be, state);
+        }
         long nowNanos = System.nanoTime();
         float dt = state.nanos == 0L ? 1.0f / 60.0f : Math.min(0.25f, (nowNanos - state.nanos) / 1.0e9f);
         state.nanos = nowNanos;

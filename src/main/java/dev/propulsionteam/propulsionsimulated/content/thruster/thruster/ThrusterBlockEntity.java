@@ -63,6 +63,9 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
     private int disassemblyCooldown = 0;
     private boolean reconcileLoadedTopology = true;
     private int schematicWidth = 0;
+    private static final int FORMED_CUBE_VALIDATION_INTERVAL_TICKS = 20;
+    private int cachedAggregatedRedstone = 0;
+    private boolean aggregatedRedstoneDirty = true;
 
     public ThrusterBlockEntity(BlockEntityType<?> typeIn, BlockPos pos, BlockState state) {
         super(typeIn, pos, state);
@@ -142,16 +145,21 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
         if (reconcileLoadedTopology) {
             reconcileLoadedTopology = false;
             if (!hasConsistentLoadedTopology()) {
-                resetLocalMultiblockState();
+                if (isController() && isMultiblock()) {
+                    disassembleMulti();
+                } else {
+                    resetLocalMultiblockState();
+                }
                 return;
             }
         }
-        if (isController() && isMultiblock()) {
+        if (isController() && isMultiblock()
+            && Math.floorMod(level.getGameTime() + worldPosition.hashCode(), FORMED_CUBE_VALIDATION_INTERVAL_TICKS) == 0) {
             if (!SimulatedThrustAdapter.isOutsideWorldBuildHeight(level, worldPosition)) {
                 // Fix: Skip multiblock validation when outside build height to prevent disassembly.
                 Direction facing = getFacing();
                 if (!isValidFormedCube(worldPosition, width, facing)) {
-                    resetLocalMultiblockState();
+                    disassembleMulti();
                     return;
                 }
             }
@@ -191,6 +199,7 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
         controllerPos = null;
         updateConnectivity = true;
         isThrustDirty = true;
+        aggregatedRedstoneDirty = true;
         thrusterData.setThrust(0);
 
         BlockState state = getBlockState();
@@ -236,6 +245,8 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
         BlockState originState = SimulatedThrustAdapter.getBlockStateSafe(level, origin);
         Block expectedBlock = originState.getBlock();
         Class<?> expectedType = null;
+        FluidStack expectedFuel = FluidStack.EMPTY;
+        FluidStack expectedOxidizer = FluidStack.EMPTY;
         for (int x = 0; x < size; x++) {
             for (int y = 0; y < size; y++) {
                 for (int z = 0; z < size; z++) {
@@ -254,6 +265,29 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
                     }
                     if (!t.supportsMultiblock()) return false;
                     if (t.isMultiblock() && t.width >= size) return false;
+
+                    ThrusterBlockEntity fluidSource = t.isController() ? t : t.getControllerBE();
+                    if (fluidSource == null) fluidSource = t;
+                    if (fluidSource.tank != null) {
+                        FluidStack fuel = fluidSource.tank.getPrimaryHandler().getFluid();
+                        if (!fuel.isEmpty()) {
+                            if (expectedFuel.isEmpty()) {
+                                expectedFuel = fuel;
+                            } else if (!FluidStack.isSameFluidSameComponents(expectedFuel, fuel)) {
+                                return false;
+                            }
+                        }
+                    }
+                    if (fluidSource.oxidizerTank != null) {
+                        FluidStack oxidizer = fluidSource.oxidizerTank.getPrimaryHandler().getFluid();
+                        if (!oxidizer.isEmpty()) {
+                            if (expectedOxidizer.isEmpty()) {
+                                expectedOxidizer = oxidizer;
+                            } else if (!FluidStack.isSameFluidSameComponents(expectedOxidizer, oxidizer)) {
+                                return false;
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -315,6 +349,7 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
             t.controllerPos = (t == controller) ? null : origin;
             t.width = size;
             t.isThrustDirty = true;
+            t.aggregatedRedstoneDirty = true;
             // A newly formed member may still carry its former single-block force.
             // Clear every cache before the controller calculates the combined thrust.
             t.thrusterData.setThrust(0.0f);
@@ -357,6 +392,7 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
                     BlockPos pos = origin.offset(x, y, z);
                     BlockEntity be = SimulatedThrustAdapter.getBlockEntitySafe(level,pos);
                     if (!(be instanceof ThrusterBlockEntity t)) continue;
+                    if (t != this && !origin.equals(t.controllerPos)) continue;
                     members.add(t);
                     if (t.tank != null && !fuelPool.isEmpty()) {
                         int take = Math.min(getBaseTankCapacityMb(), fuelPool.getAmount());
@@ -377,6 +413,7 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
                     t.width = 1;
                     t.updateConnectivity = true;
                     t.isThrustDirty = true;
+                    t.aggregatedRedstoneDirty = true;
                     t.thrusterData.setThrust(0);
                     BlockState liveState = SimulatedThrustAdapter.getBlockStateSafe(level,pos);
                     if (liveState.hasProperty(ThrusterBlock.MULTIBLOCK)
@@ -390,6 +427,10 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
         }
         for (ThrusterBlockEntity t : members) {
             t.invalidateCapabilities();
+            BlockState memberState = t.getBlockState();
+            if (!t.isRemoved() && memberState.hasProperty(AbstractThrusterBlock.FACING)) {
+                t.calculateObstruction(level, t.getBlockPos(), memberState.getValue(AbstractThrusterBlock.FACING));
+            }
         }
     }
 
@@ -486,6 +527,7 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
     @Override
     public void afterMove(ServerLevel oldLevel, ServerLevel newLevel, BlockState state, BlockPos oldPos, BlockPos newPos) {
         super.afterMove(oldLevel, newLevel, state, oldPos, newPos);
+        aggregatedRedstoneDirty = true;
         // On any assembly/disassembly event, wipe this block's multiblock state so that
         // tryAssemble() can rebuild it cleanly once all blocks have settled in their new
         // positions. Attempting to translate controllerPos through rotation doesn't work
@@ -615,11 +657,18 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
                     getFuelConsumptionPerTickAtFullThrottle(), sampledFuelDemand);
                 
                 boolean canUseOxidizer = validOxidizer();
+                float oxidizerEfficiency = getMultiblockOxidizerEfficiency(width);
+                double oxNeededDouble = baseConsumption * (double) n * oxidizerEfficiency;
+                float oxidizerRatio = 0.0f;
+                if (canUseOxidizer) {
+                    int oxAvailable = oxidizerTank.getPrimaryHandler().getFluidAmount();
+                    oxidizerRatio = oxNeededDouble <= 0.0d
+                        ? 1.0f
+                        : (float) Math.min(1.0d, Math.max(0.0d, oxAvailable / oxNeededDouble));
+                }
                 // Multiblock fuel efficiency always applies; oxidizer adds an extra multiplier.
                 double fuelEff = getMultiblockFuelEfficiency(width);
-                if (canUseOxidizer) {
-                    fuelEff *= getMultiblockOxidizerEfficiency(width);
-                }
+                fuelEff *= 1.0d + (oxidizerEfficiency - 1.0d) * oxidizerRatio;
                 double fuelNeededDouble = baseConsumption * (double) n * fuelEff;
                 int fuelNeeded = consumeFuelWithAccumulator(fuelNeededDouble);
 
@@ -633,18 +682,18 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
                     int fuelActual = (int) (fuelNeeded * fuelRatio);
                     tank.getPrimaryHandler().drain(fuelActual, IFluidHandler.FluidAction.EXECUTE);
                     
-                    if (canUseOxidizer) {
-                        double oxNeededDouble = baseConsumption * (double) n * getMultiblockOxidizerEfficiency(width);
-                        int oxToDrain = consumeOxidizerWithAccumulator(oxNeededDouble * fuelRatio);
+                    if (oxidizerRatio > 0.0f) {
+                        int oxToDrain = consumeOxidizerWithAccumulator(oxNeededDouble * oxidizerRatio * fuelRatio);
+                        int oxDrained = 0;
                         if (oxToDrain > 0) {
-                            oxidizerTank.getPrimaryHandler().drain(oxToDrain, IFluidHandler.FluidAction.EXECUTE);
+                            oxDrained = oxidizerTank.getPrimaryHandler().drain(oxToDrain, IFluidHandler.FluidAction.EXECUTE).getAmount();
                         }
-                        lastOxidizerConsumedMbPerTick = (double) oxToDrain / (double) tickRate;
+                        lastOxidizerConsumedMbPerTick = (double) oxDrained / (double) tickRate;
                     }
 
                     float baseThrustPn = (float) (getBaseThrust() * getThrustUnitsPerPn());
                     baseThrustPn *= (float) calculateAtmosphericFactor();
-                    float oxidizerThrustMultiplier = canUseOxidizer ? getMultiblockOxidizerThrustMultiplier(width) : 1.0f;
+                    float oxidizerThrustMultiplier = 1.0f + (getMultiblockOxidizerThrustMultiplier(width) - 1.0f) * oxidizerRatio;
                     totalThrust = baseThrustPn * thrustPercentage * properties.thrustMultiplier() * fuelEfficiency * fuelRatio * n * getMultiblockThrustMultiplier(width) * oxidizerThrustMultiplier;
                     lastConsumedMbPerTick = (double) fuelActual / (double) tickRate;
                 }
@@ -937,27 +986,49 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
     }
 
     private int getAggregatedRedstone() {
+        if (!aggregatedRedstoneDirty) return cachedAggregatedRedstone;
+        aggregatedRedstoneDirty = false;
         int max = redstoneInput;
-        if (level == null) return max;
+        if (level == null) {
+            aggregatedRedstoneDirty = true;
+            return max;
+        }
+        boolean complete = true;
         BlockPos origin = worldPosition;
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < width; y++) {
                 for (int z = 0; z < width; z++) {
                     if (x == 0 && y == 0 && z == 0) continue;
                     BlockEntity be = SimulatedThrustAdapter.getBlockEntitySafe(level,origin.offset(x, y, z));
-                    if (be instanceof ThrusterBlockEntity t && t.redstoneInput > max) {
-                        max = t.redstoneInput;
+                    if (be instanceof ThrusterBlockEntity t) {
+                        if (t.redstoneInput > max) {
+                            max = t.redstoneInput;
+                        }
+                    } else {
+                        complete = false;
                     }
                 }
             }
         }
+        cachedAggregatedRedstone = max;
+        if (!complete) aggregatedRedstoneDirty = true;
         return max;
+    }
+
+    private void markControllerRedstoneDirty() {
+        if (isMultiblock() && !isController()) {
+            ThrusterBlockEntity ctrl = getControllerBE();
+            if (ctrl != null) {
+                ctrl.aggregatedRedstoneDirty = true;
+            }
+        }
     }
 
     @Override
     public void setRedstoneInput(int power) {
         if (this.redstoneInput == power) return;
         this.redstoneInput = power;
+        aggregatedRedstoneDirty = true;
         if (controlMode == ControlMode.NORMAL) {
             dirtyThrust();
             setChanged();
@@ -968,6 +1039,7 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
         if (isMultiblock() && !isController()) {
             ThrusterBlockEntity ctrl = getControllerBE();
             if (ctrl != null) {
+                ctrl.aggregatedRedstoneDirty = true;
                 ctrl.dirtyThrust();
                 ctrl.notifyUpdate();
             }
@@ -1406,7 +1478,8 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
         }
         FluidThrusterProperties resolvedProperties = properties;
         Integer dyeColor = getDyeColor();
-        if (dyeColor != null || properties.useFluidColor()) {
+        boolean canResolveFluidTint = !(level instanceof ServerLevel serverLevel && serverLevel.getServer().isDedicatedServer());
+        if (dyeColor != null || (properties.useFluidColor() && canResolveFluidTint)) {
             int color = dyeColor != null ? dyeColor
                 : IClientFluidTypeExtensions.of(fluidStack().getFluid()).getTintColor(fluidStack()) & 0xFFFFFF;
             resolvedProperties = new FluidThrusterProperties(
@@ -1508,6 +1581,8 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
         }
 
         updateConnectivity = compound.getBoolean("UpdateConnectivity") || !compound.contains("Width");
+        aggregatedRedstoneDirty = true;
+        if (level != null) markControllerRedstoneDirty();
         if (!clientPacket) {
             // Create schematics place the copied blockstates before all block entities.
             // Defer topology validation until the complete placement has settled.

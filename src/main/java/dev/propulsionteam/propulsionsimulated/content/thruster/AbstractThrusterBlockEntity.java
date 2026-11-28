@@ -66,6 +66,7 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
     /** Matches {@link PropulsionConfig} thruster particle multiplier defineInRange max (0–32). */
     protected static final double PARTICLE_MULTIPLIER_CAP = 32.0d;
     protected static final double OBSTRUCTION_RAY_START_EPSILON = 0.05d;
+    private static final double PARTICLE_BROADCAST_PREFILTER_MARGIN_BLOCKS = 8.0d;
     
     protected static final float LOWEST_POWER_THRESHOLD = 5.0f / 15.0f;
 
@@ -84,9 +85,6 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
     private Vec3 previousParticleExhaustWorld;
     private Vec3 previousParticleNozzleVelocity = Vec3.ZERO;
     private double particleEmissionCarry;
-    private float adaptiveTrailCoverage;
-    private boolean adaptiveTrailActive;
-    private int adaptiveTrailQuietTicks;
 
     //Ticking
     private int currentTick = 0;
@@ -759,9 +757,6 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         previousParticleExhaustWorld = null;
         previousParticleNozzleVelocity = Vec3.ZERO;
         particleEmissionCarry = 0.0d;
-        adaptiveTrailCoverage = 0.0f;
-        adaptiveTrailActive = false;
-        adaptiveTrailQuietTicks = 0;
         if (newLevel != null) {
             setRedstoneInput(newLevel.getBestNeighborSignal(newPos));
             calculateObstruction(newLevel, newPos, state.getValue(AbstractThrusterBlock.FACING));
@@ -798,13 +793,6 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         Vec3 oldExhaustDirection = previousParticleExhaustWorld;
         Vec3 oldNozzleVelocity = previousParticleNozzleVelocity;
 
-        double angleChange = oldExhaustDirection == null ? 0.0d
-                : PlumeTrailMath.angleDegrees(oldExhaustDirection, worldExhaustDirection);
-        double reconstructedGap = oldNozzlePosition == null ? 0.0d
-                : worldNozzlePosition.distanceTo(oldNozzlePosition.add(oldNozzleVelocity));
-        double subLevelScale = getParticleSubLevelScale();
-        updateAdaptiveTrailCoverage(angleChange, reconstructedGap / subLevelScale);
-
         previousParticleNozzleWorld = worldNozzlePosition;
         previousParticleExhaustWorld = worldExhaustDirection;
         previousParticleNozzleVelocity = nozzleVelocity;
@@ -816,6 +804,27 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         float power = getEffectiveThrottle();
         if (power <= MathUtility.epsilon) return;
 
+        List<ServerPlayer> particleViewers = null;
+        double maxDistSq = 0.0d;
+        if (level instanceof ServerLevel serverLevel) {
+            double broadcastRange = getParticleBroadcastRange();
+            maxDistSq = broadcastRange * broadcastRange;
+            double prefilterRange = broadcastRange + PARTICLE_BROADCAST_PREFILTER_MARGIN_BLOCKS;
+            double prefilterDistSq = prefilterRange * prefilterRange;
+            for (ServerPlayer player : serverLevel.players()) {
+                if (!PlumeViewerPreferences.wantsParticles(player)) {
+                    continue;
+                }
+                if (player.distanceToSqr(worldNozzlePosition.x, worldNozzlePosition.y, worldNozzlePosition.z) > prefilterDistSq) {
+                    continue;
+                }
+                if (particleViewers == null) particleViewers = new java.util.ArrayList<>();
+                particleViewers.add(player);
+            }
+            if (particleViewers == null) return;
+        }
+
+        double subLevelScale = getParticleSubLevelScale();
         double particleCountMultiplier = org.joml.Math.clamp(0.0d, PARTICLE_MULTIPLIER_CAP, getParticleCountMultiplier());
         if (particleCountMultiplier <= 0) return;
         double particleVelocityMultiplier = org.joml.Math.clamp(0.0d, PARTICLE_MULTIPLIER_CAP, getParticleVelocityMultiplier());
@@ -833,7 +842,7 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         double startupDensityScale = startupDensityScale(baseParticleData);
         double density = speedPerTick / TARGET_PARTICLE_SPACING_BLOCKS
                 * particleCountMultiplier * multiblockWidth * startupDensityScale;
-        int particleCap = Math.max(0, PropulsionConfig.CLIENT_PARTICLES_PER_TICK.get());
+        int particleCap = Math.max(0, PropulsionConfig.getClientParticlesPerTickOrDefault());
         PlumeTrailMath.EmissionBudget emissionBudget = PlumeTrailMath.emissionBudget(
                 density, particleEmissionCarry, particleCap);
         int particlesToSpawn = emissionBudget.count();
@@ -882,11 +891,7 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
             double spawnZ = spawnPosition.z;
 
             if (level instanceof ServerLevel serverLevel) {
-                double maxDistSq = getParticleBroadcastRange() * getParticleBroadcastRange();
-                for (ServerPlayer player : serverLevel.players()) {
-                    if (!PlumeViewerPreferences.wantsParticles(player)) {
-                        continue;
-                    }
+                for (ServerPlayer player : particleViewers) {
                     if (player.distanceToSqr(broadcastPosition.x, broadcastPosition.y, broadcastPosition.z) > maxDistSq) {
                         continue;
                     }
@@ -960,21 +965,6 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
         return fallback;
     }
 
-    private void updateAdaptiveTrailCoverage(double angleChange, double reconstructedGap) {
-        float target = PlumeTrailMath.activationTarget(angleChange, reconstructedGap, adaptiveTrailActive);
-        if (target > 0.0f) {
-            adaptiveTrailActive = true;
-            adaptiveTrailQuietTicks = 0;
-        } else if (adaptiveTrailActive && ++adaptiveTrailQuietTicks >= 4) {
-            adaptiveTrailActive = false;
-            adaptiveTrailQuietTicks = 0;
-        }
-        float resolvedTarget = adaptiveTrailActive ? Math.max(target, 0.35f) : 0.0f;
-        float blend = resolvedTarget > adaptiveTrailCoverage ? 0.34f : 0.15f;
-        adaptiveTrailCoverage += (resolvedTarget - adaptiveTrailCoverage) * blend;
-        if (adaptiveTrailCoverage < 0.01f && !adaptiveTrailActive) adaptiveTrailCoverage = 0.0f;
-    }
-
     private static double startupDensityScale(ParticleOptions particle) {
         if (particle instanceof PlumeParticleData plume && plume.startupProgress() != null) {
             return org.joml.Math.lerp(plume.startupProgress(), 2.8d, 1.0d);
@@ -997,10 +987,6 @@ public abstract class AbstractThrusterBlockEntity extends SmartBlockEntity
 
     @Override
     public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
-        boolean wasThrustDirty = isThrustDirty;
-        calculateObstruction(getLevel(), worldPosition, getBlockState().getValue(AbstractThrusterBlock.FACING));
-        isThrustDirty = wasThrustDirty;
-
         MutableComponent title = Component.translatable("createpropulsion.gui.goggles.title.thruster_stats").copy();
         if (width > 1) {
             title.append(Component.literal(" (" + width + "x" + width + "x" + width + ")").withStyle(ChatFormatting.GRAY));

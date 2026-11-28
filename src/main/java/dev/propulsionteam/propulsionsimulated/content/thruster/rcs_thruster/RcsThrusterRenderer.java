@@ -16,6 +16,11 @@ public class RcsThrusterRenderer implements BlockEntityRenderer<RcsThrusterBlock
     public RcsThrusterRenderer(BlockEntityRendererProvider.Context context) {}
 
     @Override
+    public net.minecraft.world.phys.AABB getRenderBoundingBox(RcsThrusterBlockEntity be) {
+        return be.getRenderBoundingBox();
+    }
+
+    @Override
     public void render(RcsThrusterBlockEntity be, float partialTick, PoseStack ms, MultiBufferSource buffer, int light, int overlay) {
         VectorRedstoneLinkRenderer.renderLinks(be, be.links, ms, buffer, light, overlay);
         ms.pushPose();
