@@ -1,5 +1,7 @@
 package dev.propulsionteam.propulsionsimulated;
 
+import dev.propulsionteam.propulsionsimulated.compat.PropulsionCompatibility;
+import dev.propulsionteam.propulsionsimulated.compat.computercraft.ComputerCraftConfig;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionDefaultStress;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionItemToggles;
 
@@ -300,6 +302,10 @@ public class PropulsionConfig {
         DISABLE_WORLDGEN = COMMON_BUILDER.comment("If true, platinum ore does not generate. Applies to newly generated chunks after a world restart.")
                 .define("disableWorldgen", false);
         COMMON_BUILDER.pop();
+
+        if (PropulsionCompatibility.CC_ACTIVE) {
+            ComputerCraftConfig.define(COMMON_BUILDER);
+        }
 
         COMMON_BUILDER.comment(
                         "Item toggles. Set an item to false to hide it from the creative tab and disable every recipe that produces it.",

@@ -8,6 +8,7 @@
     "mixins": [
         "BasinBlockEntityMixin",
         "BearingContraptionMixin",
+        "ComputerCraftMethodSupplierMixin",
         "CreativeModeTabMixin",
         "FluidShellProjectileMixin",
         "FluidNetworkMixin",

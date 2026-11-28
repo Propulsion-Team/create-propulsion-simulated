@@ -91,11 +91,16 @@ public class ComputerBehaviour extends AbstractComputerBehaviour {
             new IllegalArgumentException("No peripheral available for " + blockEntity.getClass().getName()));
     }
 
-    @Override
-    public IPeripheral getPeripheralCapability() {
+    public IPeripheral getPeripheral() {
         if (peripheral == null)
             peripheral = peripheralSupplier.get();
         return peripheral;
+    }
+
+    @Override
+    public IPeripheral getPeripheralCapability() {
+        IPeripheral peripheral = getPeripheral();
+        return ComputerCraftConfig.isEnabled(peripheral.getClass()) ? peripheral : null;
     }
 
     @Override

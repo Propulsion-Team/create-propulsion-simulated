@@ -27,6 +27,7 @@ public class PropulsionMixinPlugin implements IMixinConfigPlugin {
     static {
         CONDITIONS.put("is_vsaddition_not_loaded", () -> FMLLoader.getLoadingModList().getModFileById("vs_addition") == null);
         CONDITIONS.put("is_createbigcannons_loaded", () -> FMLLoader.getLoadingModList().getModFileById("createbigcannons") != null);
+        CONDITIONS.put("is_computercraft_loaded", () -> FMLLoader.getLoadingModList().getModFileById("computercraft") != null);
     }
 
     @Override

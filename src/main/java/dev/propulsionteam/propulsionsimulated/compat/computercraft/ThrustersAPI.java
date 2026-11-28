@@ -6,7 +6,6 @@ import dan200.computercraft.api.lua.IComputerSystem;
 import dan200.computercraft.api.lua.ILuaAPI;
 import dan200.computercraft.api.lua.LuaException;
 import dan200.computercraft.api.lua.LuaFunction;
-import dan200.computercraft.api.peripheral.IPeripheral;
 import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
 import dev.propulsionteam.propulsionsimulated.compat.computercraft.LuaValues.Frame;
 import dev.propulsionteam.propulsionsimulated.content.thruster.AbstractThrusterBlockEntity;
@@ -69,8 +68,7 @@ public class ThrustersAPI implements ILuaAPI {
     }
 
     private static String type(@Nullable AbstractComputerBehaviour behaviour) {
-        IPeripheral peripheral = behaviour != null ? behaviour.getPeripheralCapability() : null;
-        return peripheral != null ? peripheral.getType() : "thruster";
+        return behaviour instanceof ComputerBehaviour own ? own.getPeripheral().getType() : "thruster";
     }
 
     private static List<Entry> scan(ShipContext ship) {
