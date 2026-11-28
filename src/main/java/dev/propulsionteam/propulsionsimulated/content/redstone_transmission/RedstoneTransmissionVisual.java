@@ -11,7 +11,6 @@ import com.simibubi.create.foundation.render.AllInstanceTypes;
 import dev.engine_room.flywheel.api.instance.Instance;
 import dev.engine_room.flywheel.api.visualization.VisualizationContext;
 import dev.engine_room.flywheel.lib.instance.InstanceTypes;
-import dev.engine_room.flywheel.lib.instance.OrientedInstance;
 import dev.engine_room.flywheel.lib.instance.TransformedInstance;
 import dev.engine_room.flywheel.lib.model.Models;
 import dev.engine_room.flywheel.lib.transform.TransformStack;
@@ -29,8 +28,8 @@ import static com.simibubi.create.content.kinetics.base.RotatedPillarKineticBloc
 
 public class RedstoneTransmissionVisual extends KineticBlockEntityVisual<RedstoneTransmissionBlockEntity> implements SimpleDynamicVisual {
     private final List<RotatingInstance> shaftInstances = new ArrayList<>();
-    private OrientedInstance minus;
-    private OrientedInstance plus;
+    private TransformedInstance minus;
+    private TransformedInstance plus;
     private TransformedInstance hand;
 
     private PoseStack ms;
@@ -57,8 +56,8 @@ public class RedstoneTransmissionVisual extends KineticBlockEntityVisual<Redston
         }
 
         //Plus/minus/gauge
-        minus = instancerProvider().instancer(InstanceTypes.ORIENTED, Models.partial(PropulsionPartialModels.TRANSMISSION_MINUS)).createInstance();
-        plus = instancerProvider().instancer(InstanceTypes.ORIENTED, Models.partial(PropulsionPartialModels.TRANSMISSION_PLUS)).createInstance();
+        minus = instancerProvider().instancer(InstanceTypes.TRANSFORMED, Models.partial(PropulsionPartialModels.TRANSMISSION_MINUS)).createInstance();
+        plus = instancerProvider().instancer(InstanceTypes.TRANSFORMED, Models.partial(PropulsionPartialModels.TRANSMISSION_PLUS)).createInstance();
         hand = instancerProvider().instancer(InstanceTypes.TRANSFORMED, Models.partial(AllPartialModels.GAUGE_DIAL)).createInstance();
 
         ms = new PoseStack();
@@ -67,19 +66,19 @@ public class RedstoneTransmissionVisual extends KineticBlockEntityVisual<Redston
         msr.pushPose();
 
         msr.rotateCenteredDegrees(-facing.toYRot() - 90, Direction.UP);
-        minus.rotateDegrees(-facing.toYRot(), Direction.UP);
-        plus.rotateDegrees(-facing.toYRot(), Direction.UP);
+        minus.translate(getVisualPosition()).rotateCenteredDegrees(-facing.toYRot(), Direction.UP);
+        plus.translate(getVisualPosition()).rotateCenteredDegrees(-facing.toYRot(), Direction.UP);
 
         if(blockEntity.getBlockState().getValue(AXIS).isHorizontal()) {
-            minus.rotateDegrees(90, Direction.Axis.X);
-            plus.rotateDegrees(90, Direction.Axis.X);
+            minus.rotateCenteredDegrees(90, Direction.EAST);
+            plus.rotateCenteredDegrees(90, Direction.EAST);
             msr.rotateCenteredDegrees(90, Direction.Axis.Z);
         }
 
         msr.translate(2f / 16, 0, 0);
 
-        minus.position(getVisualPosition()).setChanged();
-        plus.position(getVisualPosition()).setChanged();
+        minus.setChanged();
+        plus.setChanged();
         hand.setTransform(ms).setChanged();
 
         msr.popPose();

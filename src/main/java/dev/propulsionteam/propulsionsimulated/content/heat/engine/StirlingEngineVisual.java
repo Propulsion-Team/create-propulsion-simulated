@@ -21,7 +21,7 @@ import dev.engine_room.flywheel.api.instance.Instance;
 import dev.engine_room.flywheel.api.visual.DynamicVisual;
 import dev.engine_room.flywheel.api.visualization.VisualizationContext;
 import dev.engine_room.flywheel.lib.instance.InstanceTypes;
-import dev.engine_room.flywheel.lib.instance.OrientedInstance;
+import dev.engine_room.flywheel.lib.instance.TransformedInstance;
 import dev.engine_room.flywheel.lib.model.Models;
 import dev.engine_room.flywheel.lib.visual.SimpleDynamicVisual;
 import net.createmod.catnip.animation.AnimationTickHolder;
@@ -30,7 +30,7 @@ import net.minecraft.core.Direction;
 
 public class StirlingEngineVisual extends KineticBlockEntityVisual<StirlingEngineBlockEntity> implements SimpleDynamicVisual {
     protected final RotatingInstance shaft;
-    protected final List<OrientedInstance> pistons = new ArrayList<>(4);
+    protected final List<TransformedInstance> pistons = new ArrayList<>(4);
     
     private final static int[] offsetArray = {0, 7, 2, 9};
     private final Direction facing;
@@ -51,7 +51,7 @@ public class StirlingEngineVisual extends KineticBlockEntityVisual<StirlingEngin
         var pistonModel = Models.partial(PropulsionPartialModels.STIRLING_ENGINE_PISTON);
         
         for (int i = 0; i < 4; i++) {
-            OrientedInstance piston = instancerProvider().instancer(InstanceTypes.ORIENTED, pistonModel).createInstance();
+            TransformedInstance piston = instancerProvider().instancer(InstanceTypes.TRANSFORMED, pistonModel).createInstance();
             pistons.add(piston);
         }
         
@@ -92,7 +92,7 @@ public class StirlingEngineVisual extends KineticBlockEntityVisual<StirlingEngin
         }
     }
 
-    private void transformPiston(OrientedInstance instance, int index, float extensionOffset) {
+    private void transformPiston(TransformedInstance instance, int index, float extensionOffset) {
         Quaternionf rotation = new Quaternionf();
         rotation.mul(facing.getRotation());
         
@@ -100,8 +100,6 @@ public class StirlingEngineVisual extends KineticBlockEntityVisual<StirlingEngin
             rotation.mul(Axis.ZP.rotationDegrees(180));
         }
         rotation.mul(Axis.XP.rotationDegrees(270));
-
-        instance.rotation(rotation);
 
         Vector3f localOffset = new Vector3f(extensionOffset, 0, offsetArray[index] / 16.0f);
         
@@ -148,8 +146,7 @@ public class StirlingEngineVisual extends KineticBlockEntityVisual<StirlingEngin
 
         finalPos.add(fixX, 0, fixZ);
 
-        instance.position(finalPos);
-        instance.setChanged();
+        instance.setIdentityTransform().translate(finalPos).rotateCentered(rotation).setChanged();
     }
 
     @Override
@@ -160,7 +157,7 @@ public class StirlingEngineVisual extends KineticBlockEntityVisual<StirlingEngin
     @Override
     public void updateLight(float partialTick) {
         relight(shaft);
-        for (OrientedInstance piston : pistons) {
+        for (TransformedInstance piston : pistons) {
             relight(piston);
         }
     }
@@ -168,7 +165,7 @@ public class StirlingEngineVisual extends KineticBlockEntityVisual<StirlingEngin
     @Override
     protected void _delete() {
         shaft.delete();
-        for (OrientedInstance piston : pistons) {
+        for (TransformedInstance piston : pistons) {
             piston.delete();
         }
         pistons.clear();
@@ -177,7 +174,7 @@ public class StirlingEngineVisual extends KineticBlockEntityVisual<StirlingEngin
     @Override
     public void collectCrumblingInstances(Consumer<Instance> consumer) {
         consumer.accept(shaft);
-        for (OrientedInstance piston : pistons) {
+        for (TransformedInstance piston : pistons) {
             consumer.accept(piston);
         }
     }
