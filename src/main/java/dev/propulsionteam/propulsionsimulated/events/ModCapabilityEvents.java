@@ -207,6 +207,9 @@ public class ModCapabilityEvents {
         if (side == null) {
             return primaryHandler;
         }
+        if (side.getAxis() != blockEntity.getPipeAxis()) {
+            return null;
+        }
         return new PassthroughFluidHandler(blockEntity, side);
     }
 

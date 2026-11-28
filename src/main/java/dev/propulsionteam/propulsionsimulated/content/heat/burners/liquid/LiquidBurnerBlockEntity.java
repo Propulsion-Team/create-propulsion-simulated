@@ -253,7 +253,7 @@ public class LiquidBurnerBlockEntity extends AbstractBurnerBlockEntity {
 
     //Pipes & caps
 
-    protected Direction.Axis getPipeAxis() {
+    public Direction.Axis getPipeAxis() {
         if (getBlockState().hasProperty(HorizontalDirectionalBlock.FACING)) {
             return getBlockState().getValue(HorizontalDirectionalBlock.FACING).getAxis();
         }
