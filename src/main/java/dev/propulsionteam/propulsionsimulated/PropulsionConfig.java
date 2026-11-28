@@ -25,6 +25,8 @@ public class PropulsionConfig {
 
     // ── Common: thrusters ───────────────────────────────────────────────────
     public static final ModConfigSpec.DoubleValue THRUST_UNITS_PER_PN;
+    public static final ModConfigSpec.DoubleValue MAX_PROPULSION_SPEED;
+    public static final ModConfigSpec.DoubleValue PROPULSION_DRAG;
     public static final ModConfigSpec.DoubleValue VECTOR_CORE_OUTPUT_PN;
     public static final ModConfigSpec.DoubleValue NOZZLE_OFFSET_FROM_CENTER;
     public static final ModConfigSpec.IntValue OBSTRUCTION_SCAN_LENGTH;
@@ -145,6 +147,8 @@ public class PropulsionConfig {
                 .define("useAtmosphericPressure", false);
         ATMOSPHERIC_PRESSURE_AMOUNT = COMMON_BUILDER.comment("Strength of atmospheric pressure influence. 1.0 = full effect, 0.0 = no effect.")
                 .defineInRange("atmosphericPressureAmount", 1.0d, 0.0d, 2.0d);
+        MAX_PROPULSION_SPEED = COMMON_BUILDER.defineInRange("maxPropulsionSpeed", 0.0d, 0.0d, 100000.0d);
+        PROPULSION_DRAG = COMMON_BUILDER.defineInRange("propulsionDrag", 0.0d, 0.0d, 10000000.0d);
         COMMON_BUILDER.pop();
 
         COMMON_BUILDER.comment("Standard fuel thruster.").push("thruster");

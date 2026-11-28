@@ -1,9 +1,13 @@
 package dev.propulsionteam.propulsionsimulated.content.thruster;
 
+import dev.propulsionteam.propulsionsimulated.CreatePropulsion;
+import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
 import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.api.physics.force.ForceGroup;
 import dev.ryanhcode.sable.api.physics.force.ForceGroups;
 import dev.ryanhcode.sable.api.physics.force.QueuedForceGroup;
+import dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle;
+import dev.ryanhcode.sable.neoforge.event.ForgeSablePrePhysicsTickEvent;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import net.minecraft.core.BlockPos;
@@ -11,10 +15,17 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3d;
 
+import java.util.HashMap;
+import java.util.Map;
+
+@EventBusSubscriber(modid = CreatePropulsion.ID)
 public final class SimulatedThrustAdapter {
+    private static final Map<ServerSubLevel, Vector3d> PROPULSION_IMPULSES = new HashMap<>();
     private static final ResourceLocation SPACE_DIMENSION = ResourceLocation.parse("astronautics:space");
     private static final ResourceLocation SPACE_THRUST_GROUP = ResourceLocation.parse("astronautics:thrusters");
 
@@ -32,12 +43,43 @@ public final class SimulatedThrustAdapter {
 
     public static void applyImpulseAtPoint(final ServerSubLevel subLevel, final Vector3d pointLocal,
                                            final Vector3d impulseLocal, final BlockEntity thruster) {
+        final double maxSpeed = PropulsionConfig.MAX_PROPULSION_SPEED.get();
+        if (maxSpeed > 0) {
+            final RigidBodyHandle handle = RigidBodyHandle.of(subLevel);
+            if (handle != null && handle.isValid()) {
+                final Vector3d velocity = handle.getLinearVelocity(new Vector3d());
+                final Vector3d impulseWorld = subLevel.logicalPose().transformNormal(new Vector3d(impulseLocal));
+                if (velocity.length() >= maxSpeed && velocity.dot(impulseWorld) > 0) return;
+            }
+        }
         Vector3d applicationPoint = pointLocal;
         if (PropulsionCoreBehaviour.isActive(thruster)) {
             var centerOfMass = subLevel.getMassTracker().getCenterOfMass();
             if (centerOfMass != null) applicationPoint = new Vector3d(centerOfMass);
         }
         applyImpulseAtPoint(subLevel, applicationPoint, impulseLocal);
+        if (PropulsionConfig.PROPULSION_DRAG.get() > 0) {
+            PROPULSION_IMPULSES.computeIfAbsent(subLevel, ignored -> new Vector3d()).add(impulseLocal);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPrePhysicsTick(final ForgeSablePrePhysicsTickEvent event) {
+        PROPULSION_IMPULSES.forEach((subLevel, thrustImpulse) -> applyPropulsionDrag(subLevel, thrustImpulse, event.getTimeStep()));
+        PROPULSION_IMPULSES.clear();
+    }
+
+    private static void applyPropulsionDrag(final ServerSubLevel subLevel, final Vector3d thrustImpulse,
+                                            final double timeStep) {
+        if (subLevel.isRemoved()) return;
+        final RigidBodyHandle handle = RigidBodyHandle.of(subLevel);
+        if (handle == null || !handle.isValid()) return;
+        final Vector3d velocity = subLevel.logicalPose().transformNormalInverse(handle.getLinearVelocity(new Vector3d()));
+        final double speed = velocity.length();
+        if (speed <= 0) return;
+        final Vector3d direction = velocity.div(speed);
+        final double drag = Math.min(PropulsionConfig.PROPULSION_DRAG.get() * speed * timeStep, thrustImpulse.dot(direction));
+        if (drag > 0) applyGroundFriction(subLevel, direction.mul(-drag));
     }
 
     public static void applyGroundFriction(final ServerSubLevel subLevel, final Vector3d groundFrictionImpulse) {
